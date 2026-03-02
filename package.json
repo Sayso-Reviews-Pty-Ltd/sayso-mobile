@@ -1,0 +1,47 @@
+{
+  "name": "sayso-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "set \"EXPO_NO_DEPENDENCY_VALIDATION=1\" && expo start",
+    "start:offline": "expo start --offline",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "set \"EXPO_NO_DEPENDENCY_VALIDATION=1\" && expo start --web",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "^55.0.6",
+    "@expo/vector-icons": "^14.0.0",
+    "@react-native-async-storage/async-storage": "^1.23.1",
+    "@react-navigation/native": "^6.1.17",
+    "@sayso/contracts": "file:../../sayso_web/packages/contracts",
+    "@supabase/supabase-js": "^2.75.0",
+    "@tanstack/react-query": "^5.64.2",
+    "expo": "~52.0.0",
+    "expo-asset": "~11.0.5",
+    "expo-auth-session": "~6.0.0",
+    "expo-constants": "~17.0.0",
+    "expo-device": "~7.0.0",
+    "expo-image": "~2.0.0",
+    "expo-linking": "~7.0.0",
+    "expo-notifications": "~0.29.0",
+    "expo-router": "~4.0.0",
+    "expo-secure-store": "~14.0.0",
+    "expo-status-bar": "~2.0.0",
+    "expo-web-browser": "~14.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-native": "0.76.3",
+    "react-native-maps": "1.18.0",
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-screens": "~4.1.0",
+    "react-native-url-polyfill": "^2.0.0",
+    "react-native-web": "^0.19.13"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "typescript": "^5.9.3"
+  }
+}

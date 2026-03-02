@@ -1,0 +1,16 @@
+import { useQuery } from '@tanstack/react-query';
+import { apiFetch } from '../lib/api';
+import type { BusinessListItemDto } from '@sayso/contracts';
+
+interface TrendingResponse {
+  businesses: BusinessListItemDto[];
+  meta: { count: number; refreshedAt?: string; category?: string };
+}
+
+export function useTrending(limit = 20) {
+  return useQuery({
+    queryKey: ['trending', limit],
+    queryFn: () => apiFetch<TrendingResponse>(`/api/trending?limit=${limit}`),
+    staleTime: 30_000,
+  });
+}

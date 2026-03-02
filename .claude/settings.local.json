@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep -l \"export.*GET\\\\|export.*POST\\\\|export.*PUT\\\\|export.*DELETE\")",
+      "Bash(./node_modules/.bin/expo install react-native-maps expo-image)",
+      "Bash(npm install)",
+      "Bash(npm run build)",
+      "Bash(npm install expo-asset)",
+      "Bash(npm start)",
+      "Bash(npm install expo-asset@~11.0.5)",
+      "Bash(node_modules/.bin/expo start --non-interactive)",
+      "Bash(npm install react-native-web@~0.19.0 @expo/metro-runtime)"
+    ]
+  }
+}

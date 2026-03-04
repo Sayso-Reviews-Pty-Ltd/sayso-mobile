@@ -474,7 +474,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   content: {
-    paddingBottom: 36,
     backgroundColor: homeTokens.offWhite,
   },
   section: {

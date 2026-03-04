@@ -1,0 +1,17 @@
+export const homeTokens = {
+  sage: '#7D9B76',
+  sageDark: '#6B8A64',
+  sageLight: '#8FAA88',
+  coral: '#722F37',
+  coralDark: '#5C252B',
+  coralLight: '#8B3F47',
+  charcoal: '#2D3748',
+  lightGray: '#E2E8F0',
+  offWhite: '#F7FAFC',
+  white: '#FFFFFF',
+  textSecondary: 'rgba(45, 55, 72, 0.7)',
+  textTertiary: 'rgba(45, 55, 72, 0.5)',
+  borderSoft: 'rgba(45, 55, 72, 0.12)',
+  coralWash: 'rgba(114, 47, 55, 0.08)',
+  sageWash: 'rgba(125, 155, 118, 0.12)',
+} as const;

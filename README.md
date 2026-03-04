@@ -40,12 +40,14 @@ Copy `.env.example` to `.env` and set values:
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `EXPO_PUBLIC_API_BASE_URL` | Yes | Base URL for backend API requests (for example `https://sayso.vercel.app`). |
+| `EXPO_PUBLIC_API_BASE_URL` | Yes | Base URL for backend API requests (for example `https://www.sayso.co.za`). |
 | `EXPO_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL. |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key. |
 | `EXPO_PUBLIC_EAS_PROJECT_ID` | Recommended | Used for Expo push token registration. |
 
 If Supabase env values are missing, the app logs a warning at startup.
+
+For Expo web, use the canonical `www` host for production API requests to avoid browser preflight redirects.
 
 ## Setup
 

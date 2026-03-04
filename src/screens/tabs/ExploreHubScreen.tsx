@@ -1,7 +1,8 @@
-import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { routes } from '../../navigation/routes';
 import { AppHeader } from '../../components/AppHeader';
+import { CardSurface } from '../../components/CardSurface';
 import { Text } from '../../components/Typography';
 
 const groups = [
@@ -37,15 +38,17 @@ export default function ExploreHubScreen() {
             <Text style={styles.sectionTitle}>{group.title}</Text>
             <View style={styles.cardGrid}>
               {group.items.map((item) => (
-                <TouchableOpacity
+                <CardSurface
                   key={item.href}
+                  radius={18}
                   style={styles.card}
+                  contentStyle={styles.cardContent}
+                  interactive
                   onPress={() => router.push(item.href as never)}
-                  activeOpacity={0.8}
                 >
                   <Text style={styles.cardTitle}>{item.label}</Text>
                   <Text style={styles.cardBody}>Open this branch of discovery on mobile.</Text>
-                </TouchableOpacity>
+                </CardSurface>
               ))}
             </View>
           </View>
@@ -78,11 +81,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+  },
+  cardContent: {
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
     gap: 6,
   },
   cardTitle: {

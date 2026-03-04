@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 const sharedHeaderStyles = {
   headerTitleStyle: { fontFamily: 'Urbanist_700Bold' },
   headerBackTitleStyle: { fontFamily: 'Urbanist_500Medium' },
@@ -16,14 +18,14 @@ export const sharedStackScreenOptions = {
 
 export const fullScreenModalScreenOptions = {
   ...sharedHeaderStyles,
-  presentation: 'fullScreenModal',
+  presentation: Platform.OS === 'web' ? 'card' : 'fullScreenModal',
   headerShadowVisible: false,
   contentStyle: { backgroundColor: '#FFFFFF' },
 } as const;
 
 export const sheetModalScreenOptions = {
   ...sharedHeaderStyles,
-  presentation: 'modal',
+  presentation: Platform.OS === 'web' ? 'card' : 'modal',
   headerShadowVisible: false,
   contentStyle: { backgroundColor: '#FFFFFF' },
 } as const;

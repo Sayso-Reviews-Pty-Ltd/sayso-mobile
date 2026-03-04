@@ -20,6 +20,7 @@ import {
 } from '../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../hooks/useSession';
 import { routes } from '../../navigation/routes';
+import { CardSurface } from '../../components/CardSurface';
 import { EmptyState } from '../../components/EmptyState';
 import { StarRating } from '../../components/StarRating';
 import { Text } from '../../components/Typography';
@@ -235,7 +236,7 @@ export default function BusinessScreen({ initialTab = 'overview' }: Props) {
             ) : (
               <>
                 {allReviews.map((review) => (
-                  <View key={review.id} style={styles.reviewCard}>
+                  <CardSurface key={review.id} radius={16} contentStyle={styles.reviewCard}>
                     <View style={styles.reviewHeader}>
                       <Text style={styles.reviewerName}>
                         {review.display_name || review.username || 'Anonymous'}
@@ -250,7 +251,7 @@ export default function BusinessScreen({ initialTab = 'overview' }: Props) {
                         day: 'numeric',
                       })}
                     </Text>
-                  </View>
+                  </CardSurface>
                 ))}
 
                 {hasNextPage ? (
@@ -341,10 +342,6 @@ const styles = StyleSheet.create({
   },
   writeReviewTxt: { color: '#FFF', fontWeight: '700', fontSize: 15 },
   reviewCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
     padding: 14,
     gap: 8,
   },

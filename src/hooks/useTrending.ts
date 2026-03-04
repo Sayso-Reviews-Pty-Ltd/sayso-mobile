@@ -7,10 +7,11 @@ interface TrendingResponse {
   meta: { count: number; refreshedAt?: string; category?: string };
 }
 
-export function useTrending(limit = 20) {
+export function useTrending(limit = 20, enabled = true) {
   return useQuery({
     queryKey: ['trending', limit],
     queryFn: () => apiFetch<TrendingResponse>(`/api/trending?limit=${limit}`),
+    enabled,
     staleTime: 30_000,
   });
 }

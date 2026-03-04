@@ -1,11 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
-import { BusinessFeedScreen } from '../../../../src/screens/shared/BusinessFeedScreen';
+import { BusinessFeedStackScreen } from '../../../../src/screens/shared/BusinessFeedStackScreen';
 
 export default function SubcategoryRoute() {
   const { subcategory } = useLocalSearchParams<{ subcategory: string }>();
 
   return (
-    <BusinessFeedScreen
+    <BusinessFeedStackScreen
       title={(subcategory || 'Subcategory').replace(/-/g, ' ')}
       subtitle="Subcategory drill-down under the Explore taxonomy stack"
     />

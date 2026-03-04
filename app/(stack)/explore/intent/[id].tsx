@@ -1,11 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
-import { BusinessFeedScreen } from '../../../../src/screens/shared/BusinessFeedScreen';
+import { BusinessFeedStackScreen } from '../../../../src/screens/shared/BusinessFeedStackScreen';
 
 export default function ExploreIntentRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   return (
-    <BusinessFeedScreen
+    <BusinessFeedStackScreen
       title={(id || 'Intent').replace(/-/g, ' ')}
       subtitle="Intent-driven discovery route for mobile Explore"
     />

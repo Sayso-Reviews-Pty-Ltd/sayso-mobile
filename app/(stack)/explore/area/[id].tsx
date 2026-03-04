@@ -1,11 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
-import { BusinessFeedScreen } from '../../../../src/screens/shared/BusinessFeedScreen';
+import { BusinessFeedStackScreen } from '../../../../src/screens/shared/BusinessFeedStackScreen';
 
 export default function ExploreAreaRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   return (
-    <BusinessFeedScreen
+    <BusinessFeedStackScreen
       title={(id || 'Area').replace(/-/g, ' ')}
       subtitle="Area-based discovery under the Explore tab stack"
     />

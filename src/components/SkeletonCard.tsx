@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Platform, StyleSheet, View } from 'react-native';
+import { CardSurface } from './CardSurface';
 
 export function SkeletonCard() {
   const opacity = useRef(new Animated.Value(0.4)).current;
@@ -7,38 +8,36 @@ export function SkeletonCard() {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.4, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(opacity, { toValue: 0.4, duration: 700, useNativeDriver: Platform.OS !== 'web' }),
       ])
     ).start();
   }, [opacity]);
 
   return (
-    <Animated.View style={[styles.card, { opacity }]}>
-      <View style={styles.image} />
-      <View style={styles.body}>
-        <View style={styles.titleLine} />
-        <View style={styles.subtitleLine} />
-        <View style={styles.ratingLine} />
-      </View>
+    <Animated.View style={{ opacity }}>
+      <CardSurface radius={24}>
+        <View style={styles.image} />
+        <View style={styles.body}>
+          <View style={styles.titleLine} />
+          <View style={styles.subtitleLine} />
+          <View style={styles.ratingLine} />
+        </View>
+      </CardSurface>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFF',
-    borderRadius: 14,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
   image: {
     width: '100%',
-    height: 140,
+    height: 208,
     backgroundColor: '#E5E7EB',
   },
   body: {
-    padding: 12,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 14,
   },
   titleLine: {
     height: 14,

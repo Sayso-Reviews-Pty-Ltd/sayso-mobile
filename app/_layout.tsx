@@ -7,18 +7,22 @@ import {
   Urbanist_600SemiBold,
   Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
+import { useFonts as useLocalFonts } from 'expo-font';
 import { Providers } from '../src/providers/Providers';
 import { rootStackScreenOptions } from '../src/navigation/screenOptions';
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [urbanistLoaded] = useFonts({
     Urbanist_400Regular,
     Urbanist_500Medium,
     Urbanist_600SemiBold,
     Urbanist_700Bold,
   });
+  const [brandFontsLoaded] = useLocalFonts({
+    MonarchParadox: require('../assets/fonts/monarchparadox.otf'),
+  });
 
-  if (!fontsLoaded) return null;
+  if (!urbanistLoaded || !brandFontsLoaded) return null;
 
   return (
     <Providers>

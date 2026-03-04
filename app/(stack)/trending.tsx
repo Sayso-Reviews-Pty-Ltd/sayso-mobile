@@ -1,10 +1,11 @@
-import { BusinessFeedScreen } from '../../src/screens/shared/BusinessFeedScreen';
+import { BusinessFeedStackScreen } from '../../src/screens/shared/BusinessFeedStackScreen';
 
 export default function TrendingRoute() {
   return (
-    <BusinessFeedScreen
+    <BusinessFeedStackScreen
       title="Trending"
       subtitle="What people around you are rating and saving right now"
+      count={50}
     />
   );
 }

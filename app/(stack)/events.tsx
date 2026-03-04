@@ -1,10 +1,10 @@
-import { BusinessFeedScreen } from '../../src/screens/shared/BusinessFeedScreen';
+import { PlaceholderScreen } from '../../src/screens/shared/PlaceholderScreen';
 
 export default function EventsRoute() {
   return (
-    <BusinessFeedScreen
+    <PlaceholderScreen
       title="Events"
-      subtitle="A mobile event list shell backed by live business discovery data for now"
+      description="This route is ready for a dedicated events-only feed. The home surface already previews live event entries inside the combined Events & Specials section."
     />
   );
 }

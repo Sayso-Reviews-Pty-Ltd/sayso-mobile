@@ -1,11 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
-import { BusinessFeedScreen } from '../../../../src/screens/shared/BusinessFeedScreen';
+import { BusinessFeedStackScreen } from '../../../../src/screens/shared/BusinessFeedStackScreen';
 
 export default function CategoryRoute() {
   const { category } = useLocalSearchParams<{ category: string }>();
 
   return (
-    <BusinessFeedScreen
+    <BusinessFeedStackScreen
       title={(category || 'Category').replace(/-/g, ' ')}
       subtitle="Category feed in the shared Explore stack"
     />

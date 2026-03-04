@@ -3,18 +3,23 @@ import { apiFetch } from '../lib/api';
 import type { BusinessListItemDto } from '@sayso/contracts';
 
 interface SearchResponse {
-  businesses: BusinessListItemDto[];
+  businesses?: BusinessListItemDto[];
+  data?: BusinessListItemDto[];
   meta?: { usedFallback?: boolean; query?: string };
 }
 
 export function useSearch(query: string, limit = 20) {
+  const normalizedQuery = query.trim();
+
   return useQuery({
-    queryKey: ['search', query, limit],
+    queryKey: ['search', normalizedQuery, limit],
     queryFn: () =>
-      apiFetch<SearchResponse>(
-        `/api/businesses/search?query=${encodeURIComponent(query)}&limit=${limit}`
-      ),
-    enabled: query.trim().length >= 2,
+      apiFetch<SearchResponse>(`/api/businesses?q=${encodeURIComponent(normalizedQuery)}&limit=${limit}`),
+    select: (response) => ({
+      businesses: response.businesses ?? response.data ?? [],
+      meta: response.meta,
+    }),
+    enabled: normalizedQuery.length >= 2,
     staleTime: 10_000,
   });
 }

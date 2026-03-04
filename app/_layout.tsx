@@ -8,6 +8,7 @@ import {
   Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
 import { Providers } from '../src/providers/Providers';
+import { rootStackScreenOptions } from '../src/navigation/screenOptions';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -22,17 +23,12 @@ export default function RootLayout() {
   return (
     <Providers>
       <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerTitleStyle: { fontFamily: 'Urbanist_700Bold' },
-          headerBackTitleStyle: { fontFamily: 'Urbanist_500Medium' },
-        }}
-      >
+      <Stack screenOptions={rootStackScreenOptions}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="(stack)" options={{ headerShown: false }} />
+        <Stack.Screen name="(modals)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
         <Stack.Screen name="role-unsupported" options={{ headerShown: false }} />
-        <Stack.Screen name="business/[id]" options={{ headerShown: true }} />
-        <Stack.Screen name="business/[id]/review" options={{ headerShown: true }} />
       </Stack>
     </Providers>
   );

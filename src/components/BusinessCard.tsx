@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { BusinessListItemDto, SavedBusinessDto } from '@sayso/contracts';
+import { routes } from '../navigation/routes';
 import { Text } from './Typography';
 
 type Props = {
@@ -16,7 +17,7 @@ export function BusinessCard({ business, style }: Props) {
   return (
     <TouchableOpacity
       style={[styles.card, style]}
-      onPress={() => router.push(`/business/${business.id}`)}
+      onPress={() => router.push(routes.businessDetail(business.id) as never)}
       activeOpacity={0.8}
     >
       <Image

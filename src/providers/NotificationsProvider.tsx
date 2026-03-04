@@ -51,7 +51,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
 
     const data = await apiFetch<NotificationsResponseDto>('/api/notifications/user');
-    const unread = data.notifications.filter((item) => !item.read).length;
+    const unread = data.notifications.filter((item: { read?: boolean }) => !item.read).length;
     setUnreadCount(unread);
   };
 

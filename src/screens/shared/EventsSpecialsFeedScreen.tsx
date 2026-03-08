@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   FlatList,
+  Pressable,
   RefreshControl,
   StyleSheet,
   View,
@@ -8,6 +10,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { EventSpecialListItemDto, EventsAndSpecialsResponseDto } from '@sayso/contracts';
 import { apiFetch } from '../../lib/api';
@@ -31,6 +34,7 @@ function ItemSeparator() {
 
 type Props = {
   subtitle: string;
+  onScrollY?: (y: number) => void;
 };
 
 function fetchEventsPage(cursor: string | null) {
@@ -43,7 +47,7 @@ function fetchEventsPage(cursor: string | null) {
   return apiFetch<EventsAndSpecialsResponseDto>(`/api/events-and-specials?${params.toString()}`);
 }
 
-export function EventsSpecialsFeedScreen({ subtitle }: Props) {
+export function EventsSpecialsFeedScreen({ subtitle, onScrollY }: Props) {
   const listRef = useRef<FlatList<EventSpecialListItemDto>>(null);
   const hasRestoredScrollRef = useRef(false);
   const initialOffset = EVENT_FEED_SCROLL_OFFSETS.get('events-specials') ?? 0;
@@ -60,6 +64,17 @@ export function EventsSpecialsFeedScreen({ subtitle }: Props) {
     enabled: true,
     onScrollToTop: handleScrollToTop,
   });
+
+  const fabAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(fabAnim, {
+      toValue: showScrollTopButton ? 1 : 0,
+      damping: 18,
+      stiffness: 260,
+      useNativeDriver: true,
+    }).start();
+  }, [showScrollTopButton, fabAnim]);
 
   const query = useInfiniteQuery({
     queryKey: ['events-specials-feed', REQUEST_LIMIT],
@@ -137,7 +152,8 @@ export function EventsSpecialsFeedScreen({ subtitle }: Props) {
     EVENT_FEED_SCROLL_OFFSETS.set('events-specials', nextOffset);
     const shouldShow = nextOffset > BACK_TO_TOP_THRESHOLD;
     setShowScrollTopButton((current) => (current === shouldShow ? current : shouldShow));
-  }, []);
+    onScrollY?.(nextOffset);
+  }, [onScrollY]);
 
   const footer = useMemo(() => {
     if (query.isFetchingNextPage) {
@@ -214,6 +230,27 @@ export function EventsSpecialsFeedScreen({ subtitle }: Props) {
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       />
+
+      {/* Scroll-to-top FAB */}
+      <Animated.View
+        style={[
+          styles.scrollTopFab,
+          {
+            opacity: fabAnim,
+            transform: [{ scale: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
+          },
+        ]}
+        pointerEvents={showScrollTopButton ? 'box-none' : 'none'}
+      >
+        <Pressable
+          style={({ pressed }) => [styles.scrollTopBtn, pressed && styles.scrollTopBtnPressed]}
+          onPress={handleScrollToTop}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll to top"
+        >
+          <Ionicons name="chevron-up" size={20} color="#2D3748" />
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -226,7 +263,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   header: {
     paddingTop: 12,
@@ -245,9 +282,9 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   loadMoreWrap: {
-    paddingTop: 12,
-    paddingBottom: 12,
-    gap: 10,
+    paddingTop: 4,
+    paddingBottom: 8,
+    gap: 6,
   },
   loadMoreError: {
     fontSize: 13,
@@ -258,6 +295,29 @@ const styles = StyleSheet.create({
   },
   footerSpacer: {
     height: 12,
+  },
+  scrollTopFab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 32,
+    zIndex: 100,
+  },
+  scrollTopBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(229,224,229,0.90)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  scrollTopBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.95 }],
   },
 });
 

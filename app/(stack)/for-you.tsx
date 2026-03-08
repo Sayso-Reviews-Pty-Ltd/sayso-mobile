@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
+import { useNavigation } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { PaginatedBusinessFeedResponseDto } from '@sayso/contracts';
 import { BusinessFeed } from '../../src/components/feed/BusinessFeed';
@@ -16,9 +17,12 @@ import { homeTokens } from '../../src/screens/tabs/home/HomeTokens';
 
 const REQUEST_LIMIT = 120;
 const VISIBLE_CHUNK_SIZE = 12;
+const NAVBAR_BG = '#722F37';
+const SCROLL_COLOR_THRESHOLD = 60;
 
 export default function ForYouRoute() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { user } = useAuthSession();
   const preferences = useUserPreferences(Boolean(user));
 
@@ -94,16 +98,32 @@ export default function ForYouRoute() {
     return apiFetch<PaginatedBusinessFeedResponseDto>(`/api/businesses?${params.toString()}`);
   };
 
+  const handleScrollY = useCallback((y: number) => {
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: y > SCROLL_COLOR_THRESHOLD ? NAVBAR_BG : homeTokens.offWhite,
+      },
+      headerTintColor: y > SCROLL_COLOR_THRESHOLD ? '#FFFFFF' : homeTokens.charcoal,
+    });
+  }, [navigation]);
+
+  const feedListHeaderTop = (
+    <View style={styles.header}>
+      <View style={styles.headerCopy}>
+        <Text style={styles.title}>For You</Text>
+        <Text style={styles.subtitle}>A personalized discovery feed for your next outing.</Text>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ title: 'For You' }} />
-      <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <Text style={styles.title}>For You</Text>
-          <Text style={styles.subtitle}>A personalized discovery feed for your next outing.</Text>
-        </View>
-        <HeaderBellButton />
-      </View>
+      <Stack.Screen
+        options={{
+          title: 'For You',
+          headerRight: () => <HeaderBellButton />,
+        }}
+      />
 
       {preferences.isLoading ? (
         <View style={styles.loadingList}>
@@ -127,7 +147,8 @@ export default function ForYouRoute() {
         <BusinessFeed
           feedKey="for-you"
           queryKey={['for-you', user.id, preferenceIds, REQUEST_LIMIT]}
-          subtitle="A personalized discovery feed for your next outing."
+          listHeaderTop={feedListHeaderTop}
+          onScrollY={handleScrollY}
           errorTitle="Couldn't load personalised picks right now."
           emptyTitle="Curated from your interests"
           emptyMessage="Based on what you selected, no matches in this feed yet."
@@ -146,12 +167,9 @@ const styles = StyleSheet.create({
     backgroundColor: homeTokens.offWhite,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingHorizontal: 4,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   headerCopy: {
     flex: 1,

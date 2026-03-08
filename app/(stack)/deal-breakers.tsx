@@ -1,10 +1,5 @@
-import { PlaceholderScreen } from '../../src/screens/shared/PlaceholderScreen';
+import DealBreakersScreen from '../../src/screens/stack/DealBreakersScreen';
 
 export default function DealBreakersRoute() {
-  return (
-    <PlaceholderScreen
-      title="Deal Breakers"
-      description="This screen is available from Profile and onboarding. It is wired as a shared stack route for preferences and filtering rules."
-    />
-  );
+  return <DealBreakersScreen />;
 }

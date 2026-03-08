@@ -4,6 +4,7 @@ import {
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -175,6 +177,17 @@ export default function HomeScreen() {
     enabled: true,
     onScrollToTop: handleGlobalScrollToTop,
   });
+
+  const fabAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(fabAnim, {
+      toValue: showScrollTopButton ? 1 : 0,
+      damping: 18,
+      stiffness: 260,
+      useNativeDriver: true,
+    }).start();
+  }, [showScrollTopButton, fabAnim]);
 
   useEffect(() => {
     setScrollTopVisible(false);
@@ -460,6 +473,27 @@ export default function HomeScreen() {
           />
         </Animated.ScrollView>
       )}
+
+      {/* Scroll-to-top FAB */}
+      <Animated.View
+        style={[
+          styles.scrollTopFab,
+          {
+            opacity: fabAnim,
+            transform: [{ scale: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
+          },
+        ]}
+        pointerEvents={showScrollTopButton ? 'box-none' : 'none'}
+      >
+        <Pressable
+          style={({ pressed }) => [styles.scrollTopBtn, pressed && styles.scrollTopBtnPressed]}
+          onPress={handleGlobalScrollToTop}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll to top"
+        >
+          <Ionicons name="chevron-up" size={20} color="#2D3748" />
+        </Pressable>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -606,5 +640,28 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: 'rgba(45,55,72,0.9)',
     marginTop: 6,
+  },
+  scrollTopFab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 32,
+    zIndex: 100,
+  },
+  scrollTopBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(229,224,229,0.90)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  scrollTopBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.95 }],
   },
 });

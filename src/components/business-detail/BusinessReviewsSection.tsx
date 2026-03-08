@@ -1,10 +1,8 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { CardSurface } from '../CardSurface';
-import { StarRating } from '../StarRating';
 import { Text } from '../Typography';
+import { ReviewsList } from '../review-card/ReviewsList';
+import type { ReviewCardData } from '../review-card/ReviewCard';
 import { useBusinessReviews } from '../../hooks/useBusinessReviews';
-import { CARD_RADIUS } from '../../styles/radii';
 import { businessDetailColors, businessDetailSpacing } from './styles';
 
 type Props = {
@@ -12,84 +10,55 @@ type Props = {
   onPressWriteReview: () => void;
 };
 
-function formatDate(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Recently';
-  }
-  return parsed.toLocaleDateString('en-ZA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 export function BusinessReviewsSection({ businessId, onPressWriteReview }: Props) {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useBusinessReviews(businessId);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error } =
+    useBusinessReviews(businessId);
   const reviews = data?.pages.flatMap((page) => page.data) ?? [];
+
+  const normalized: ReviewCardData[] = reviews.map((r) => ({
+    id: r.id,
+    userId: r.user_id,
+    rating: r.rating,
+    content: r.body ?? '',
+    helpfulCount: 0,
+    createdAt: r.created_at,
+    user: {
+      id: r.user_id,
+      name: r.display_name ?? r.username ?? 'Anonymous',
+      avatarUrl: r.avatar_url,
+    },
+    images: r.images?.map((i) => i.url).filter((u): u is string => !!u) ?? [],
+  }));
 
   return (
     <View style={styles.section}>
-      <View style={styles.titleWrap}>
-        <Text style={styles.label}>Community Reviews</Text>
-      </View>
+      <Text style={styles.label}>Community Reviews</Text>
 
-      <View style={styles.cardWrap}>
-        {isLoading ? (
-          <Text style={styles.loadingText}>Loading reviews...</Text>
-        ) : reviews.length === 0 ? (
-          <View style={styles.emptyWrap}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="chatbubble" size={30} color={businessDetailColors.charcoal} />
-            </View>
-            <Text style={styles.emptyTitle}>No reviews yet</Text>
-            <Text style={styles.emptyBody}>No reviews yet. Be the first to review this business!</Text>
-            <Pressable style={styles.emptyAction} onPress={onPressWriteReview}>
-              <Text style={styles.emptyActionText}>Write First Review</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.reviewsStack}>
-            {reviews.map((review) => (
-              <CardSurface key={review.id} radius={CARD_RADIUS} contentStyle={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <View style={styles.reviewerWrap}>
-                    <View style={styles.reviewerAvatar}>
-                      <Text style={styles.reviewerAvatarText}>
-                        {(review.display_name || review.username || 'U').slice(0, 1).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View>
-                      <Text style={styles.reviewerName}>{review.display_name || review.username || 'Anonymous'}</Text>
-                      <Text style={styles.reviewDate}>{formatDate(review.created_at)}</Text>
-                    </View>
-                  </View>
-                  <StarRating value={review.rating} size={13} />
-                </View>
-                {review.body ? <Text style={styles.reviewBody}>{review.body}</Text> : null}
-              </CardSurface>
-            ))}
+      <ReviewsList
+        reviews={normalized}
+        loading={isLoading}
+        error={isError ? (error instanceof Error ? error.message : 'Failed to load reviews') : null}
+        emptyMessage="No reviews yet. Be the first to review this business!"
+        emptyStateAction={{ label: 'Write First Review', onPress: onPressWriteReview }}
+      />
 
-            <Pressable style={styles.writeReviewButton} onPress={onPressWriteReview}>
-              <Text style={styles.writeReviewButtonText}>Leave a Review</Text>
-            </Pressable>
+      {reviews.length > 0 && (
+        <Pressable style={styles.writeButton} onPress={onPressWriteReview}>
+          <Text style={styles.writeButtonText}>Leave a Review</Text>
+        </Pressable>
+      )}
 
-            {hasNextPage ? (
-              <Pressable
-                style={[styles.loadMoreButton, isFetchingNextPage ? styles.loadMoreButtonDisabled : null]}
-                onPress={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-              >
-                <Text style={styles.loadMoreText}>{isFetchingNextPage ? 'Loading...' : 'Load more reviews'}</Text>
-              </Pressable>
-            ) : (
-              <Text style={styles.reviewCountText}>
-                Showing {reviews.length} review{reviews.length === 1 ? '' : 's'}
-              </Text>
-            )}
-          </View>
-        )}
-      </View>
+      {hasNextPage && (
+        <Pressable
+          style={[styles.loadMoreButton, isFetchingNextPage && styles.loadMoreDisabled]}
+          onPress={() => fetchNextPage()}
+          disabled={isFetchingNextPage}
+        >
+          <Text style={styles.loadMoreText}>
+            {isFetchingNextPage ? 'Loading...' : 'Load more reviews'}
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -97,11 +66,8 @@ export function BusinessReviewsSection({ businessId, onPressWriteReview }: Props
 const styles = StyleSheet.create({
   section: {
     marginTop: 8,
-    gap: 12,
-  },
-  titleWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 16,
+    paddingHorizontal: businessDetailSpacing.pageGutter,
   },
   label: {
     color: businessDetailColors.charcoal,
@@ -109,134 +75,27 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
   },
-  cardWrap: {
-    marginHorizontal: businessDetailSpacing.pageGutter,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.34)',
-    backgroundColor: businessDetailColors.cardTint,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  loadingText: {
-    color: businessDetailColors.textMuted,
-    fontSize: 14,
-    textAlign: 'center',
-    paddingVertical: 24,
-  },
-  emptyWrap: {
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 28,
-    paddingHorizontal: 14,
-  },
-  emptyIconCircle: {
-    width: 78,
-    height: 78,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(229,224,229,0.72)',
-  },
-  emptyTitle: {
-    color: businessDetailColors.charcoal,
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  emptyBody: {
-    color: businessDetailColors.textMuted,
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  emptyAction: {
-    marginTop: 8,
+  writeButton: {
     borderRadius: 999,
     backgroundColor: businessDetailColors.coral,
-    paddingHorizontal: 28,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
   },
-  emptyActionText: {
+  writeButtonText: {
     color: businessDetailColors.white,
     fontSize: 14,
-    fontWeight: '700',
-  },
-  reviewsStack: {
-    gap: 9,
-  },
-  reviewCard: {
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    gap: 8,
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  reviewerWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  reviewerAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(229,224,229,0.8)',
-  },
-  reviewerAvatarText: {
-    color: businessDetailColors.charcoal,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  reviewerName: {
-    color: businessDetailColors.charcoal,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  reviewDate: {
-    color: businessDetailColors.textSubtle,
-    fontSize: 11,
-  },
-  reviewBody: {
-    color: businessDetailColors.textMuted,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  writeReviewButton: {
-    marginTop: 4,
-    borderRadius: 999,
-    backgroundColor: businessDetailColors.coral,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  writeReviewButtonText: {
-    color: businessDetailColors.white,
-    fontSize: 13,
     fontWeight: '700',
   },
   loadMoreButton: {
     alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: 10,
   },
-  loadMoreButtonDisabled: {
+  loadMoreDisabled: {
     opacity: 0.7,
   },
   loadMoreText: {
     color: businessDetailColors.coral,
     fontSize: 13,
     fontWeight: '700',
-  },
-  reviewCountText: {
-    color: businessDetailColors.textSubtle,
-    fontSize: 12,
-    textAlign: 'center',
-    paddingTop: 2,
   },
 });

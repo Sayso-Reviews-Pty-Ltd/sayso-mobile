@@ -97,19 +97,23 @@ export function BusinessPageHeader({
         </View>
 
         <View style={styles.centerSlot}>
-          <Pressable
-            ref={logoTriggerRef}
-            style={styles.logoTrigger}
-            onPress={toggleMenu}
-            accessibilityLabel="Open business navigation menu"
-          >
+          {menuItems.length > 0 ? (
+            <Pressable
+              ref={logoTriggerRef}
+              style={styles.logoTrigger}
+              onPress={toggleMenu}
+              accessibilityLabel="Open business navigation menu"
+            >
+              <Text style={[styles.logoText, { color: foregroundColor }]}>Sayso</Text>
+              <Ionicons
+                name={menuVisible ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={foregroundColor}
+              />
+            </Pressable>
+          ) : (
             <Text style={[styles.logoText, { color: foregroundColor }]}>Sayso</Text>
-            <Ionicons
-              name={menuVisible ? 'chevron-up' : 'chevron-down'}
-              size={14}
-              color={foregroundColor}
-            />
-          </Pressable>
+          )}
         </View>
 
         <View style={styles.rightSlot}>
@@ -210,6 +214,7 @@ const styles = StyleSheet.create({
   menuBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(17,24,39,0.22)',
+    zIndex: 9999,
   },
   menuCard: {
     position: 'absolute',
@@ -219,6 +224,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.36)',
     backgroundColor: 'rgba(229,224,229,0.98)',
+    zIndex: 9999,
+    elevation: 20,
   },
   menuCardFallback: {
     top: 92,

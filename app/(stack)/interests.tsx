@@ -1,10 +1,5 @@
-import { PlaceholderScreen } from '../../src/screens/shared/PlaceholderScreen';
+import InterestsScreen from '../../src/screens/stack/InterestsScreen';
 
 export default function InterestsRoute() {
-  return (
-    <PlaceholderScreen
-      title="Interests"
-      description="This screen is available both from Profile and from onboarding, so the route contract is now in place even before the full preferences UI is built."
-    />
-  );
+  return <InterestsScreen />;
 }

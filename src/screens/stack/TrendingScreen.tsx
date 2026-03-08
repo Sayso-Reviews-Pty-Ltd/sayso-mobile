@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   AppState,
   FlatList,
   Pressable,
@@ -13,6 +14,7 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import * as Location from 'expo-location';
+import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { EmptyState } from '../../components/EmptyState';
@@ -39,7 +41,12 @@ function ItemSeparator() {
   return <View style={styles.separator} />;
 }
 
+const NAVBAR_BG = '#722F37';
+const SCROLL_COLOR_THRESHOLD = 60;
+
 export default function TrendingScreen() {
+  const navigation = useNavigation();
+
   // Search
   const [inputValue, setInputValue] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -56,6 +63,16 @@ export default function TrendingScreen() {
   const [visibleCount, setVisibleCount] = useState(VISIBLE_CHUNK);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const listRef = useRef<FlatList<BusinessListItemDto>>(null);
+  const fabAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(fabAnim, {
+      toValue: showBackToTop ? 1 : 0,
+      damping: 18,
+      stiffness: 260,
+      useNativeDriver: true,
+    }).start();
+  }, [showBackToTop, fabAnim]);
 
   const isSearching = debouncedQuery.trim().length >= 1;
   const hasFilters = filters.minRating !== null || filters.radiusKm !== null;
@@ -158,8 +175,15 @@ export default function TrendingScreen() {
   }, [allBusinesses.length]);
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setShowBackToTop(e.nativeEvent.contentOffset.y > BACK_TO_TOP_THRESHOLD);
-  }, []);
+    const y = e.nativeEvent.contentOffset.y;
+    setShowBackToTop(y > BACK_TO_TOP_THRESHOLD);
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: y > SCROLL_COLOR_THRESHOLD ? NAVBAR_BG : businessDetailColors.page,
+      },
+      headerTintColor: y > SCROLL_COLOR_THRESHOLD ? '#FFFFFF' : businessDetailColors.charcoal,
+    });
+  }, [navigation]);
 
   const keyExtractor = useCallback((item: BusinessListItemDto) => item.id, []);
   const renderItem = useCallback<ListRenderItem<BusinessListItemDto>>(
@@ -168,6 +192,148 @@ export default function TrendingScreen() {
   );
 
   // ── Sub-components ────────────────────────────────────────────────────────
+  const listHeader = useMemo(() => (
+    <View>
+      {/* Search bar */}
+      <View style={styles.searchWrap}>
+        <View style={styles.searchRow}>
+          <Ionicons name="search-outline" size={16} color={businessDetailColors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            value={inputValue}
+            onChangeText={handleInputChange}
+            placeholder="Search trending businesses..."
+            placeholderTextColor={businessDetailColors.textSubtle}
+            returnKeyType="search"
+            autoCorrect={false}
+            autoCapitalize="none"
+            clearButtonMode="never"
+          />
+          {inputValue.length > 0 && (
+            <Pressable onPress={handleClearSearch} hitSlop={8}>
+              <Ionicons name="close-circle" size={16} color={businessDetailColors.textMuted} />
+            </Pressable>
+          )}
+        </View>
+      </View>
+
+      {/* Inline filters — visible when searching */}
+      {isSearching && (
+        <View style={styles.filtersWrap}>
+          <View style={styles.filterGroup}>
+            <View style={styles.filterLabelRow}>
+              <Ionicons name="location-outline" size={13} color={businessDetailColors.textMuted} />
+              <Text style={styles.filterLabelText}>Distance</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
+              {DISTANCE_OPTIONS.map((km) => {
+                const active = filters.radiusKm === km;
+                return (
+                  <Pressable
+                    key={km}
+                    style={[styles.pill, active ? styles.pillActive : styles.pillInactive]}
+                    onPress={() => handleDistanceSelect(km)}
+                  >
+                    <Text style={[styles.pillText, active ? styles.pillTextActive : styles.pillTextInactive]}>
+                      {km} km
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          <View style={styles.filterGroup}>
+            <View style={styles.filterLabelRow}>
+              <Ionicons name="star" size={13} color={businessDetailColors.textMuted} />
+              <Text style={styles.filterLabelText}>Min Rating</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
+              {RATING_OPTIONS.map((r) => {
+                const active = filters.minRating === r;
+                return (
+                  <Pressable
+                    key={r}
+                    style={[styles.pill, active ? styles.pillActive : styles.pillInactive]}
+                    onPress={() => handleRatingSelect(r)}
+                  >
+                    <Text style={[styles.pillText, active ? styles.pillTextActive : styles.pillTextInactive]}>
+                      {r.toFixed(1)}+
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {/* Active filter badges */}
+      {hasFilters && (
+        <View style={styles.activeBadgesRow}>
+          {filters.minRating !== null && (
+            <Pressable
+              style={styles.activeBadge}
+              onPress={() => setFilters((prev) => ({ ...prev, minRating: null }))}
+            >
+              <Text style={styles.activeBadgeText}>★ {filters.minRating.toFixed(1)}+</Text>
+              <Ionicons name="close" size={11} color={businessDetailColors.white} />
+            </Pressable>
+          )}
+          {filters.radiusKm !== null && (
+            <Pressable
+              style={styles.activeBadge}
+              onPress={() => setFilters((prev) => ({ ...prev, radiusKm: null }))}
+            >
+              <Text style={styles.activeBadgeText}>{filters.radiusKm} km</Text>
+              <Ionicons name="close" size={11} color={businessDetailColors.white} />
+            </Pressable>
+          )}
+          <Pressable style={styles.clearBadge} onPress={handleClearFilters}>
+            <Text style={styles.clearBadgeText}>Clear all</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* List / Map toggle */}
+      <View style={styles.toggleRow}>
+        <View style={styles.togglePill}>
+          <Pressable
+            style={[styles.toggleBtn, !isMapMode && styles.toggleBtnActiveList]}
+            onPress={() => setIsMapMode(false)}
+          >
+            <Ionicons
+              name="list-outline"
+              size={14}
+              color={!isMapMode ? businessDetailColors.white : businessDetailColors.charcoal}
+            />
+            <Text style={[styles.toggleBtnText, !isMapMode ? styles.toggleBtnTextActive : styles.toggleBtnTextInactive]}>
+              List
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.toggleBtn, isMapMode && styles.toggleBtnActiveMap]}
+            onPress={() => setIsMapMode(true)}
+          >
+            <Ionicons
+              name="map-outline"
+              size={14}
+              color={isMapMode ? businessDetailColors.white : businessDetailColors.charcoal}
+            />
+            <Text style={[styles.toggleBtnText, isMapMode ? styles.toggleBtnTextActive : styles.toggleBtnTextInactive]}>
+              Map
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  ), [
+    inputValue, handleInputChange, handleClearSearch,
+    isSearching, filters, hasFilters,
+    handleDistanceSelect, handleRatingSelect, handleClearFilters,
+    isMapMode,
+  ]);
+
   const listFooter = useMemo(() => {
     if (isLoading) return null;
     if (hasMore) {
@@ -220,168 +386,8 @@ export default function TrendingScreen() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
-      {/* Search bar */}
-      <View style={styles.searchWrap}>
-        <View style={styles.searchRow}>
-          <Ionicons name="search-outline" size={16} color={businessDetailColors.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            value={inputValue}
-            onChangeText={handleInputChange}
-            placeholder="Search trending businesses..."
-            placeholderTextColor={businessDetailColors.textSubtle}
-            returnKeyType="search"
-            autoCorrect={false}
-            autoCapitalize="none"
-            clearButtonMode="never"
-          />
-          {inputValue.length > 0 && (
-            <Pressable onPress={handleClearSearch} hitSlop={8}>
-              <Ionicons name="close-circle" size={16} color={businessDetailColors.textMuted} />
-            </Pressable>
-          )}
-        </View>
-      </View>
-
-      {/* Inline filters — visible when searching */}
-      {isSearching && (
-        <View style={styles.filtersWrap}>
-          {/* Distance */}
-          <View style={styles.filterGroup}>
-            <View style={styles.filterLabelRow}>
-              <Ionicons name="location-outline" size={13} color={businessDetailColors.textMuted} />
-              <Text style={styles.filterLabelText}>Distance</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.pillRow}
-            >
-              {DISTANCE_OPTIONS.map((km) => {
-                const active = filters.radiusKm === km;
-                return (
-                  <Pressable
-                    key={km}
-                    style={[styles.pill, active ? styles.pillActive : styles.pillInactive]}
-                    onPress={() => handleDistanceSelect(km)}
-                  >
-                    <Text
-                      style={[
-                        styles.pillText,
-                        active ? styles.pillTextActive : styles.pillTextInactive,
-                      ]}
-                    >
-                      {km} km
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-
-          {/* Rating */}
-          <View style={styles.filterGroup}>
-            <View style={styles.filterLabelRow}>
-              <Ionicons name="star" size={13} color={businessDetailColors.textMuted} />
-              <Text style={styles.filterLabelText}>Min Rating</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.pillRow}
-            >
-              {RATING_OPTIONS.map((r) => {
-                const active = filters.minRating === r;
-                return (
-                  <Pressable
-                    key={r}
-                    style={[styles.pill, active ? styles.pillActive : styles.pillInactive]}
-                    onPress={() => handleRatingSelect(r)}
-                  >
-                    <Text
-                      style={[
-                        styles.pillText,
-                        active ? styles.pillTextActive : styles.pillTextInactive,
-                      ]}
-                    >
-                      {r.toFixed(1)}+
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </View>
-      )}
-
-      {/* Active filter badges */}
-      {hasFilters && (
-        <View style={styles.activeBadgesRow}>
-          {filters.minRating !== null && (
-            <Pressable
-              style={styles.activeBadge}
-              onPress={() => setFilters((prev) => ({ ...prev, minRating: null }))}
-            >
-              <Text style={styles.activeBadgeText}>★ {filters.minRating.toFixed(1)}+</Text>
-              <Ionicons name="close" size={11} color={businessDetailColors.white} />
-            </Pressable>
-          )}
-          {filters.radiusKm !== null && (
-            <Pressable
-              style={styles.activeBadge}
-              onPress={() => setFilters((prev) => ({ ...prev, radiusKm: null }))}
-            >
-              <Text style={styles.activeBadgeText}>{filters.radiusKm} km</Text>
-              <Ionicons name="close" size={11} color={businessDetailColors.white} />
-            </Pressable>
-          )}
-          <Pressable style={styles.clearBadge} onPress={handleClearFilters}>
-            <Text style={styles.clearBadgeText}>Clear all</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {/* List / Map toggle */}
-      <View style={styles.toggleRow}>
-        <View style={styles.togglePill}>
-          <Pressable
-            style={[styles.toggleBtn, !isMapMode && styles.toggleBtnActiveList]}
-            onPress={() => setIsMapMode(false)}
-          >
-            <Ionicons
-              name="list-outline"
-              size={14}
-              color={!isMapMode ? businessDetailColors.white : businessDetailColors.charcoal}
-            />
-            <Text
-              style={[
-                styles.toggleBtnText,
-                !isMapMode ? styles.toggleBtnTextActive : styles.toggleBtnTextInactive,
-              ]}
-            >
-              List
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.toggleBtn, isMapMode && styles.toggleBtnActiveMap]}
-            onPress={() => setIsMapMode(true)}
-          >
-            <Ionicons
-              name="map-outline"
-              size={14}
-              color={isMapMode ? businessDetailColors.white : businessDetailColors.charcoal}
-            />
-            <Text
-              style={[
-                styles.toggleBtnText,
-                isMapMode ? styles.toggleBtnTextActive : styles.toggleBtnTextInactive,
-              ]}
-            >
-              Map
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      {/* Map mode: controls stay fixed so map remains usable */}
+      {isMapMode && listHeader}
 
       {/* Content */}
       {isMapMode ? (
@@ -393,6 +399,7 @@ export default function TrendingScreen() {
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           ItemSeparatorComponent={ItemSeparator}
+          ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
           ListFooterComponent={listFooter}
           contentContainerStyle={styles.list}
@@ -408,14 +415,27 @@ export default function TrendingScreen() {
         />
       )}
 
-      {/* Back to top */}
-      {showBackToTop && !isMapMode && (
-        <Pressable
-          style={({ pressed }) => [styles.backToTop, pressed && styles.backToTopPressed]}
-          onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+      {/* Scroll-to-top FAB */}
+      {!isMapMode && (
+        <Animated.View
+          style={[
+            styles.scrollTopFab,
+            {
+              opacity: fabAnim,
+              transform: [{ scale: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
+            },
+          ]}
+          pointerEvents={showBackToTop ? 'box-none' : 'none'}
         >
-          <Text style={styles.backToTopText}>↑ Top</Text>
-        </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.scrollTopBtn, pressed && styles.scrollTopBtnPressed]}
+            onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+            accessibilityRole="button"
+            accessibilityLabel="Scroll to top"
+          >
+            <Ionicons name="chevron-up" size={20} color="#2D3748" />
+          </Pressable>
+        </Animated.View>
       )}
     </View>
   );
@@ -437,7 +457,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 12,
+    borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
@@ -580,7 +600,7 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 16,
     paddingTop: 4,
-    paddingBottom: 80,
+    paddingBottom: 4,
     flexGrow: 1,
   },
   separator: {
@@ -591,9 +611,9 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   loadMoreBtn: {
-    marginTop: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
+    marginTop: 4,
+    paddingVertical: 12,
+    borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.8)',
     alignItems: 'center',
     borderWidth: 1,
@@ -609,31 +629,28 @@ const styles = StyleSheet.create({
   },
 
 
-  // Back to top
-  backToTop: {
+  // Scroll-to-top FAB
+  scrollTopFab: {
     position: 'absolute',
-    right: 20,
-    bottom: 28,
-    minHeight: 44,
-    paddingHorizontal: 16,
+    right: 16,
+    bottom: 32,
+    zIndex: 100,
+  },
+  scrollTopBtn: {
+    width: 44,
+    height: 44,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderWidth: 1,
-    borderColor: 'rgba(45,55,72,0.12)',
+    backgroundColor: 'rgba(229,224,229,0.90)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  backToTopPressed: {
-    opacity: 0.92,
-  },
-  backToTopText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: businessDetailColors.charcoal,
+  scrollTopBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.95 }],
   },
 });

@@ -4,6 +4,7 @@ import {
   Easing,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '../../components/EmptyState';
 import { Text } from '../../components/Typography';
@@ -183,6 +185,17 @@ export default function BusinessScreen({ initialTab }: Props) {
     enabled: true,
     onScrollToTop: handleScrollToTop,
   });
+
+  const fabAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(fabAnim, {
+      toValue: showScrollTopButton ? 1 : 0,
+      damping: 18,
+      stiffness: 260,
+      useNativeDriver: true,
+    }).start();
+  }, [showScrollTopButton, fabAnim]);
 
   const setHeaderState = useCallback(
     (collapsed: boolean) => {
@@ -385,6 +398,27 @@ export default function BusinessScreen({ initialTab }: Props) {
         ) : null}
       </ScrollView>
 
+      {/* Scroll-to-top FAB */}
+      <Animated.View
+        style={[
+          styles.scrollTopFab,
+          {
+            opacity: fabAnim,
+            transform: [{ scale: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
+          },
+        ]}
+        pointerEvents={showScrollTopButton ? 'box-none' : 'none'}
+      >
+        <Pressable
+          style={({ pressed }) => [styles.scrollTopBtn, pressed && styles.scrollTopBtnPressed]}
+          onPress={handleScrollToTop}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll to top"
+        >
+          <Ionicons name="chevron-up" size={20} color="#2D3748" />
+        </Pressable>
+      </Animated.View>
+
       <ContactBusinessModal
         visible={showContactModal}
         businessName={business.name}
@@ -422,6 +456,29 @@ const styles = StyleSheet.create({
   mainColumn: {
     marginHorizontal: businessDetailSpacing.pageGutter,
     gap: 14,
+  },
+  scrollTopFab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 32,
+    zIndex: 100,
+  },
+  scrollTopBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(229,224,229,0.90)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  scrollTopBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.95 }],
   },
   deeplinkHint: {
     marginHorizontal: businessDetailSpacing.pageGutter,

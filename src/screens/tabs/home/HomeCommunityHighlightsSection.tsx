@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { FeaturedBusinessDto, RecentReviewDto, TopReviewerDto } from '@sayso/contracts';
 import { CardSurface } from '../../../components/CardSurface';
 import { Text } from '../../../components/Typography';
+import { ReviewerCard } from '../../../components/reviewer-card/ReviewerCard';
 import { COMMUNITY_BADGE_MARQUEE_ASSETS } from '../../../lib/communityBadgeMarqueeAssets';
 import { HomeSectionHeader } from './HomeSectionHeader';
 import { HomeBusinessRow } from './HomeBusinessRow';
@@ -112,40 +113,6 @@ function CommunityBadgeMarquee() {
   );
 }
 
-function ContributorCard({
-  reviewer,
-  review,
-  onPress,
-}: {
-  reviewer: TopReviewerDto;
-  review?: RecentReviewDto;
-  onPress: () => void;
-}) {
-  return (
-    <CardSurface
-      radius={CARD_RADIUS}
-      style={styles.reviewerCard}
-      contentStyle={styles.reviewerCardContent}
-      interactive
-      onPress={onPress}
-    >
-      <View style={styles.reviewerHeader}>
-        <Image source={{ uri: reviewer.profilePicture || undefined }} style={styles.avatar} contentFit="cover" />
-        <View style={styles.reviewerCopy}>
-          <Text numberOfLines={1} style={styles.reviewerName}>
-            {reviewer.name}
-          </Text>
-          <Text numberOfLines={1} style={styles.reviewerMeta}>
-            {reviewer.reviewCount} reviews
-          </Text>
-        </View>
-      </View>
-      <Text numberOfLines={3} style={styles.reviewerSnippet}>
-        {review?.reviewText ?? 'Write your first review and help shape what is worth discovering.'}
-      </Text>
-    </CardSurface>
-  );
-}
 
 export function HomeCommunityHighlightsSection({
   reviewers,
@@ -225,9 +192,9 @@ export function HomeCommunityHighlightsSection({
             {[1, 2, 3].map((item) => (
               <CardSurface
                 key={`reviewer-skeleton-${item}`}
-                radius={CARD_RADIUS}
-                style={styles.reviewerCard}
-                contentStyle={styles.reviewerCardContent}
+                radius={16}
+                style={{ width: 240 }}
+                contentStyle={{ minHeight: 260, padding: 16 }}
               >
                 <View style={styles.reviewerCardSkeleton} />
               </CardSurface>
@@ -264,13 +231,13 @@ export function HomeCommunityHighlightsSection({
             contentContainerStyle={styles.rowContent}
           >
             {reviewers.map((reviewer) => {
-              const review = recentReviews.find((item) => item.reviewer.id === reviewer.id);
+              const latestReview = recentReviews.find((item) => item.reviewer.id === reviewer.id);
               return (
-                <ContributorCard
+                <ReviewerCard
                   key={reviewer.id}
+                  variant="reviewer"
                   reviewer={reviewer}
-                  review={review}
-                  onPress={() => onPressReviewer(reviewer)}
+                  latestReview={latestReview}
                 />
               );
             })}
@@ -348,46 +315,9 @@ const styles = StyleSheet.create({
     gap: 14,
     backgroundColor: homeTokens.offWhite,
   },
-  reviewerCard: {
-    width: 248,
-  },
-  reviewerCardContent: {
-    minHeight: 180,
-    padding: 16,
-  },
   reviewerCardSkeleton: {
     flex: 1,
     minHeight: 148,
-  },
-  reviewerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: homeTokens.lightGray,
-  },
-  reviewerCopy: {
-    flex: 1,
-  },
-  reviewerName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: homeTokens.charcoal,
-  },
-  reviewerMeta: {
-    fontSize: 13,
-    color: 'rgba(45,55,72,0.9)',
-    marginTop: 2,
-  },
-  reviewerSnippet: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: 'rgba(45,55,72,0.9)',
-    marginTop: 14,
   },
   messageCard: {
     marginHorizontal: homeTokens.pageGutter,

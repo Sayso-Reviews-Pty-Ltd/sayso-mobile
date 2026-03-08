@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
+  Animated,
   FlatList,
   Pressable,
   RefreshControl,
@@ -9,6 +10,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { BusinessListItemDto, PaginatedBusinessFeedResponseDto } from '@sayso/contracts';
 import { BusinessCard } from '../BusinessCard';
@@ -32,6 +34,8 @@ type Props = {
   feedKey: string;
   queryKey: readonly unknown[];
   subtitle?: string;
+  listHeaderTop?: ReactNode;
+  onScrollY?: (y: number) => void;
   errorTitle: string;
   emptyTitle: string;
   emptyMessage: string;
@@ -44,6 +48,8 @@ export function BusinessFeed({
   feedKey,
   queryKey,
   subtitle,
+  listHeaderTop,
+  onScrollY,
   errorTitle,
   emptyTitle,
   emptyMessage,
@@ -57,6 +63,16 @@ export function BusinessFeed({
   const [showBackToTop, setShowBackToTop] = useState(initialOffset > BACK_TO_TOP_THRESHOLD);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(visibleChunkSize);
+  const fabAnim = useRef(new Animated.Value(initialOffset > BACK_TO_TOP_THRESHOLD ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(fabAnim, {
+      toValue: showBackToTop ? 1 : 0,
+      damping: 18,
+      stiffness: 260,
+      useNativeDriver: true,
+    }).start();
+  }, [showBackToTop, fabAnim]);
 
   const query = useInfiniteQuery({
     queryKey: [...queryKey, requestLimit],
@@ -136,8 +152,9 @@ export function BusinessFeed({
 
       const shouldShow = nextOffset > BACK_TO_TOP_THRESHOLD;
       setShowBackToTop((current) => (current === shouldShow ? current : shouldShow));
+      onScrollY?.(nextOffset);
     },
-    [feedKey]
+    [feedKey, onScrollY]
   );
 
   const handleBackToTop = useCallback(() => {
@@ -171,9 +188,10 @@ export function BusinessFeed({
     return <View style={styles.footerSpacer} />;
   }, [handleLoadMore, hasBufferedItems, hasNextPage, loadMoreError, query.isFetchingNextPage, visibleItems.length]);
 
-  const listHeader = subtitle ? (
+  const listHeader = (listHeaderTop || subtitle) ? (
     <View style={styles.header}>
-      <Text style={styles.subtitle}>{subtitle}</Text>
+      {listHeaderTop ?? null}
+      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
     </View>
   ) : null;
 
@@ -216,11 +234,25 @@ export function BusinessFeed({
         showsVerticalScrollIndicator={false}
       />
 
-      {showBackToTop ? (
-        <Pressable style={({ pressed }) => [styles.backToTop, pressed ? styles.backToTopPressed : null]} onPress={handleBackToTop}>
-          <Text style={styles.backToTopText}>↑ Top</Text>
+      <Animated.View
+        style={[
+          styles.scrollTopFab,
+          {
+            opacity: fabAnim,
+            transform: [{ scale: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
+          },
+        ]}
+        pointerEvents={showBackToTop ? 'box-none' : 'none'}
+      >
+        <Pressable
+          style={({ pressed }) => [styles.scrollTopBtn, pressed && styles.scrollTopBtnPressed]}
+          onPress={handleBackToTop}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll to top"
+        >
+          <Ionicons name="chevron-up" size={20} color="#2D3748" />
         </Pressable>
-      ) : null}
+      </Animated.View>
     </View>
   );
 }
@@ -233,7 +265,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   header: {
     paddingTop: 12,
@@ -252,9 +284,9 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   loadMoreWrap: {
-    paddingTop: 12,
-    paddingBottom: 12,
-    gap: 10,
+    paddingTop: 4,
+    paddingBottom: 8,
+    gap: 6,
   },
   loadMoreError: {
     fontSize: 13,
@@ -266,30 +298,27 @@ const styles = StyleSheet.create({
   footerSpacer: {
     height: 12,
   },
-  backToTop: {
+  scrollTopFab: {
     position: 'absolute',
-    right: 20,
-    bottom: 28,
-    minHeight: 44,
-    paddingHorizontal: 16,
+    right: 16,
+    bottom: 32,
+    zIndex: 100,
+  },
+  scrollTopBtn: {
+    width: 44,
+    height: 44,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderWidth: 1,
-    borderColor: 'rgba(45, 55, 72, 0.12)',
+    backgroundColor: 'rgba(229,224,229,0.90)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  backToTopPressed: {
-    opacity: 0.92,
-  },
-  backToTopText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#2D3748',
+  scrollTopBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.95 }],
   },
 });

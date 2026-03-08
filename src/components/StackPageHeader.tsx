@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BusinessPageHeader, type BusinessHeaderMenuItem } from './business-detail/BusinessPageHeader';
@@ -8,13 +8,13 @@ import { routes } from '../navigation/routes';
 
 type Props = {
   navigation: { canGoBack: () => boolean; goBack: () => void };
-  options?: { headerStyle?: { backgroundColor?: string } | null; headerTintColor?: string };
+  options?: { headerStyle?: StyleProp<{ backgroundColor?: string }>; headerTintColor?: string };
 };
 
 export function StackPageHeader({ navigation, options }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bgColor = options?.headerStyle?.backgroundColor ?? businessDetailColors.page;
+  const bgColor = (options?.headerStyle ? StyleSheet.flatten(options.headerStyle) : undefined)?.backgroundColor ?? businessDetailColors.page;
   const collapsed = options?.headerTintColor === '#FFFFFF';
 
   const menuItems = useMemo<BusinessHeaderMenuItem[]>(

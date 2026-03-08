@@ -388,7 +388,7 @@ export default function WriteReviewScreen() {
     displayTitle = businessDetail.name ?? '';
     displayImage = businessDetail.image_url ?? businessDetail.images?.[0] ?? null;
   } else if (eventSpecial) {
-    const es = eventSpecial as Record<string, unknown>;
+    const es = eventSpecial as unknown as Record<string, unknown>;
     displayTitle = String(es.name ?? es.title ?? '');
     displayImage = String(es.imageUrl ?? es.image_url ?? '') || null;
     businessName = String(es.businessName ?? es.business_name ?? '') || null;

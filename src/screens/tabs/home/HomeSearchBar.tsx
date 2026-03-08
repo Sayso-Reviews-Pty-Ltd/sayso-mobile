@@ -162,7 +162,8 @@ const styles = StyleSheet.create({
       ? ({
           boxShadow: '0 0 0 4px rgba(125, 155, 118, 0.18)',
           outlineStyle: 'none',
-        } satisfies ViewStyle & { boxShadow?: string; outlineStyle?: 'none' })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
       : null),
   },
   icon: {
@@ -181,7 +182,8 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web'
       ? ({
           outlineStyle: 'none',
-        } satisfies ViewStyle & { outlineStyle?: 'none' })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
       : null),
   },
   placeholderWrap: {

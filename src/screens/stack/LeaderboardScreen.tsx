@@ -1,0 +1,656 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Text } from '../../components/Typography';
+import { BusinessPageHeader } from '../../components/business-detail/BusinessPageHeader';
+import { businessDetailSpacing } from '../../components/business-detail/styles';
+import {
+  ContributorPodium,
+  ContributorRow,
+  BusinessPodium,
+  BusinessRow,
+  InterestFilter,
+} from '../../components/leaderboard';
+import type { FeaturedBusinessDto } from '@sayso/contracts';
+import { useTopReviewers } from '../../hooks/useTopReviewers';
+import { useFeaturedBusinesses } from '../../hooks/useFeaturedBusinesses';
+import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
+import { routes } from '../../navigation/routes';
+
+const PAGE_BG = '#E5E0E5';
+const CARD_BG = '#9DAB9B';
+const CHARCOAL = '#2D2D2D';
+const CHARCOAL_70 = 'rgba(45,45,45,0.70)';
+const SAGE = '#9DAB9B';
+const CORAL = '#722F37';
+
+const INITIAL_VISIBLE = 5;
+
+function normalizeInterestId(id?: string | null): string {
+  if (!id || id === 'uncategorized') return 'miscellaneous';
+  return id;
+}
+
+export default function LeaderboardScreen() {
+  const { tab: tabParam } = useLocalSearchParams<{ tab?: 'contributors' | 'businesses' }>();
+  const router = useRouter();
+  const initialTab = tabParam === 'businesses' ? 'businesses' : 'contributors';
+
+  const [activeTab, setActiveTab] = useState<'contributors' | 'businesses'>(initialTab);
+  const [showAllContributors, setShowAllContributors] = useState(false);
+  const [showAllBusinesses, setShowAllBusinesses] = useState(false);
+  const [selectedInterest, setSelectedInterest] = useState('all');
+  const [businessesEnabled, setBusinessesEnabled] = useState(initialTab === 'businesses');
+
+  useEffect(() => {
+    if (tabParam === 'businesses' || tabParam === 'contributors') {
+      setActiveTab(tabParam);
+      if (tabParam === 'businesses') setBusinessesEnabled(true);
+    }
+  }, [tabParam]);
+
+  // Data
+  const { reviewers, isLoading: loadingReviewers, error: reviewersError, refetch: refetchReviewers } = useTopReviewers(20);
+  const { featuredBusinesses, isLoading: loadingBusinesses } = useFeaturedBusinesses(50, null, businessesEnabled);
+
+  // Scroll + header state
+  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollTopVisibleRef = useRef(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const headerCollapsedRef = useRef(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const headerProgress = useRef(new Animated.Value(0)).current;
+  const fabAnim = useRef(new Animated.Value(0)).current;
+
+  const setScrollTopVisible = useCallback((v: boolean) => {
+    if (scrollTopVisibleRef.current === v) return;
+    scrollTopVisibleRef.current = v;
+    setShowScrollTop(v);
+  }, []);
+
+  const handleScrollToTop = useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
+  useGlobalScrollToTop({ visible: showScrollTop, enabled: true, onScrollToTop: handleScrollToTop });
+
+  useEffect(() => {
+    Animated.spring(fabAnim, {
+      toValue: showScrollTop ? 1 : 0,
+      damping: 18,
+      stiffness: 260,
+      useNativeDriver: true,
+    }).start();
+  }, [showScrollTop, fabAnim]);
+
+  const setHeaderState = useCallback((collapsed: boolean) => {
+    if (headerCollapsedRef.current === collapsed) return;
+    headerCollapsedRef.current = collapsed;
+    setHeaderCollapsed(collapsed);
+    Animated.spring(headerProgress, {
+      toValue: collapsed ? 1 : 0,
+      damping: 28,
+      mass: 0.8,
+      stiffness: 300,
+      overshootClamping: true,
+      useNativeDriver: false,
+    }).start();
+  }, [headerProgress]);
+
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    setScrollTopVisible(y > 300);
+    if (y > 52) setHeaderState(true);
+    else if (y < 18) setHeaderState(false);
+  }, [setHeaderState, setScrollTopVisible]);
+
+  const handleBack = () => {
+    if (router.canGoBack()) { router.back(); return; }
+    router.replace(routes.home() as never);
+  };
+
+  const menuItems = useMemo(() => [
+    { key: 'home', label: 'Home', onPress: () => router.push(routes.home() as never) },
+    { key: 'trending', label: 'Trending', onPress: () => router.push(routes.trending() as never) },
+    { key: 'events', label: 'Events & Specials', onPress: () => router.push(routes.eventsSpecials() as never) },
+    { key: 'saved', label: 'Saved', onPress: () => router.push(routes.saved() as never) },
+    { key: 'profile', label: 'Profile', onPress: () => router.push(routes.profile() as never) },
+  ], [router]);
+
+  const headerBg = headerProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['transparent', CARD_BG],
+  });
+  const headerElevation = headerProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 8] });
+  const headerShadowOpacity = headerProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 0.12] });
+
+  // Business filtering + sorting
+  const availableInterestIds = useMemo(() => {
+    const ids = new Set<string>(
+      featuredBusinesses.map(b =>
+        normalizeInterestId((b as any).interestId ?? (b as any).interest_id)
+      )
+    );
+    return Array.from(ids).sort();
+  }, [featuredBusinesses]);
+
+  const sortedBusinesses = useMemo(() => {
+    const filtered = selectedInterest === 'all'
+      ? featuredBusinesses
+      : featuredBusinesses.filter(b =>
+          normalizeInterestId((b as any).interestId ?? (b as any).interest_id) === selectedInterest
+        );
+    return [...filtered].sort((a: FeaturedBusinessDto, b: FeaturedBusinessDto) => {
+      const ra = a.totalRating ?? a.rating ?? 0;
+      const rb = b.totalRating ?? b.rating ?? 0;
+      return rb - ra;
+    });
+  }, [featuredBusinesses, selectedInterest]);
+
+  const visibleContributors = showAllContributors ? reviewers : reviewers.slice(0, INITIAL_VISIBLE);
+  const visibleBusinesses = showAllBusinesses ? sortedBusinesses : sortedBusinesses.slice(0, INITIAL_VISIBLE);
+
+  const handleTabChange = (tab: 'contributors' | 'businesses') => {
+    setActiveTab(tab);
+    if (tab === 'businesses' && !businessesEnabled) setBusinessesEnabled(true);
+  };
+
+  return (
+    <SafeAreaView style={s.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Sticky header */}
+      <Animated.View
+        style={[
+          s.stickyHeader,
+          {
+            backgroundColor: headerBg,
+            elevation: headerElevation,
+            shadowOpacity: headerShadowOpacity,
+          },
+        ]}
+      >
+        <BusinessPageHeader
+          onPressBack={handleBack}
+          onPressNotifications={() => router.push(routes.notifications() as never)}
+          onPressMessages={() => router.push(routes.dmInbox() as never)}
+          menuItems={menuItems}
+          collapsed={headerCollapsed}
+        />
+      </Animated.View>
+
+      <ScrollView
+        ref={scrollRef}
+        style={s.scroll}
+        contentContainerStyle={s.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {/* Hero */}
+        <View style={s.hero}>
+          <Text style={s.heroTitle}>Community Highlights</Text>
+          <Text style={s.heroSub}>
+            Celebrate the top contributors and businesses in our community. See who's making a difference and discover the most loved local spots.
+          </Text>
+        </View>
+
+        {/* Tab switcher — matches web: white/80 container, sage active */}
+        <View style={s.tabContainer}>
+          <View style={s.tabRow}>
+            <Pressable
+              style={[s.tab, activeTab === 'contributors' && s.tabActive]}
+              onPress={() => handleTabChange('contributors')}
+            >
+              <Text style={[s.tabText, activeTab === 'contributors' && s.tabTextActive]}>
+                Top Contributors
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[s.tab, activeTab === 'businesses' && s.tabActive]}
+              onPress={() => handleTabChange('businesses')}
+            >
+              <Text style={[s.tabText, activeTab === 'businesses' && s.tabTextActive]}>
+                Top Businesses
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Main card — sage background matching web card-bg */}
+        <View style={s.card}>
+          {/* Decorative orbs */}
+          <View style={s.orbTopRight} pointerEvents="none" />
+          <View style={s.orbBottomLeft} pointerEvents="none" />
+
+          {activeTab === 'contributors' ? (
+            <>
+              {loadingReviewers ? (
+                <View style={s.skeletonWrap}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <View key={i} style={s.skeletonRow} />
+                  ))}
+                </View>
+              ) : reviewersError ? (
+                <View style={s.emptyWrap}>
+                  <Text style={s.emptyText}>Couldn't load leaderboard.</Text>
+                  <Pressable style={s.retryBtn} onPress={() => void refetchReviewers()}>
+                    <Text style={s.retryText}>Retry</Text>
+                  </Pressable>
+                </View>
+              ) : reviewers.length === 0 ? (
+                <View style={s.emptyWrap}>
+                  <View style={s.emptyIcon}>
+                    <Ionicons name="trophy-outline" size={36} color={CHARCOAL_70} />
+                  </View>
+                  <Text style={s.emptyText}>No contributors yet. Be the first to write a review!</Text>
+                </View>
+              ) : (
+                <>
+                  <ContributorPodium reviewers={reviewers} />
+                  <View style={s.list}>
+                    {visibleContributors.map((r: (typeof reviewers)[number], i: number) => (
+                      <ContributorRow key={r.id} reviewer={r} rank={i + 1} />
+                    ))}
+                  </View>
+                  {reviewers.length > INITIAL_VISIBLE && (
+                    <Pressable
+                      style={s.expandBtn}
+                      onPress={() => setShowAllContributors(v => !v)}
+                    >
+                      {showAllContributors && <Ionicons name="chevron-up" size={15} color="#fff" />}
+                      <Text style={s.expandText}>
+                        {showAllContributors ? 'Show Less' : 'View Full Leaderboard'}
+                      </Text>
+                      {!showAllContributors && <Ionicons name="chevron-down" size={15} color="#fff" />}
+                    </Pressable>
+                  )}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {availableInterestIds.length > 0 && (
+                <InterestFilter
+                  availableIds={availableInterestIds}
+                  selected={selectedInterest}
+                  onSelect={setSelectedInterest}
+                />
+              )}
+
+              {loadingBusinesses ? (
+                <View style={s.skeletonWrap}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <View key={i} style={s.skeletonRow} />
+                  ))}
+                </View>
+              ) : sortedBusinesses.length === 0 ? (
+                <View style={s.emptyWrap}>
+                  <View style={s.emptyIcon}>
+                    <Ionicons name="storefront-outline" size={36} color={CHARCOAL_70} />
+                  </View>
+                  <Text style={s.emptyText}>No businesses yet.</Text>
+                </View>
+              ) : (
+                <>
+                  <BusinessPodium businesses={sortedBusinesses} />
+                  <View style={s.list}>
+                    {visibleBusinesses.map((b, i) => (
+                      <BusinessRow key={b.id} business={b} rank={i + 1} />
+                    ))}
+                  </View>
+                  {sortedBusinesses.length > INITIAL_VISIBLE && (
+                    <Pressable
+                      style={s.expandBtn}
+                      onPress={() => setShowAllBusinesses(v => !v)}
+                    >
+                      {showAllBusinesses && <Ionicons name="chevron-up" size={15} color="#fff" />}
+                      <Text style={s.expandText}>
+                        {showAllBusinesses ? 'Show Less' : 'View Full Leaderboard'}
+                      </Text>
+                      {!showAllBusinesses && <Ionicons name="chevron-down" size={15} color="#fff" />}
+                    </Pressable>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </View>
+
+        {/* Badge section — coral/navbar-bg background matching web */}
+        <View style={s.badgeSection}>
+          <Text style={s.badgeSectionTitle}>What Do Your Badges Mean?</Text>
+          <Text style={s.badgeSectionSub}>Learn about all the badges you can earn</Text>
+          <View style={s.badgeBtns}>
+            <Pressable
+              style={s.badgePrimaryBtn}
+              onPress={() => router.push(routes.badges() as never)}
+            >
+              <Ionicons name="ribbon-outline" size={14} color={CORAL} />
+              <Text style={s.badgePrimaryText}>View badge guide</Text>
+            </Pressable>
+            <Pressable
+              style={s.badgeSecondaryBtn}
+              onPress={() => router.push(routes.achievements() as never)}
+            >
+              <Ionicons name="trophy-outline" size={14} color="#fff" />
+              <Text style={s.badgeSecondaryText}>Achievements</Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Scroll-to-top FAB */}
+      <Animated.View
+        style={[
+          s.fab,
+          {
+            opacity: fabAnim,
+            transform: [{ scale: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
+          },
+        ]}
+        pointerEvents={showScrollTop ? 'box-none' : 'none'}
+      >
+        <Pressable
+          style={({ pressed }) => [s.fabBtn, pressed && s.fabBtnPressed]}
+          onPress={handleScrollToTop}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll to top"
+        >
+          <Ionicons name="chevron-up" size={20} color="#2D3748" />
+        </Pressable>
+      </Animated.View>
+    </SafeAreaView>
+  );
+}
+
+const s = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: PAGE_BG,
+  },
+  stickyHeader: {
+    paddingHorizontal: businessDetailSpacing.pageGutter,
+    paddingTop: 10,
+    paddingBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 8,
+    zIndex: 50,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 32,
+  },
+
+  // Hero
+  hero: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
+    alignItems: 'center',
+  },
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: CHARCOAL,
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginBottom: 8,
+  },
+  heroSub: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: CHARCOAL_70,
+    textAlign: 'center',
+    maxWidth: 320,
+  },
+
+  // Tabs — white/80 container with border, sage active (mirrors web Tabs.tsx)
+  tabContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.80)',
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: 'rgba(45,45,45,0.20)',
+    padding: 4,
+    gap: 4,
+  },
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  tabActive: {
+    backgroundColor: SAGE,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: CHARCOAL_70,
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
+
+  // Main card — sage card-bg with white/20 border (mirrors web card wrapper)
+  card: {
+    marginHorizontal: 12,
+    backgroundColor: CARD_BG,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.20)',
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  orbTopRight: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(157,171,155,0.15)',
+    // blur not available natively; subtle color is enough
+  },
+  orbBottomLeft: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(114,47,55,0.08)',
+  },
+
+  // List
+  list: {
+    gap: 8,
+    marginTop: 16,
+  },
+
+  // Expand button — sage gradient, white text, rounded-full (mirrors web)
+  expandBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 16,
+    alignSelf: 'center',
+    backgroundColor: SAGE,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: SAGE,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  expandText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+  },
+
+  // Empty / loading
+  skeletonWrap: {
+    gap: 8,
+    paddingVertical: 8,
+  },
+  skeletonRow: {
+    height: 72,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.20)',
+  },
+  emptyWrap: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    gap: 12,
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: PAGE_BG,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: CHARCOAL_70,
+    textAlign: 'center',
+    maxWidth: 260,
+    lineHeight: 20,
+  },
+  retryBtn: {
+    backgroundColor: CARD_BG,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginTop: 4,
+  },
+  retryText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
+
+  // Badge section — coral/navbar-bg background (mirrors web)
+  badgeSection: {
+    marginTop: 20,
+    marginHorizontal: 12,
+    backgroundColor: CORAL,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    gap: 4,
+  },
+  badgeSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  badgeSectionSub: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.65)',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  badgeBtns: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  badgePrimaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  badgePrimaryText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: CORAL,
+  },
+  badgeSecondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 999,
+  },
+  badgeSecondaryText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
+
+  // FAB
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 32,
+    zIndex: 100,
+  },
+  fabBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(229,224,229,0.90)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  fabBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.95 }],
+  },
+});

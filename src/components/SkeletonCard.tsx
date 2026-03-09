@@ -21,7 +21,6 @@ export function SkeletonCard() {
 const styles = StyleSheet.create({
   frostedSurface: {
     backgroundColor: 'rgba(157,171,155,0.72)',
-    borderColor: 'rgba(255,255,255,0.34)',
   },
   image: {
     width: '100%',
@@ -33,8 +32,6 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     alignItems: 'center',
     backgroundColor: 'rgba(157,171,155,0.32)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.34)',
   },
   titleLine: {
     height: 22,

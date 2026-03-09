@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderWidth: 1,
   },
   pillLabel: {
     fontSize: 11,
@@ -99,21 +98,18 @@ const styles = StyleSheet.create({
   },
   sagePill: {
     backgroundColor: 'rgba(125, 155, 118, 0.12)',
-    borderColor: 'rgba(125, 155, 118, 0.24)',
   },
   sageLabel: {
     color: '#6B8A64',
   },
   coralPill: {
     backgroundColor: 'rgba(114, 47, 55, 0.1)',
-    borderColor: 'rgba(114, 47, 55, 0.2)',
   },
   coralLabel: {
     color: '#722F37',
   },
   amberPill: {
     backgroundColor: 'rgba(217, 119, 6, 0.12)',
-    borderColor: 'rgba(217, 119, 6, 0.2)',
   },
   amberLabel: {
     color: '#B45309',

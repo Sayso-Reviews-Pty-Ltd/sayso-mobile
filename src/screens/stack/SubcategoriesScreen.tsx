@@ -110,6 +110,22 @@ type PreferencesResponseDto = {
   subcategories?: PreferenceDto[];
 };
 
+type GroupAnim = {
+  opacity: Animated.Value;
+  y: Animated.Value;
+  titleX: Animated.Value;
+};
+
+type PillAnim = {
+  opacity: Animated.Value;
+  entryScale: Animated.Value;
+  selectedScale: Animated.Value;
+  x: Animated.Value;
+  y: Animated.Value;
+  tapScale: Animated.Value;
+  checkScale: Animated.Value;
+};
+
 export default function SubcategoriesScreen() {
   const router = useRouter();
   const [interestIds, setInterestIds] = useState<string[]>([]);
@@ -119,12 +135,31 @@ export default function SubcategoriesScreen() {
 
   const counterOpacity = useRef(new Animated.Value(0)).current;
   const counterY = useRef(new Animated.Value(14)).current;
-  const groupAnims = useRef(
+  const prevSelectedRef = useRef<Set<string>>(new Set());
+  const groupAnims = useRef<GroupAnim[]>(
     Array.from({ length: MAX_GROUPS }, () => ({
       opacity: new Animated.Value(0),
-      y: new Animated.Value(18),
+      y: new Animated.Value(20),
+      titleX: new Animated.Value(-10),
     }))
   ).current;
+  const pillAnimMap = useRef(new Map<string, PillAnim>());
+
+  const getPillAnim = useCallback((id: string): PillAnim => {
+    const existing = pillAnimMap.current.get(id);
+    if (existing) return existing;
+    const created: PillAnim = {
+      opacity: new Animated.Value(0),
+      entryScale: new Animated.Value(0.8),
+      selectedScale: new Animated.Value(1),
+      x: new Animated.Value(0),
+      y: new Animated.Value(0),
+      tapScale: new Animated.Value(1),
+      checkScale: new Animated.Value(0),
+    };
+    pillAnimMap.current.set(id, created);
+    return created;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,21 +213,13 @@ export default function SubcategoriesScreen() {
   }, []);
 
   useEffect(() => {
-    const ease = Easing.out(Easing.cubic);
+    const ease = Easing.bezier(0.25, 0.8, 0.25, 1);
 
     Animated.parallel([
       Animated.timing(counterOpacity, { toValue: 1, delay: 130, duration: 320, useNativeDriver: true }),
       Animated.timing(counterY, { toValue: 0, delay: 130, duration: 320, easing: ease, useNativeDriver: true }),
     ]).start();
-
-    groupAnims.forEach((anim, index) => {
-      const delay = 190 + index * 55;
-      Animated.parallel([
-        Animated.timing(anim.opacity, { toValue: 1, delay, duration: 320, useNativeDriver: true }),
-        Animated.timing(anim.y, { toValue: 0, delay, duration: 320, easing: ease, useNativeDriver: true }),
-      ]).start();
-    });
-  }, [counterOpacity, counterY, groupAnims]);
+  }, [counterOpacity, counterY]);
 
   const visibleGroups = useMemo(
     () =>
@@ -202,17 +229,167 @@ export default function SubcategoriesScreen() {
     [interestIds]
   );
 
+  useEffect(() => {
+    const ease = Easing.bezier(0.25, 0.8, 0.25, 1);
+    visibleGroups.forEach((_, groupIndex) => {
+      const anim = groupAnims[groupIndex];
+      if (!anim) return;
+      anim.opacity.setValue(0);
+      anim.y.setValue(20);
+      anim.titleX.setValue(-10);
+      Animated.parallel([
+        Animated.timing(anim.opacity, {
+          toValue: 1,
+          delay: groupIndex * 80,
+          duration: 400,
+          easing: ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim.y, {
+          toValue: 0,
+          delay: groupIndex * 80,
+          duration: 400,
+          easing: ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim.titleX, {
+          toValue: 0,
+          delay: groupIndex * 80,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  }, [groupAnims, visibleGroups]);
+
+  useEffect(() => {
+    const ease = Easing.bezier(0.25, 0.8, 0.25, 1);
+    visibleGroups.forEach((group, groupIndex) => {
+      group.items.forEach((item, itemIndex) => {
+        const anim = getPillAnim(item.id);
+        anim.opacity.setValue(0);
+        anim.entryScale.setValue(0.8);
+        Animated.parallel([
+          Animated.timing(anim.opacity, {
+            toValue: 1,
+            delay: groupIndex * 80 + 50 + itemIndex * 30,
+            duration: 300,
+            easing: ease,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim.entryScale, {
+            toValue: 1,
+            delay: groupIndex * 80 + 50 + itemIndex * 30,
+            duration: 300,
+            easing: ease,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    });
+  }, [getPillAnim, visibleGroups]);
+
+  useEffect(() => {
+    const prevSelected = prevSelectedRef.current;
+    const visibleIds = new Set(visibleGroups.flatMap((group) => group.items.map((item) => item.id)));
+    visibleIds.forEach((id) => {
+      const anim = getPillAnim(id);
+      const wasSelected = prevSelected.has(id);
+      const isSelected = selected.has(id);
+      if (wasSelected === isSelected) return;
+
+      Animated.spring(anim.selectedScale, {
+        toValue: isSelected ? 1.05 : 1,
+        stiffness: 400,
+        damping: 17,
+        mass: 1,
+        useNativeDriver: true,
+      }).start();
+      if (isSelected) {
+        anim.checkScale.setValue(0);
+        Animated.spring(anim.checkScale, {
+          toValue: 1,
+          stiffness: 500,
+          damping: 25,
+          mass: 1,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        Animated.timing(anim.checkScale, {
+          toValue: 0,
+          duration: 120,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+    prevSelectedRef.current = new Set(selected);
+  }, [getPillAnim, selected, visibleGroups]);
+
+  const triggerShake = useCallback((id: string) => {
+    const anim = getPillAnim(id);
+    anim.x.setValue(0);
+    Animated.sequence([
+      Animated.timing(anim.x, { toValue: -4, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(anim.x, { toValue: 4, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(anim.x, { toValue: -3, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(anim.x, { toValue: 2, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(anim.x, { toValue: 0, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]).start();
+  }, [getPillAnim]);
+
+  const triggerExcite = useCallback((id: string) => {
+    const anim = getPillAnim(id);
+    anim.tapScale.setValue(1);
+    anim.y.setValue(0);
+    Animated.parallel([
+      Animated.timing(anim.tapScale, {
+        toValue: 1.06,
+        duration: 110,
+        easing: Easing.bezier(0.2, 0.9, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(anim.y, {
+        toValue: -2,
+        duration: 110,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      Animated.parallel([
+        Animated.spring(anim.tapScale, {
+          toValue: 1,
+          stiffness: 420,
+          damping: 18,
+          mass: 0.65,
+          useNativeDriver: true,
+        }),
+        Animated.spring(anim.y, {
+          toValue: 0,
+          stiffness: 360,
+          damping: 22,
+          mass: 0.75,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  }, [getPillAnim]);
+
   const toggle = useCallback((id: string) => {
+    triggerExcite(id);
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
       } else if (next.size < MAX) {
         next.add(id);
+      } else {
+        triggerShake(id);
       }
       return next;
     });
-  }, []);
+  }, [triggerExcite, triggerShake]);
 
   const canContinue = selected.size >= MIN;
   const atMax = selected.size >= MAX;
@@ -228,7 +405,7 @@ export default function SubcategoriesScreen() {
         body: JSON.stringify({ subcategories: ids }),
       });
       await AsyncStorage.setItem('onboarding_subcategories', JSON.stringify(ids));
-      router.replace(routes.dealBreakers() as never);
+      router.push(routes.dealBreakers() as never);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save subcategories. Please try again.');
     } finally {
@@ -236,7 +413,7 @@ export default function SubcategoriesScreen() {
     }
   }, [canContinue, isLoading, router, selected]);
 
-  const handleBack = () => router.push(routes.interests() as never);
+  const handleBack = () => router.back();
 
   const helperText =
     selected.size === 0
@@ -253,6 +430,9 @@ export default function SubcategoriesScreen() {
         totalSteps={4}
         title="Let's Get More Specific!"
         subtitle="Select specific areas within your interests"
+        titleTyping
+        titleTypingDelayMs={300}
+        titleTypingSpeedMs={40}
         onBack={handleBack}
         onContinue={handleContinue}
         canContinue={canContinue}
@@ -284,32 +464,54 @@ export default function SubcategoriesScreen() {
                 key={group.interestId}
                 style={[styles.group, { opacity: anim.opacity, transform: [{ translateY: anim.y }] }]}
               >
-                <Text style={styles.groupLabel}>{group.groupLabel}</Text>
+                <Animated.Text style={[styles.groupLabel, { transform: [{ translateX: anim.titleX }] }]}>
+                  {group.groupLabel}
+                </Animated.Text>
                 <View style={styles.pillsRow}>
                   {group.items.map((item) => {
                     const isSelected = selected.has(item.id);
                     const isDisabled = atMax && !isSelected;
+                    const pillAnim = getPillAnim(item.id);
                     return (
-                      <Pressable
+                      <Animated.View
                         key={item.id}
-                        style={({ pressed }) => [
-                          styles.pill,
-                          isDisabled && styles.pillDisabled,
-                          pressed && !isDisabled && styles.pillPressed,
-                        ]}
-                        onPress={() => toggle(item.id)}
-                        disabled={isDisabled}
+                        style={{
+                          opacity: pillAnim.opacity,
+                          transform: [
+                            { translateX: pillAnim.x },
+                            { translateY: pillAnim.y },
+                            { scale: pillAnim.entryScale },
+                            { scale: pillAnim.selectedScale },
+                            { scale: pillAnim.tapScale },
+                          ],
+                        }}
                       >
-                        <LinearGradient
-                          colors={isSelected ? ['#722F37', '#7A404A'] : ['rgba(125,155,118,0.14)', 'rgba(125,155,118,0.06)']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={[styles.pillFill, isSelected && styles.pillSelected]}
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.pill,
+                            isDisabled && styles.pillDisabled,
+                            pressed && !isDisabled && styles.pillPressed,
+                          ]}
+                          onPress={() => toggle(item.id)}
+                          disabled={isDisabled}
                         >
-                          <Text style={[styles.pillText, isSelected && styles.pillTextSelected]}>{item.label}</Text>
-                          {isSelected ? <Ionicons name="checkmark-circle" size={14} color="#FFFFFF" /> : null}
-                        </LinearGradient>
-                      </Pressable>
+                          <LinearGradient
+                            colors={isSelected ? ['#722F37', '#7A404A'] : ['rgba(125,155,118,0.14)', 'rgba(125,155,118,0.06)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={[styles.pillFill, isSelected && styles.pillSelected]}
+                          >
+                            <Text style={[styles.pillText, isSelected && styles.pillTextSelected]}>{item.label}</Text>
+                            {isSelected ? (
+                              <Animated.View
+                                style={{ transform: [{ scale: pillAnim.checkScale }], opacity: pillAnim.checkScale }}
+                              >
+                                <Ionicons name="checkmark-circle" size={14} color="#FFFFFF" />
+                              </Animated.View>
+                            ) : null}
+                          </LinearGradient>
+                        </Pressable>
+                      </Animated.View>
                     );
                   })}
                 </View>

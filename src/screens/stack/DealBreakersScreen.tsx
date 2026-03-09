@@ -43,7 +43,8 @@ type PreferencesResponseDto = { dealbreakers?: PreferenceDto[] };
 type CardAnim = {
   opacity: Animated.Value;
   y: Animated.Value;
-  scale: Animated.Value;
+  selectedScale: Animated.Value;
+  flip: Animated.Value;
 };
 
 const DEALBREAKER_ICONS: Record<DealbreakerId, DealbreakerIconName> = {
@@ -61,11 +62,13 @@ export default function DealBreakersScreen() {
 
   const badgeOpacity = useRef(new Animated.Value(0)).current;
   const badgeY = useRef(new Animated.Value(12)).current;
+  const prevSelectedRef = useRef<Set<DealbreakerId>>(new Set());
   const cardAnims = useRef<CardAnim[]>(
     DEALBREAKERS.map(() => ({
       opacity: new Animated.Value(0),
-      y: new Animated.Value(16),
-      scale: new Animated.Value(0.95),
+      y: new Animated.Value(20),
+      selectedScale: new Animated.Value(1),
+      flip: new Animated.Value(0),
     }))
   ).current;
 
@@ -106,7 +109,7 @@ export default function DealBreakersScreen() {
   }, []);
 
   useEffect(() => {
-    const ease = Easing.out(Easing.cubic);
+    const ease = Easing.out(Easing.ease);
 
     Animated.parallel([
       Animated.timing(badgeOpacity, { toValue: 1, delay: 120, duration: 300, useNativeDriver: true }),
@@ -114,18 +117,38 @@ export default function DealBreakersScreen() {
     ]).start();
 
     DEALBREAKERS.forEach((_, index) => {
-      const delay = 180 + index * 70;
+      const delay = index * 100;
       const anim = cardAnims[index];
       Animated.parallel([
-        Animated.timing(anim.opacity, { toValue: 1, delay, duration: 300, useNativeDriver: true }),
-        Animated.timing(anim.y, { toValue: 0, delay, duration: 300, easing: ease, useNativeDriver: true }),
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.spring(anim.scale, { toValue: 1, damping: 14, stiffness: 220, useNativeDriver: true }),
-        ]),
+        Animated.timing(anim.opacity, { toValue: 1, delay, duration: 600, easing: ease, useNativeDriver: true }),
+        Animated.timing(anim.y, { toValue: 0, delay, duration: 600, easing: ease, useNativeDriver: true }),
       ]).start();
     });
   }, [badgeOpacity, badgeY, cardAnims]);
+
+  useEffect(() => {
+    const prevSelected = prevSelectedRef.current;
+    DEALBREAKERS.forEach((item, index) => {
+      const anim = cardAnims[index];
+      const wasSelected = prevSelected.has(item.id);
+      const isSelected = selected.has(item.id);
+      if (wasSelected === isSelected) return;
+
+      Animated.timing(anim.selectedScale, {
+        toValue: isSelected ? 1.05 : 1,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+      Animated.timing(anim.flip, {
+        toValue: isSelected ? 180 : 0,
+        duration: 600,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    });
+    prevSelectedRef.current = new Set(selected);
+  }, [cardAnims, selected]);
 
   const toggle = useCallback((id: DealbreakerId) => {
     setSelected((prev) => {
@@ -161,7 +184,7 @@ export default function DealBreakersScreen() {
     }
   }, [canContinue, isLoading, router, selected]);
 
-  const handleBack = () => router.push(routes.subcategories() as never);
+  const handleBack = () => router.back();
 
   const helperText =
     selected.size === 0
@@ -178,6 +201,9 @@ export default function DealBreakersScreen() {
         totalSteps={4}
         title="What are your dealbreakers?"
         subtitle="Select what matters most to you in a business"
+        titleTyping
+        titleTypingDelayMs={300}
+        titleTypingSpeedMs={40}
         onBack={handleBack}
         onContinue={handleContinue}
         continueLabel="Complete Setup"
@@ -206,13 +232,21 @@ export default function DealBreakersScreen() {
             const isSelected = selected.has(item.id);
             const isDisabled = atMax && !isSelected;
             const anim = cardAnims[index];
+            const frontRotate = anim.flip.interpolate({
+              inputRange: [0, 180],
+              outputRange: ['0deg', '180deg'],
+            });
+            const backRotate = anim.flip.interpolate({
+              inputRange: [0, 180],
+              outputRange: ['180deg', '360deg'],
+            });
             return (
               <Animated.View
                 key={item.id}
                 style={{
                   width: '48.5%',
                   opacity: anim.opacity,
-                  transform: [{ translateY: anim.y }, { scale: anim.scale }],
+                  transform: [{ translateY: anim.y }, { scale: anim.selectedScale }],
                 }}
               >
                 <Pressable
@@ -224,30 +258,62 @@ export default function DealBreakersScreen() {
                   onPress={() => toggle(item.id)}
                   disabled={isDisabled}
                 >
-                  <LinearGradient
-                    colors={isSelected ? ['#722F37', '#7A404A'] : ['rgba(125,155,118,0.14)', 'rgba(125,155,118,0.06)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.cardFill, isSelected && styles.cardSelected]}
-                  >
-                    {isSelected ? (
-                      <>
+                  <View style={styles.flipCard}>
+                    <Animated.View
+                      style={[
+                        styles.cardFace,
+                        {
+                          transform: [{ perspective: 1000 }, { rotateY: frontRotate }],
+                        },
+                      ]}
+                    >
+                      <LinearGradient
+                        colors={
+                          isDisabled
+                            ? ['rgba(66,66,72,0.08)', 'rgba(66,66,72,0.04)']
+                            : ['rgba(125,155,118,0.14)', 'rgba(125,155,118,0.06)']
+                        }
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.cardFaceFill, isDisabled && styles.cardFaceFillDisabled]}
+                      >
+                        <View style={[styles.cardIconWrap, isDisabled && styles.cardIconWrapDisabled]}>
+                          <Ionicons
+                            name={DEALBREAKER_ICONS[item.id]}
+                            size={24}
+                            color={isDisabled ? 'rgba(66,66,72,0.45)' : '#7D9B76'}
+                          />
+                        </View>
+                        <Text style={styles.cardLabel}>{item.label}</Text>
+                        <Text numberOfLines={2} style={styles.cardDescription}>
+                          {item.description}
+                        </Text>
+                      </LinearGradient>
+                    </Animated.View>
+
+                    <Animated.View
+                      style={[
+                        styles.cardFace,
+                        {
+                          transform: [{ perspective: 1000 }, { rotateY: backRotate }],
+                        },
+                      ]}
+                    >
+                      <LinearGradient
+                        colors={['#722F37', '#7A404A']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.cardFaceFill}
+                      >
                         <View style={styles.selectedIconWrap}>
                           <Ionicons name={DEALBREAKER_ICONS[item.id]} size={28} color="#FFFFFF" />
                         </View>
                         <View style={styles.selectedCheck}>
                           <Ionicons name="checkmark-circle" size={15} color="#722F37" />
                         </View>
-                      </>
-                    ) : (
-                      <>
-                        <Text style={styles.cardLabel}>{item.label}</Text>
-                        <Text style={styles.cardDescription}>
-                          {item.description}
-                        </Text>
-                      </>
-                    )}
-                  </LinearGradient>
+                      </LinearGradient>
+                    </Animated.View>
+                  </View>
                 </Pressable>
               </Animated.View>
             );
@@ -257,7 +323,7 @@ export default function DealBreakersScreen() {
     </>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   errorBanner: {
     backgroundColor: 'rgba(255, 247, 237, 0.95)',
@@ -304,23 +370,47 @@ const styles = StyleSheet.create({
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
   card: {
-    minHeight: 132,
+    height: 164,
     borderRadius: 14,
-    borderWidth: 2,
-    borderColor: 'rgba(154,176,154,0.32)',
     overflow: 'hidden',
   },
-  cardFill: {
-    minHeight: 128,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+  flipCard: {
+    width: '100%',
+    height: '100%',
     position: 'relative',
   },
-  cardSelected: {
+  cardFace: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backfaceVisibility: 'hidden',
     borderWidth: 2,
-    borderColor: '#722F37',
+    borderColor: 'rgba(154,176,154,0.32)',
+  },
+  cardFaceFill: {
+    flex: 1,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(125,155,118,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(125,155,118,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  cardIconWrapDisabled: {
+    backgroundColor: 'rgba(66,66,72,0.08)',
+    borderColor: 'rgba(66,66,72,0.16)',
+  },
+  cardFaceFillDisabled: {
+    borderColor: 'rgba(66,66,72,0.2)',
   },
   cardDisabled: { opacity: 0.42 },
   cardPressed: { transform: [{ scale: 0.98 }] },

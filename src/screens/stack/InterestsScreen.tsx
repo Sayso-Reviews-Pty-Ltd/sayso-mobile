@@ -9,6 +9,7 @@ import { Text } from '../../components/Typography';
 import { apiFetch } from '../../lib/api';
 import { routes } from '../../navigation/routes';
 
+
 const MIN = 3;
 const MAX = 6;
 
@@ -31,7 +32,11 @@ type PreferencesResponseDto = { interests?: InterestPreferenceDto[] };
 type ItemAnim = {
   opacity: Animated.Value;
   y: Animated.Value;
-  scale: Animated.Value;
+  x: Animated.Value;
+  entryScale: Animated.Value;
+  selectedScale: Animated.Value;
+  bounceScale: Animated.Value;
+  checkScale: Animated.Value;
 };
 
 export default function InterestsScreen() {
@@ -42,12 +47,16 @@ export default function InterestsScreen() {
 
   const badgeOpacity = useRef(new Animated.Value(0)).current;
   const badgeY = useRef(new Animated.Value(12)).current;
-  const shakeAnim = useRef(new Animated.Value(0)).current;
+  const prevSelectedRef = useRef<Set<InterestId>>(new Set());
   const itemAnims = useRef<ItemAnim[]>(
     INTERESTS.map(() => ({
       opacity: new Animated.Value(0),
-      y: new Animated.Value(16),
-      scale: new Animated.Value(0.94),
+      y: new Animated.Value(20),
+      x: new Animated.Value(0),
+      entryScale: new Animated.Value(0.9),
+      selectedScale: new Animated.Value(1),
+      bounceScale: new Animated.Value(1),
+      checkScale: new Animated.Value(0),
     }))
   ).current;
 
@@ -88,7 +97,7 @@ export default function InterestsScreen() {
   }, []);
 
   useEffect(() => {
-    const ease = Easing.out(Easing.cubic);
+    const ease = Easing.bezier(0.25, 0.8, 0.25, 1);
 
     Animated.parallel([
       Animated.timing(badgeOpacity, { toValue: 1, delay: 120, duration: 300, useNativeDriver: true }),
@@ -96,31 +105,88 @@ export default function InterestsScreen() {
     ]).start();
 
     INTERESTS.forEach((_, i) => {
-      const delay = 170 + i * 34;
+      const delay = Math.min(i, 8) * 30 + 100;
       const anim = itemAnims[i];
       Animated.parallel([
-        Animated.timing(anim.opacity, { toValue: 1, delay, duration: 280, useNativeDriver: true }),
-        Animated.timing(anim.y, { toValue: 0, delay, duration: 280, easing: ease, useNativeDriver: true }),
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.spring(anim.scale, { toValue: 1, damping: 13, stiffness: 220, useNativeDriver: true }),
-        ]),
+        Animated.timing(anim.opacity, { toValue: 1, delay, duration: 400, easing: ease, useNativeDriver: true }),
+        Animated.timing(anim.y, { toValue: 0, delay, duration: 400, easing: ease, useNativeDriver: true }),
+        Animated.timing(anim.entryScale, { toValue: 1, delay, duration: 400, easing: ease, useNativeDriver: true }),
       ]).start();
     });
   }, [badgeOpacity, badgeY, itemAnims]);
 
-  const triggerShake = useCallback(() => {
-    shakeAnim.setValue(0);
+  useEffect(() => {
+    const prevSelected = prevSelectedRef.current;
+    INTERESTS.forEach((item, index) => {
+      const anim = itemAnims[index];
+      const wasSelected = prevSelected.has(item.id);
+      const isSelected = selected.has(item.id);
+      if (wasSelected === isSelected) return;
+
+      Animated.spring(anim.selectedScale, {
+        toValue: isSelected ? 1.05 : 1,
+        stiffness: 400,
+        damping: 17,
+        mass: 1,
+        useNativeDriver: true,
+      }).start();
+
+      if (isSelected) {
+        anim.checkScale.setValue(0);
+        Animated.spring(anim.checkScale, {
+          toValue: 1,
+          stiffness: 500,
+          damping: 25,
+          mass: 1,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        Animated.timing(anim.checkScale, {
+          toValue: 0,
+          duration: 120,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+    prevSelectedRef.current = new Set(selected);
+  }, [itemAnims, selected]);
+
+  const triggerShake = useCallback((id: InterestId) => {
+    const index = INTERESTS.findIndex((interest) => interest.id === id);
+    if (index < 0) return;
+    const x = itemAnims[index].x;
+    x.setValue(0);
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 6, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -6, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 4, duration: 45, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -4, duration: 45, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 35, useNativeDriver: true }),
+      Animated.timing(x, { toValue: -4, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(x, { toValue: 4, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(x, { toValue: -3, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(x, { toValue: 2, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(x, { toValue: 0, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
     ]).start();
-  }, [shakeAnim]);
+  }, [itemAnims]);
 
   const toggle = useCallback((id: InterestId) => {
+    const index = INTERESTS.findIndex((interest) => interest.id === id);
+    if (index >= 0) {
+      const bounceScale = itemAnims[index].bounceScale;
+      bounceScale.setValue(1);
+      Animated.sequence([
+        Animated.timing(bounceScale, {
+          toValue: 1.08,
+          duration: 140,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceScale, {
+          toValue: 1,
+          duration: 210,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -128,11 +194,11 @@ export default function InterestsScreen() {
       } else if (next.size < MAX) {
         next.add(id);
       } else {
-        triggerShake();
+        triggerShake(id);
       }
       return next;
     });
-  }, [triggerShake]);
+  }, [itemAnims, triggerShake]);
 
   const canContinue = selected.size >= MIN && selected.size <= MAX;
   const atMax = selected.size >= MAX;
@@ -148,7 +214,7 @@ export default function InterestsScreen() {
         body: JSON.stringify({ interests: ids }),
       });
       await AsyncStorage.setItem('onboarding_interests', JSON.stringify(ids));
-      router.replace(routes.subcategories() as never);
+      router.push(routes.subcategories() as never);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save interests. Please try again.');
     } finally {
@@ -196,7 +262,7 @@ export default function InterestsScreen() {
           <Text style={styles.selectionHint}>{helperText}</Text>
         </Animated.View>
 
-        <Animated.View style={[styles.grid, { transform: [{ translateX: shakeAnim }] }]}>
+        <Animated.View style={styles.grid}>
           {INTERESTS.map((item, index) => {
             const isSelected = selected.has(item.id);
             const isDisabled = atMax && !isSelected;
@@ -207,7 +273,13 @@ export default function InterestsScreen() {
                 style={{
                   width: '48.2%',
                   opacity: anim.opacity,
-                  transform: [{ translateY: anim.y }, { scale: anim.scale }],
+                  transform: [
+                    { translateY: anim.y },
+                    { translateX: anim.x },
+                    { scale: anim.entryScale },
+                    { scale: anim.selectedScale },
+                    { scale: anim.bounceScale },
+                  ],
                 }}
               >
                 <Pressable
@@ -220,7 +292,7 @@ export default function InterestsScreen() {
                   disabled={isDisabled}
                 >
                   <LinearGradient
-                    colors={isSelected ? ['#722F37', '#7A404A'] : ['#7D9B76', '#6B8A64']}
+                    colors={isSelected ? ['#722F37', '#7A404A'] : ['#7D9B76', 'rgba(125,155,118,0.9)']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={[styles.circleFill, isSelected && styles.circleFillSelected]}
@@ -228,13 +300,13 @@ export default function InterestsScreen() {
                     <Text style={[styles.circleLabel, isSelected && styles.circleLabelSelected]}>
                       {item.label}
                     </Text>
-                    {isSelected ? (
-                      <View style={styles.checkBadge}>
-                        <Ionicons name="checkmark-circle" size={16} color="#7D9B76" />
-                      </View>
-                    ) : null}
                   </LinearGradient>
                 </Pressable>
+                {isSelected ? (
+                  <Animated.View style={[styles.checkBadge, { transform: [{ scale: anim.checkScale }] }]}>
+                    <Ionicons name="checkmark-circle" size={22} color="#7D9B76" />
+                  </Animated.View>
+                ) : null}
               </Animated.View>
             );
           })}
@@ -298,11 +370,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 9,
-    elevation: 2,
   },
   circleFill: {
     flex: 1,
@@ -317,7 +384,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.28)',
   },
   circleDisabled: { opacity: 0.42 },
-  circlePressed: { transform: [{ scale: 0.97 }] },
+  circlePressed: { transform: [{ scale: 0.95 }] },
   circleLabel: {
     color: '#FFFFFF',
     fontSize: 15,
@@ -328,9 +395,10 @@ const styles = StyleSheet.create({
   circleLabelSelected: { color: '#FFFFFF' },
   checkBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
+    top: 4,
+    right: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
   },
 });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../../components/Typography';
 import { apiFetch } from '../../lib/api';
 import { routes } from '../../navigation/routes';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const PARTICLE_COUNT = 54;
+const FALL_DISTANCE = SCREEN_HEIGHT + 120;
 
 // Confetti particle — a single animated colored dot
 function Particle({ delay, x, color, size }: { delay: number; x: number; color: string; size: number }) {
@@ -20,7 +24,7 @@ function Particle({ delay, x, color, size }: { delay: number; x: number; color: 
       Animated.delay(delay),
       Animated.parallel([
         Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
-        Animated.timing(y, { toValue: 600, duration: 1800, useNativeDriver: true }),
+        Animated.timing(y, { toValue: FALL_DISTANCE, duration: 1800, useNativeDriver: true }),
         Animated.timing(rotation, { toValue: 1, duration: 1800, useNativeDriver: true }),
       ]),
       Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
@@ -49,12 +53,12 @@ function Particle({ delay, x, color, size }: { delay: number; x: number; color: 
 }
 
 const CONFETTI_COLORS = ['#722F37', '#9DAB9B', '#E5E0E5', '#7D9B76', '#D4A5A5', '#B8C9B6'];
-const PARTICLES = Array.from({ length: 30 }, (_, i) => ({
+const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
   key: i,
-  delay: Math.random() * 800,
-  x: Math.random() * 340,
+  delay: Math.random() * 1000,
+  x: Math.random() * (SCREEN_WIDTH + 40) - 20,
   color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-  size: 6 + Math.random() * 8,
+  size: 5 + Math.random() * 9,
 }));
 
 type DealbreakerIconName = 'shield-checkmark-outline' | 'time-outline' | 'happy-outline' | 'pricetag-outline';

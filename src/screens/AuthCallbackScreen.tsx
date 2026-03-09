@@ -81,6 +81,11 @@ export default function AuthCallbackScreen() {
 
         if (cancelled) return;
 
+        const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
+        if (authUserError) throw authUserError;
+        const currentUserId = authUserData.user?.id;
+        if (!currentUserId) throw new Error('No authenticated user found after auth callback');
+
         // Fetch profile to determine routing — retry up to 3 times to handle
         // the case where the profile trigger hasn't run yet.
         let profileData: {
@@ -95,6 +100,7 @@ export default function AuthCallbackScreen() {
           const { data } = await supabase
             .from('profiles')
             .select('role, account_role, onboarding_step, onboarding_completed_at, onboarding_complete')
+            .eq('user_id', currentUserId)
             .single();
 
           if (data) {

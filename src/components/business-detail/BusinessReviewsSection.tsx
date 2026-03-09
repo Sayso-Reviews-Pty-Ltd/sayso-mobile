@@ -46,12 +46,6 @@ export function BusinessReviewsSection({ businessId, onPressWriteReview }: Props
         emptyStateAction={{ label: 'Write First Review', onPress: onPressWriteReview }}
       />
 
-      {reviews.length > 0 && (
-        <Pressable style={styles.writeButton} onPress={onPressWriteReview}>
-          <Text style={styles.writeButtonText}>Leave a Review</Text>
-        </Pressable>
-      )}
-
       {hasNextPage && (
         <Pressable
           style={[styles.loadMoreButton, isFetchingNextPage && styles.loadMoreDisabled]}
@@ -79,20 +73,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
   },
-  writeButton: {
-    borderRadius: 999,
-    backgroundColor: businessDetailColors.coral,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  writeButtonText: {
-    color: businessDetailColors.white,
-    fontSize: 14,
-    fontWeight: '700',
-  },
   loadMoreButton: {
     alignItems: 'center',
     paddingVertical: 10,
+    marginVertical: 4,
   },
   loadMoreDisabled: {
     opacity: 0.7,

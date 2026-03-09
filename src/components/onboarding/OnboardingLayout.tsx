@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Easing,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -31,6 +31,9 @@ type Props = {
   continueVariant?: 'continue' | 'complete';
   canContinue: boolean;
   isLoading?: boolean;
+  titleTyping?: boolean;
+  titleTypingDelayMs?: number;
+  titleTypingSpeedMs?: number;
   children: ReactNode;
 };
 
@@ -45,35 +48,72 @@ export function OnboardingLayout({
   continueVariant = 'continue',
   canContinue,
   isLoading = false,
+  titleTyping = false,
+  titleTypingDelayMs = 300,
+  titleTypingSpeedMs = 40,
   children,
 }: Props) {
   const insets = useSafeAreaInsets();
   const progressPercentage = Math.max(0, Math.min(100, (step / totalSteps) * 100));
   const isCompleteVariant = continueVariant === 'complete';
+  const hasBack = Boolean(onBack);
+  const progressEase = useRef(Easing.bezier(0.4, 0, 0.2, 1)).current;
 
   // Title: slide-up + fade
   const titleOpacity = useRef(new Animated.Value(0)).current;
-  const titleY       = useRef(new Animated.Value(20)).current;
+  const titleY       = useRef(new Animated.Value(10)).current;
 
   // Subtitle: slide-up + fade
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
-  const subtitleY       = useRef(new Animated.Value(18)).current;
+  const subtitleY       = useRef(new Animated.Value(10)).current;
 
   // Action area: fade-up
   const actionOpacity = useRef(new Animated.Value(0)).current;
   const actionY       = useRef(new Animated.Value(16)).current;
 
+  // Web-parity progress/back animations
+  const progressScaleX = useRef(new Animated.Value(0)).current;
+  const activeDotScale = useRef(new Animated.Value(1)).current;
+  const backOpacity = useRef(new Animated.Value(0)).current;
+  const backY = useRef(new Animated.Value(30)).current;
+  const [displayTitle, setDisplayTitle] = useState(titleTyping ? '' : title);
+
+  useEffect(() => {
+    if (!titleTyping) {
+      setDisplayTitle(title);
+      return;
+    }
+
+    setDisplayTitle('');
+    let charIndex = 0;
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+    const startTimeout = setTimeout(() => {
+      intervalId = setInterval(() => {
+        charIndex += 1;
+        setDisplayTitle(title.slice(0, charIndex));
+        if (charIndex >= title.length && intervalId) {
+          clearInterval(intervalId);
+        }
+      }, titleTypingSpeedMs);
+    }, titleTypingDelayMs);
+
+    return () => {
+      clearTimeout(startTimeout);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [title, titleTyping, titleTypingDelayMs, titleTypingSpeedMs]);
+
   useEffect(() => {
     const ease = Easing.out(Easing.cubic);
 
     Animated.parallel([
-      Animated.timing(titleOpacity, { toValue: 1, delay: 50,  duration: 380, useNativeDriver: true }),
-      Animated.timing(titleY,       { toValue: 0, delay: 50,  duration: 380, easing: ease, useNativeDriver: true }),
+      Animated.timing(titleOpacity, { toValue: 1, delay: 50, duration: 400, useNativeDriver: true }),
+      Animated.timing(titleY,       { toValue: 0, delay: 50, duration: 400, easing: ease, useNativeDriver: true }),
     ]).start();
 
     Animated.parallel([
-      Animated.timing(subtitleOpacity, { toValue: 1, delay: 110, duration: 360, useNativeDriver: true }),
-      Animated.timing(subtitleY,       { toValue: 0, delay: 110, duration: 360, easing: ease, useNativeDriver: true }),
+      Animated.timing(subtitleOpacity, { toValue: 1, delay: 110, duration: 400, useNativeDriver: true }),
+      Animated.timing(subtitleY,       { toValue: 0, delay: 110, duration: 400, easing: ease, useNativeDriver: true }),
     ]).start();
 
     Animated.parallel([
@@ -82,27 +122,91 @@ export function OnboardingLayout({
     ]).start();
   }, [actionOpacity, actionY, subtitleOpacity, subtitleY, titleOpacity, titleY]);
 
+  useEffect(() => {
+    progressScaleX.setValue(0);
+    Animated.timing(progressScaleX, {
+      toValue: 1,
+      duration: 800,
+      easing: progressEase,
+      useNativeDriver: true,
+    }).start();
+  }, [progressScaleX, step]);
+
+  useEffect(() => {
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(activeDotScale, {
+          toValue: 1.1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(activeDotScale, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseLoop.start();
+    return () => {
+      pulseLoop.stop();
+      activeDotScale.setValue(1);
+    };
+  }, [activeDotScale]);
+
+  useEffect(() => {
+    if (!hasBack) return;
+    backOpacity.setValue(0);
+    backY.setValue(30);
+    Animated.parallel([
+      Animated.timing(backOpacity, {
+        toValue: 1,
+        delay: 100,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(backY, {
+        toValue: 0,
+        delay: 100,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [backOpacity, backY, hasBack]);
+
   return (
     <View style={[styles.root, { backgroundColor: C.page }]}>
       <View style={styles.topProgressTrack}>
-        <View style={[styles.topProgressFill, { width: `${progressPercentage}%` }]} />
+        <Animated.View
+          style={[
+            styles.topProgressFill,
+            {
+              width: `${progressPercentage}%`,
+              transform: [{ scaleX: progressScaleX }],
+            },
+          ]}
+        />
       </View>
 
-      <View style={styles.orbLayer} pointerEvents="none">
-        <View style={[styles.orb, styles.orb1]} />
-        <View style={[styles.orb, styles.orb2]} />
-        <View style={[styles.orb, styles.orb3]} />
-      </View>
-
-      {onBack ? (
-        <View style={[styles.backWrap, { top: insets.top + 8 }]}>
+      {hasBack ? (
+        <Animated.View
+          style={[
+            styles.backWrap,
+            { top: insets.top + 8 },
+            { opacity: backOpacity, transform: [{ translateY: backY }] },
+          ]}
+        >
           <Pressable style={styles.backBtn} onPress={onBack} hitSlop={12}>
             <Ionicons name="arrow-back" size={22} color={C.white} />
           </Pressable>
-        </View>
+        </Animated.View>
       ) : null}
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.flex}
         contentContainerStyle={[
           styles.scroll,
@@ -113,15 +217,16 @@ export function OnboardingLayout({
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        decelerationRate="normal"
       >
-        <View style={styles.header}>
+        <Animated.View style={styles.header}>
           <Animated.View style={{ opacity: titleOpacity, transform: [{ translateY: titleY }] }}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.title}>{displayTitle}</Text>
           </Animated.View>
           <Animated.View style={{ opacity: subtitleOpacity, transform: [{ translateY: subtitleY }] }}>
             <Text style={styles.subtitle}>{subtitle}</Text>
           </Animated.View>
-        </View>
+        </Animated.View>
 
         {children}
 
@@ -143,10 +248,17 @@ export function OnboardingLayout({
               end={{ x: 1, y: 0 }}
               style={styles.continueBtnGradient}
             >
-              <Text style={styles.continueTxt}>{isLoading ? 'Saving…' : continueLabel}</Text>
-              {!isLoading ? (
-                <Ionicons name="arrow-forward" size={17} color={C.white} style={{ marginLeft: 8 }} />
-              ) : null}
+              {isLoading ? (
+                <>
+                  <ActivityIndicator size="small" color={C.white} style={styles.loadingSpinner} />
+                  <Text style={styles.continueTxt}>Saving…</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.continueTxt}>{continueLabel}</Text>
+                  <Ionicons name="arrow-forward" size={17} color={C.white} style={{ marginLeft: 8 }} />
+                </>
+              )}
             </LinearGradient>
           </Pressable>
 
@@ -156,20 +268,24 @@ export function OnboardingLayout({
               const isActive = dot === step;
               const isCompleted = dot < step;
               return (
-                <View
-                  key={dot}
-                  style={[
-                    styles.progressDot,
-                    isActive && styles.progressDotActive,
-                    isCompleted && styles.progressDotComplete,
-                  ]}
-                />
-              );
-            })}
+                  <Animated.View
+                    key={dot}
+                    style={isActive ? { transform: [{ scale: activeDotScale }] } : undefined}
+                  >
+                    <View
+                      style={[
+                        styles.progressDot,
+                        isActive && styles.progressDotActive,
+                        isCompleted && styles.progressDotComplete,
+                      ]}
+                    />
+                  </Animated.View>
+                );
+              })}
           </View>
           <Text style={styles.progressLabel}>Step {step} of {totalSteps}</Text>
         </Animated.View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -190,13 +306,8 @@ const styles = StyleSheet.create({
   topProgressFill: {
     height: '100%',
     backgroundColor: '#9DAB9B',
+    transformOrigin: 'left center',
   },
-
-  orbLayer: { ...StyleSheet.absoluteFillObject, overflow: 'hidden' },
-  orb: { position: 'absolute', borderRadius: 999 },
-  orb1: { width: 260, height: 260, top: -80,  right: -60,  backgroundColor: 'rgba(114,47,55,0.09)' },
-  orb2: { width: 180, height: 180, bottom: 120, left: -60,  backgroundColor: 'rgba(157,171,155,0.14)' },
-  orb3: { width: 130, height: 130, top: 200,  left: -40,   backgroundColor: 'rgba(125,155,118,0.10)' },
 
   backWrap: { position: 'absolute', left: 20, zIndex: 10 },
   backBtn: {
@@ -236,11 +347,6 @@ const styles = StyleSheet.create({
     maxWidth: 460,
     borderRadius: 999,
     overflow: 'hidden',
-    shadowColor: '#722F37',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 14,
-    elevation: 4,
   },
   continueBtnGradient: {
     paddingVertical: 15,
@@ -248,9 +354,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  continueBtnDisabled: { opacity: 0.42, shadowOpacity: 0 },
-  continueBtnPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
+  continueBtnDisabled: { opacity: 0.42 },
+  continueBtnPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
   continueTxt: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  loadingSpinner: { marginRight: 8 },
 
   progressDots: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 18 },
   progressDot: { width: 12, height: 12, borderRadius: 999, backgroundColor: 'rgba(66,66,72,0.18)' },

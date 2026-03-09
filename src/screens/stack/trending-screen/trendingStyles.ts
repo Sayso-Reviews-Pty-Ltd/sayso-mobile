@@ -148,7 +148,7 @@ export const styles = StyleSheet.create({
     paddingTop: 4,
   },
   loadMoreBtn: {
-    marginTop: 4,
+    marginVertical: 4,
     paddingVertical: 12,
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.8)',

@@ -1,5 +1,1 @@
-import SubcategoriesScreen from '../../src/screens/stack/SubcategoriesScreen';
-
-export default function SubcategoriesRoute() {
-  return <SubcategoriesScreen />;
-}
+export { default } from '../../src/screens/stack/SubcategoriesScreen';

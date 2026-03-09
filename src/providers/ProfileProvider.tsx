@@ -51,7 +51,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           .select(
             'role, account_role, email_verified, onboarding_step, onboarding_completed_at, onboarding_complete'
           )
-          .eq('id', userId)
+          .eq('user_id', userId)
           .single();
 
         if (error) {

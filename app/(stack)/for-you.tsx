@@ -248,6 +248,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     color: homeTokens.charcoal,
+    textAlign: 'center',
   },
   heroDesc: {
     fontSize: 15,
@@ -255,6 +256,7 @@ const styles = StyleSheet.create({
     color: homeTokens.textSecondary,
     marginTop: 6,
     marginBottom: 2,
+    textAlign: 'center',
   },
   searchWrap: {
     paddingTop: 12,

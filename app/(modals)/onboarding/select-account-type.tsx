@@ -1,10 +1,3 @@
-import { PlaceholderScreen } from '../../../src/screens/shared/PlaceholderScreen';
+import SelectAccountTypeScreen from '../../../src/screens/modals/SelectAccountTypeScreen';
 
-export default function SelectAccountTypeRoute() {
-  return (
-    <PlaceholderScreen
-      title="Select Account Type"
-      description="This route is reserved for the mobile account-type selection step inside onboarding."
-    />
-  );
-}
+export default SelectAccountTypeScreen;

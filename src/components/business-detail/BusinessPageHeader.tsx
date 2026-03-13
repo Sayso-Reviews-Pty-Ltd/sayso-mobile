@@ -3,6 +3,9 @@ import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../Typography';
 import { businessDetailColors } from './styles';
+import { FROSTED_CARD_BORDER_COLOR } from '../../styles/cardSurface';
+import { CARD_CTA_RADIUS } from '../../styles/radii';
+import { homeTokens } from '../../screens/tabs/home/HomeTokens';
 
 export type BusinessHeaderMenuItem = {
   key: string;
@@ -40,11 +43,11 @@ export function BusinessPageHeader({
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<MenuAnchor | null>(null);
   const logoTriggerRef = useRef<View | null>(null);
-  const foregroundColor = collapsed ? businessDetailColors.white : 'rgba(45,45,45,0.88)';
-  const backButtonBg = collapsed ? 'rgba(255,255,255,0.14)' : '#FFFFFF';
-  const backButtonBorder = collapsed ? 'rgba(255,255,255,0.24)' : '#E5E7EB';
-  const actionButtonBg = collapsed ? 'rgba(255,255,255,0.14)' : '#FFFFFF';
-  const actionButtonBorder = collapsed ? 'rgba(255,255,255,0.24)' : '#E5E7EB';
+  const foregroundColor = collapsed ? businessDetailColors.white : businessDetailColors.textMuted;
+  const backButtonBg = collapsed ? businessDetailColors.borderSoft : businessDetailColors.white;
+  const backButtonBorder = collapsed ? FROSTED_CARD_BORDER_COLOR : homeTokens.borderSoft;
+  const actionButtonBg = collapsed ? businessDetailColors.borderSoft : businessDetailColors.white;
+  const actionButtonBorder = collapsed ? FROSTED_CARD_BORDER_COLOR : homeTokens.borderSoft;
 
   const handleSelectMenuItem = (item: BusinessHeaderMenuItem) => {
     setMenuVisible(false);
@@ -97,7 +100,7 @@ export function BusinessPageHeader({
               onPress={onPressBack}
               accessibilityLabel="Go back"
             >
-              <Ionicons name="chevron-back" size={22} color={foregroundColor} />
+              <Ionicons name="chevron-back" size={20} color={foregroundColor} />
             </Pressable>
           ) : (
             <View style={styles.backButtonSpacer} />
@@ -130,14 +133,14 @@ export function BusinessPageHeader({
             onPress={onPressMessages}
             accessibilityLabel="Messages"
           >
-            <Ionicons name="chatbubble" size={22} color={foregroundColor} />
+            <Ionicons name="chatbubble-outline" size={20} color={foregroundColor} />
           </Pressable>
           <Pressable
             style={[styles.iconButton, { backgroundColor: actionButtonBg, borderColor: actionButtonBorder }]}
             onPress={onPressNotifications}
             accessibilityLabel="Notifications"
           >
-            <Ionicons name="notifications" size={22} color={foregroundColor} />
+            <Ionicons name="notifications-outline" size={20} color={foregroundColor} />
           </Pressable>
         </View>
       </View>
@@ -200,18 +203,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 32,
     fontFamily: 'MonarchParadox',
-    letterSpacing: 0.2,
+    letterSpacing: 3,
     textTransform: 'none',
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: CARD_CTA_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: businessDetailColors.white,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: homeTokens.borderSoft,
   },
   backButtonSpacer: {
     width: 40,
@@ -220,12 +223,12 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: CARD_CTA_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
+    borderColor: homeTokens.borderSoft,
+    backgroundColor: businessDetailColors.white,
   },
   menuBackdrop: {
     flex: 1,

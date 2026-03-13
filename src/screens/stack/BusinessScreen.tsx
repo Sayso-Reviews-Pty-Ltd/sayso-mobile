@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Animated,
   InteractionManager,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -128,11 +127,8 @@ export default function BusinessScreen({ initialTab }: Props) {
 
   const isBusinessOwner = Boolean(user && business?.owner_id && user.id === business.owner_id);
 
-  const headerProgress = useRef(new Animated.Value(0)).current;
-  const headerCollapsedRef = useRef(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollTopVisibleRef = useRef(false);
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [showScrollTopButton, setShowScrollTopButton] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
 
@@ -165,45 +161,13 @@ export default function BusinessScreen({ initialTab }: Props) {
     onScrollToTop: handleScrollToTop,
   });
 
-  const setHeaderState = useCallback(
-    (collapsed: boolean) => {
-      if (headerCollapsedRef.current === collapsed) return;
-      headerCollapsedRef.current = collapsed;
-      setHeaderCollapsed(collapsed);
-      Animated.spring(headerProgress, {
-        toValue: collapsed ? 1 : 0,
-        damping: 28,
-        mass: 0.8,
-        stiffness: 300,
-        overshootClamping: true,
-        useNativeDriver: false,
-      }).start();
-    },
-    [headerProgress]
-  );
-
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const y = event.nativeEvent.contentOffset.y;
       setScrollTopVisible(y > 300);
-      if (y > 52) setHeaderState(true);
-      else if (y < 18) setHeaderState(false);
     },
-    [setHeaderState, setScrollTopVisible]
+    [setScrollTopVisible]
   );
-
-  const headerBg = headerProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['transparent', businessDetailColors.coral],
-  });
-  const headerElevation = headerProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 8],
-  });
-  const headerShadowOpacity = headerProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 0.12],
-  });
 
   if (isLoading) {
     return (
@@ -233,15 +197,15 @@ export default function BusinessScreen({ initialTab }: Props) {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <Animated.View style={[styles.stickyHeader, { backgroundColor: headerBg, elevation: headerElevation, shadowOpacity: headerShadowOpacity }]}>
+      <View style={[styles.stickyHeader, { backgroundColor: businessDetailColors.coral, elevation: 8, shadowOpacity: 0.12 }]}>
         <BusinessPageHeader
           onPressBack={handleBack}
           onPressNotifications={handleOpenNotifications}
           onPressMessages={handleOpenMessages}
           menuItems={headerMenuItems}
-          collapsed={headerCollapsed}
+          collapsed={true}
         />
-      </Animated.View>
+      </View>
 
       <ScrollView
         ref={scrollRef}

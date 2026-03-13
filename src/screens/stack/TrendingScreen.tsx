@@ -195,9 +195,9 @@ export default function TrendingScreen() {
       headerCollapsedRef.current = collapsed;
       navigation.setOptions({
         headerStyle: {
-          backgroundColor: collapsed ? NAVBAR_BG : businessDetailColors.page,
+          backgroundColor: NAVBAR_BG,
         },
-        headerTintColor: collapsed ? '#FFFFFF' : businessDetailColors.charcoal,
+        headerTintColor: '#FFFFFF',
       });
     },
     [navigation]

@@ -9,6 +9,7 @@ import { Text } from '../components/Typography';
 
 type CallbackParams = {
   code?: string;
+  type?: string;
   error?: string;
   error_description?: string;
 };
@@ -81,6 +82,12 @@ export default function AuthCallbackScreen() {
         }
 
         if (cancelled) return;
+
+        // Password recovery flow — redirect to reset-password form
+        if (params.type === 'recovery') {
+          router.replace(routes.resetPassword() as never);
+          return;
+        }
 
         const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
         if (authUserError) throw authUserError;

@@ -3,7 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BusinessPageHeader, type BusinessHeaderMenuItem } from './business-detail/BusinessPageHeader';
-import { businessDetailColors, businessDetailSpacing } from './business-detail/styles';
+import { businessDetailColors } from './business-detail/styles';
+import { FROSTED_CARD_BORDER_COLOR } from '../styles/cardSurface';
 import { routes } from '../navigation/routes';
 
 type Props = {
@@ -19,7 +20,7 @@ export function StackPageHeader({ navigation, options, onPressBack, showBackButt
   const flattenedHeaderStyle = options?.headerStyle
     ? (StyleSheet.flatten(options.headerStyle as never) as { backgroundColor?: string } | undefined)
     : undefined;
-  const bgColor = flattenedHeaderStyle?.backgroundColor ?? businessDetailColors.page;
+  const bgColor = flattenedHeaderStyle?.backgroundColor ?? businessDetailColors.coral;
   const collapsed = options?.headerTintColor === '#FFFFFF';
   const effectiveShowBackButton = showBackButton ?? navigation.canGoBack();
 
@@ -47,7 +48,7 @@ export function StackPageHeader({ navigation, options, onPressBack, showBackButt
         onPressNotifications={() => router.push('/(stack)/notifications')}
         onPressMessages={() => router.push('/(stack)/dm')}
         menuItems={menuItems}
-        collapsed={collapsed}
+        collapsed={true}
         showBackButton={effectiveShowBackButton}
       />
     </View>
@@ -56,9 +57,11 @@ export function StackPageHeader({ navigation, options, onPressBack, showBackButt
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: businessDetailColors.page,
-    paddingHorizontal: businessDetailSpacing.pageGutter,
-    paddingBottom: 12,
+    backgroundColor: businessDetailColors.coral,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: FROSTED_CARD_BORDER_COLOR,
     zIndex: 50,
   },
 });

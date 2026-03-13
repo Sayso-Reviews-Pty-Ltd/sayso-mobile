@@ -405,9 +405,9 @@ const s = StyleSheet.create({
     backgroundColor: PAGE_BG,
   },
   stickyHeader: {
-    paddingHorizontal: businessDetailSpacing.pageGutter,
+    paddingHorizontal: 20,
     paddingTop: 14,
-    paddingBottom: 12,
+    paddingBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 8,

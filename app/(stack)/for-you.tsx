@@ -97,9 +97,9 @@ export default function ForYouRoute() {
       headerCollapsedRef.current = collapsed;
       navigation.setOptions({
         headerStyle: {
-          backgroundColor: collapsed ? NAVBAR_BG : homeTokens.offWhite,
+          backgroundColor: NAVBAR_BG,
         },
-        headerTintColor: collapsed ? '#FFFFFF' : homeTokens.charcoal,
+        headerTintColor: '#FFFFFF',
       });
     },
     [navigation]

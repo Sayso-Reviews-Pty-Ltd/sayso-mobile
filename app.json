@@ -30,7 +30,8 @@
       "expo-secure-store",
       "expo-notifications",
       "expo-font",
-      "./plugins/with-transport-security"
+      "./plugins/with-transport-security",
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true

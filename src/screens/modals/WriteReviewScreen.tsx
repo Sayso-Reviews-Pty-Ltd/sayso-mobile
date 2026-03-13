@@ -725,10 +725,8 @@ export default function WriteReviewScreen() {
   const { user } = useAuth();
   const { guardSensitiveAction } = useSecurity();
   const reducedMotion = useReducedMotion();
-  const headerCollapsedRef = useRef(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollTopVisibleRef = useRef(false);
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [showScrollTopButton, setShowScrollTopButton] = useState(false);
 
   const [rating, setRating] = useState(0);
@@ -1004,12 +1002,6 @@ export default function WriteReviewScreen() {
         scrollTopVisibleRef.current = showScrollTop;
         setShowScrollTopButton(showScrollTop);
       }
-
-      const collapsed = y > 60;
-      if (collapsed !== headerCollapsedRef.current) {
-        headerCollapsedRef.current = collapsed;
-        setHeaderCollapsed(collapsed);
-      }
     },
     []
   );
@@ -1174,8 +1166,8 @@ export default function WriteReviewScreen() {
           headerShown: true,
           headerShadowVisible: false,
           header: (props) => <StackPageHeader {...props} onPressBack={handleBack} />,
-          headerStyle: { backgroundColor: headerCollapsed ? C.coral : C.offWhite },
-          headerTintColor: headerCollapsed ? '#FFFFFF' : C.charcoal,
+          headerStyle: { backgroundColor: C.coral },
+          headerTintColor: '#FFFFFF',
         }}
       />
 

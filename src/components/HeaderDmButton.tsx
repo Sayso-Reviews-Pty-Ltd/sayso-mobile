@@ -2,6 +2,9 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { routes } from '../navigation/routes';
+import { businessDetailColors } from './business-detail/styles';
+import { FROSTED_CARD_BORDER_COLOR } from '../styles/cardSurface';
+import { CARD_CTA_RADIUS } from '../styles/radii';
 
 export function HeaderDmButton() {
   const router = useRouter();
@@ -13,7 +16,7 @@ export function HeaderDmButton() {
       activeOpacity={0.8}
       accessibilityLabel="Open direct messages"
     >
-      <Ionicons name="chatbubble" size={20} color="#111827" />
+      <Ionicons name="chatbubble-outline" size={18} color={businessDetailColors.white} />
     </TouchableOpacity>
   );
 }
@@ -22,11 +25,11 @@ const styles = StyleSheet.create({
   button: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: CARD_CTA_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: businessDetailColors.borderSoft,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: FROSTED_CARD_BORDER_COLOR,
   },
 });

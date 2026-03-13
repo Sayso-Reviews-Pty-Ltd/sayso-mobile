@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { NAVBAR_BG_COLOR } from '../styles/colors';
 
 const APP_BACKGROUND_COLOR = '#E5E0E5';
 
@@ -17,6 +18,8 @@ export const sharedStackScreenOptions = {
   ...sharedHeaderStyles,
   animation: 'none',
   headerShadowVisible: false,
+  headerStyle: { backgroundColor: NAVBAR_BG_COLOR },
+  headerTintColor: '#FFFFFF',
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;
 

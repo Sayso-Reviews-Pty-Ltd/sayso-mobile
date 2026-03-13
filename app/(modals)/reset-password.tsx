@@ -1,10 +1,3 @@
-import { PlaceholderScreen } from '../../src/screens/shared/PlaceholderScreen';
+import ResetPasswordScreen from '../../src/screens/modals/ResetPasswordScreen';
 
-export default function ResetPasswordRoute() {
-  return (
-    <PlaceholderScreen
-      title="Reset Password"
-      description="This modal route is deep-linkable and ready for the secure password reset form."
-    />
-  );
-}
+export default ResetPasswordScreen;

@@ -1,7 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 import { HeaderDmBellActions } from './HeaderDmBellActions';
 import { Text } from './Typography';
-import { APP_PAGE_GUTTER } from '../styles/layout';
+import { businessDetailColors } from './business-detail/styles';
+import { FROSTED_CARD_BORDER_COLOR } from '../styles/cardSurface';
 
 type Props = {
   title: string;
@@ -24,25 +25,29 @@ export function AppHeader({ title, subtitle, showBell = false }: Props) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
-    paddingHorizontal: APP_PAGE_GUTTER,
-    paddingTop: 24,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 24,
+    backgroundColor: businessDetailColors.coral,
+    borderBottomWidth: 1,
+    borderBottomColor: FROSTED_CARD_BORDER_COLOR,
   },
   copy: {
     flex: 1,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#111827',
-    letterSpacing: -0.5,
+    fontSize: 24,
+    fontWeight: '600',
+    color: businessDetailColors.white,
+    letterSpacing: 3,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#6B7280',
+    fontSize: 12,
+    color: businessDetailColors.page,
     marginTop: 4,
+    letterSpacing: 1.5,
   },
 });

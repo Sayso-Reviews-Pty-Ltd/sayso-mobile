@@ -83,6 +83,16 @@ npm run start
 - `npm run web`: run Expo for web
 - `npm run type-check`: TypeScript check without emit
 
+## Git Tracking Policy
+
+- Commit repo-wide config and dependency lock files: `app.json`, `babel.config.js`, `tsconfig.json`, `package-lock.json`.
+- Do not commit local machine/runtime files: `.env` variants (except `.env.example`), `.claude/settings.local.json`, `.claude/worktrees/`, `*.pid`, `*.pid.lock`, `*.log`, and `*.local.{json,yaml,yml,toml}`.
+- If a local-only file was already tracked, untrack it without deleting your local copy:
+
+```bash
+git rm --cached <path>
+```
+
 ## Auth and OAuth setup notes
 
 - App scheme is `sayso` (`app.json`), and OAuth callback is built from `/auth/callback`.

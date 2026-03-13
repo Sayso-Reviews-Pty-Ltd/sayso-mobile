@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  Animated,
   InteractionManager,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -23,9 +22,8 @@ import {
   EventSpecialRelatedSection,
   EventSpecialReviewsSection,
   EventSpecialSkeleton,
-  type EventSpecialHeaderMenuItem,
 } from '../../components/event-detail';
-import { businessDetailColors } from '../../components/business-detail/styles';
+import { NAVBAR_BG_COLOR } from '../../styles/colors';
 import { useEventReminder } from '../../hooks/useEventReminder';
 import { useEventRatings } from '../../hooks/useEventRatings';
 import { useEventReviews } from '../../hooks/useEventReviews';
@@ -96,9 +94,6 @@ export default function EventSpecialScreen({ routeType }: Props) {
 
   useRealtimeQueryInvalidation(realtimeTargets);
 
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
-  const headerCollapsedRef = useRef(false);
-  const headerProgress = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollTopVisibleRef = useRef(false);
   const [showScrollTopButton, setShowScrollTopButton] = useState(false);
@@ -133,31 +128,11 @@ export default function EventSpecialScreen({ routeType }: Props) {
     onScrollToTop: handleScrollToTop,
   });
 
-  const setHeaderState = useCallback(
-    (collapsed: boolean) => {
-      if (headerCollapsedRef.current === collapsed) return;
-      headerCollapsedRef.current = collapsed;
-      setHeaderCollapsed(collapsed);
-      Animated.spring(headerProgress, {
-        toValue: collapsed ? 1 : 0,
-        damping: 28,
-        mass: 0.8,
-        stiffness: 300,
-        overshootClamping: true,
-        useNativeDriver: false,
-      }).start();
-    },
-    [headerProgress]
-  );
-
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const offsetY = event.nativeEvent.contentOffset.y;
-      setScrollTopVisible(offsetY > 300);
-      if (offsetY > 52) setHeaderState(true);
-      else if (offsetY < 18) setHeaderState(false);
+      setScrollTopVisible(event.nativeEvent.contentOffset.y > 300);
     },
-    [setHeaderState, setScrollTopVisible]
+    [setScrollTopVisible]
   );
 
   const handleBack = () => {
@@ -167,18 +142,6 @@ export default function EventSpecialScreen({ routeType }: Props) {
     }
     router.replace(routes.eventsSpecials() as never);
   };
-
-  const headerMenuItems = useMemo<EventSpecialHeaderMenuItem[]>(
-    () => [
-      { key: 'home', label: 'Home', onPress: () => router.push(routes.home() as never) },
-      { key: 'for-you', label: 'For You', onPress: () => router.push(routes.forYou() as never) },
-      { key: 'trending', label: 'Trending', onPress: () => router.push(routes.trending() as never) },
-      { key: 'events', label: 'Events & Specials', onPress: () => router.push(routes.eventsSpecials() as never) },
-      { key: 'saved', label: 'Saved', onPress: () => router.push(routes.saved() as never) },
-      { key: 'profile', label: 'Profile', onPress: () => router.push(routes.profile() as never) },
-    ],
-    [router]
-  );
 
   useEffect(() => {
     if (!item || !id) return;
@@ -240,19 +203,6 @@ export default function EventSpecialScreen({ routeType }: Props) {
     router.push(routes.writeReview(routeType, id) as never);
   };
 
-  const headerBg = headerProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['transparent', businessDetailColors.coral],
-  });
-  const headerElevation = headerProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 8],
-  });
-  const headerShadowOpacity = headerProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 0.12],
-  });
-
   if (detailQuery.isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -290,24 +240,14 @@ export default function EventSpecialScreen({ routeType }: Props) {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <Animated.View
-        style={[
-          styles.stickyHeader,
-          {
-            backgroundColor: headerBg,
-            elevation: headerElevation,
-            shadowOpacity: headerShadowOpacity,
-          },
-        ]}
-      >
+      <View style={[styles.stickyHeader, { backgroundColor: NAVBAR_BG_COLOR }]}>
         <EventSpecialPageHeader
           onPressBack={handleBack}
           onPressNotifications={() => router.push(routes.notifications() as never)}
           onPressMessages={() => router.push(routes.dmInbox() as never)}
-          menuItems={headerMenuItems}
-          collapsed={headerCollapsed}
+          collapsed={true}
         />
-      </Animated.View>
+      </View>
 
       <ScrollView
         ref={scrollRef}
@@ -345,29 +285,8 @@ export default function EventSpecialScreen({ routeType }: Props) {
 
         {showDeferredSections ? (
           <>
-            <TransitionItem variant="card" index={4}>
-              <EventSpecialRelatedSection
-                title={item.type === 'special' ? 'More Specials Near You' : 'More Events Near You'}
-                items={related.items}
-                isLoading={related.isLoading}
-                error={related.error}
-              />
-            </TransitionItem>
-
             <View style={styles.mainColumn}>
-              <TransitionItem variant="card" index={5}>
-                <EventSpecialMoreDatesCard
-                  currentStartISO={item.startDateISO}
-                  currentEndISO={item.endDateISO}
-                  occurrences={item.occurrencesList}
-                  onPressDate={(occurrenceId) => {
-                    const target = item.type === 'special' ? routes.specialDetail(occurrenceId) : routes.eventDetail(occurrenceId);
-                    router.push(target as never);
-                  }}
-                />
-              </TransitionItem>
-
-              <TransitionItem variant="card" index={6}>
+              <TransitionItem variant="card" index={4}>
                 <EventSpecialActionCard
                   item={item}
                   routeType={routeType}
@@ -383,10 +302,31 @@ export default function EventSpecialScreen({ routeType }: Props) {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={7}>
+              <TransitionItem variant="card" index={5}>
+                <EventSpecialMoreDatesCard
+                  currentStartISO={item.startDateISO}
+                  currentEndISO={item.endDateISO}
+                  occurrences={item.occurrencesList}
+                  onPressDate={(occurrenceId) => {
+                    const target = item.type === 'special' ? routes.specialDetail(occurrenceId) : routes.eventDetail(occurrenceId);
+                    router.push(target as never);
+                  }}
+                />
+              </TransitionItem>
+
+              <TransitionItem variant="card" index={6}>
                 <EventSpecialContactInfoCard item={item} />
               </TransitionItem>
             </View>
+
+            <TransitionItem variant="card" index={7}>
+              <EventSpecialRelatedSection
+                title={item.type === 'special' ? 'More Specials Near You' : 'More Events Near You'}
+                items={related.items}
+                isLoading={related.isLoading}
+                error={related.error}
+              />
+            </TransitionItem>
 
             <TransitionItem variant="card" index={8}>
               <EventSpecialReviewsSection

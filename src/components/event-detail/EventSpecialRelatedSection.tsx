@@ -70,12 +70,15 @@ const styles = StyleSheet.create({
   },
   messageCard: {
     borderRadius: businessDetailSpacing.cardRadius,
-    borderWidth: 1,
-    borderColor: businessDetailColors.borderSoft,
-    backgroundColor: businessDetailColors.cardTint,
+    backgroundColor: businessDetailColors.cardBg,
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 4,
   },
   messageTitle: {
     color: businessDetailColors.charcoal,

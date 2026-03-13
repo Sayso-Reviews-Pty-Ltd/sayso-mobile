@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import type { EventSpecialDetail } from '../../hooks/useEventSpecialDetail';
 import { resolveEventMediaImage } from '../event-card/eventCardUtils';
@@ -15,6 +16,8 @@ export function EventSpecialHero({ item, rating }: Props) {
   const { image } = resolveEventMediaImage(item);
   const displayRating = Number.isFinite(rating) ? rating : 0;
 
+  const typeBadgeStyle = item.type === 'special' ? styles.typeBadgeSpecial : styles.typeBadgeEvent;
+
   return (
     <View style={styles.wrap}>
       {image ? (
@@ -28,9 +31,16 @@ export function EventSpecialHero({ item, rating }: Props) {
         </View>
       )}
 
-      <View pointerEvents="none" style={styles.gradientOverlay} />
+      <LinearGradient
+        colors={['transparent', 'transparent', 'rgba(0,0,0,0.50)']}
+        locations={[0, 0.4, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        pointerEvents="none"
+        style={StyleSheet.absoluteFillObject}
+      />
 
-      <View style={styles.typeBadge}>
+      <View style={[styles.typeBadge, typeBadgeStyle]}>
         <Text style={styles.typeBadgeText}>{item.type === 'special' ? 'Special Offer' : 'Event'}</Text>
       </View>
 
@@ -58,7 +68,7 @@ export function EventSpecialHero({ item, rating }: Props) {
 const styles = StyleSheet.create({
   wrap: {
     width: '100%',
-    height: 286,
+    aspectRatio: 4 / 3,
     overflow: 'hidden',
     backgroundColor: businessDetailColors.cardBg,
   },
@@ -76,20 +86,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: businessDetailColors.sage,
   },
-  gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.28)',
-  },
   typeBadge: {
     position: 'absolute',
     top: 16,
     left: 16,
     borderRadius: 999,
-    backgroundColor: 'rgba(114,47,55,0.95)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.45)',
     paddingHorizontal: 12,
     paddingVertical: 7,
+  },
+  typeBadgeEvent: {
+    backgroundColor: 'rgba(114,47,55,0.95)',
+    borderColor: 'rgba(255,255,255,0.45)',
+  },
+  typeBadgeSpecial: {
+    backgroundColor: 'rgba(157,171,155,0.92)',
+    borderColor: 'rgba(125,155,118,0.50)',
   },
   typeBadgeText: {
     color: businessDetailColors.white,

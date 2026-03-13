@@ -1,4 +1,5 @@
 import { Alert, Linking, Pressable, Share, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import type { EventSpecialDetail } from '../../hooks/useEventSpecialDetail';
 import type { EventReminderOption } from '../../hooks/useEventReminder';
@@ -23,6 +24,8 @@ type Props = {
   onPressReminder: (option: EventReminderOption) => void;
   onPressWriteReview: () => void;
 };
+
+const CTA_GRADIENT = ['#722F37', 'rgba(114,47,55,0.90)'] as const;
 
 function getRoutePath(type: 'event' | 'special', id: string) {
   return type === 'special' ? routes.specialDetail(id) : routes.eventDetail(id);
@@ -123,37 +126,45 @@ export function EventSpecialActionCard({
     <View style={styles.card}>
       <Text style={styles.heading}>{item.type === 'special' ? 'Claim This Special' : 'Join This Event'}</Text>
 
-      <Pressable style={styles.primaryButton} onPress={handlePrimaryCta}>
-        <Text style={styles.primaryButtonText}>{ctaLabel}</Text>
+      <Pressable style={styles.ctaButton} onPress={handlePrimaryCta}>
+        <LinearGradient colors={CTA_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaGradient}>
+          <Text style={styles.ctaText}>{ctaLabel}</Text>
+        </LinearGradient>
       </Pressable>
 
-      <View style={styles.actionsGrid}>
-        <Pressable style={[styles.quickAction, isGoing ? styles.quickActionActive : null]} onPress={onPressGoing}>
-          <Ionicons name="people" size={17} color={businessDetailColors.charcoal} />
-          <Text style={styles.quickActionText}>Going</Text>
-          {rsvpBusy ? <Text style={styles.busyLabel}>...</Text> : null}
-        </Pressable>
+      <Pressable style={styles.ctaButton} onPress={onPressWriteReview}>
+        <LinearGradient colors={CTA_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaGradient}>
+          <Text style={styles.ctaText}>Write Review</Text>
+        </LinearGradient>
+      </Pressable>
 
-        <Pressable style={[styles.quickAction, hasAnyReminder ? styles.quickActionReminder : null]} onPress={handleReminderChoice}>
-          <Ionicons name="notifications" size={17} color={businessDetailColors.charcoal} />
-          <Text style={styles.quickActionText}>Remind</Text>
-          {reminderBusy ? <Text style={styles.busyLabel}>...</Text> : null}
-        </Pressable>
+      <View style={styles.quickActionsContainer}>
+        <Text style={styles.quickActionsLabel}>QUICK ACTIONS</Text>
 
-        <Pressable style={styles.quickAction} onPress={handleCalendar}>
-          <Ionicons name="calendar" size={17} color={businessDetailColors.charcoal} />
-          <Text style={styles.quickActionText}>Calendar</Text>
-        </Pressable>
+        <View style={styles.actionsGrid}>
+          <Pressable style={[styles.quickAction, isGoing ? styles.quickActionActive : null]} onPress={onPressGoing}>
+            <Ionicons name="people" size={17} color={businessDetailColors.charcoal} />
+            <Text style={styles.quickActionText}>Going</Text>
+            {rsvpBusy ? <Text style={styles.busyLabel}>...</Text> : null}
+          </Pressable>
 
-        <Pressable style={styles.quickAction} onPress={handleShare}>
-          <Ionicons name="share-social" size={17} color={businessDetailColors.charcoal} />
-          <Text style={styles.quickActionText}>Share</Text>
-        </Pressable>
+          <Pressable style={[styles.quickAction, hasAnyReminder ? styles.quickActionReminder : null]} onPress={handleReminderChoice}>
+            <Ionicons name="notifications" size={17} color={businessDetailColors.charcoal} />
+            <Text style={styles.quickActionText}>Remind</Text>
+            {reminderBusy ? <Text style={styles.busyLabel}>...</Text> : null}
+          </Pressable>
+
+          <Pressable style={styles.quickAction} onPress={handleCalendar}>
+            <Ionicons name="calendar" size={17} color={businessDetailColors.charcoal} />
+            <Text style={styles.quickActionText}>Calendar</Text>
+          </Pressable>
+
+          <Pressable style={styles.quickAction} onPress={handleShare}>
+            <Ionicons name="share-social" size={17} color={businessDetailColors.charcoal} />
+            <Text style={styles.quickActionText}>Share</Text>
+          </Pressable>
+        </View>
       </View>
-
-      <Pressable style={styles.reviewButton} onPress={onPressWriteReview}>
-        <Text style={styles.reviewButtonText}>Write Review</Text>
-      </Pressable>
     </View>
   );
 }
@@ -161,29 +172,53 @@ export function EventSpecialActionCard({
 const styles = StyleSheet.create({
   card: {
     borderRadius: businessDetailSpacing.cardRadius,
-    borderWidth: 1,
-    borderColor: businessDetailColors.borderSoft,
-    backgroundColor: businessDetailColors.cardTint,
+    backgroundColor: businessDetailColors.cardBg,
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 4,
   },
   heading: {
     color: businessDetailColors.charcoal,
     fontSize: 19,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  primaryButton: {
+  ctaButton: {
     borderRadius: 999,
-    backgroundColor: businessDetailColors.coral,
+    overflow: 'hidden',
+  },
+  ctaGradient: {
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
   },
-  primaryButtonText: {
+  ctaText: {
     color: businessDetailColors.white,
     fontSize: 14,
     fontWeight: '700',
+  },
+  quickActionsContainer: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.70)',
+    backgroundColor: 'rgba(229,224,229,0.70)',
+    padding: 12,
+  },
+  quickActionsLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 2.0,
+    color: 'rgba(45,45,45,0.55)',
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -196,7 +231,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.32)',
     backgroundColor: 'rgba(229,224,229,0.8)',
-    minHeight: 58,
+    minHeight: 72,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
@@ -220,18 +255,6 @@ const styles = StyleSheet.create({
     top: 8,
     color: businessDetailColors.textSubtle,
     fontSize: 11,
-    fontWeight: '700',
-  },
-  reviewButton: {
-    borderRadius: 999,
-    backgroundColor: businessDetailColors.coral,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  reviewButtonText: {
-    color: businessDetailColors.white,
-    fontSize: 14,
     fontWeight: '700',
   },
 });

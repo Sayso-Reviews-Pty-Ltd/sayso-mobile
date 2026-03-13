@@ -19,6 +19,7 @@ import { supabase } from '../../../lib/supabase';
 import { routes } from '../../../navigation/routes';
 import { SkeletonBlock } from '../../../components/SkeletonBlock';
 import { Text } from '../../../components/Typography';
+import { StackPageHeader } from '../../../components/StackPageHeader';
 
 const GRID = 8;
 
@@ -205,14 +206,11 @@ export default function DMInboxScreen() {
     <View style={[styles.root, { backgroundColor: C.page }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + GRID * 1.5 }]}>
-        <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color={C.charcoal} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <View style={styles.headerRight} />
-      </View>
+      <StackPageHeader
+        navigation={{ canGoBack: () => true, goBack: () => router.back() }}
+        onPressBack={() => router.back()}
+        showBackButton={true}
+      />
 
       {/* Search */}
       <View style={styles.searchWrap}>
@@ -284,36 +282,6 @@ export default function DMInboxScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: GRID * 2,
-    paddingBottom: GRID * 1.5,
-    gap: GRID,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.62)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(45,45,45,0.08)',
-    flexShrink: 0,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: C.charcoal,
-    letterSpacing: -0.3,
-    textAlign: 'center',
-  },
-  headerRight: {
-    width: 40,
-  },
 
   searchWrap: {
     paddingHorizontal: GRID * 2,

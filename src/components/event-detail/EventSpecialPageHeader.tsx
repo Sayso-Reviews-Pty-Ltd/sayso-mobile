@@ -6,7 +6,7 @@ type Props = {
   onPressBack: () => void;
   onPressNotifications: () => void;
   onPressMessages: () => void;
-  menuItems: EventSpecialHeaderMenuItem[];
+  menuItems?: EventSpecialHeaderMenuItem[];
   collapsed?: boolean;
 };
 

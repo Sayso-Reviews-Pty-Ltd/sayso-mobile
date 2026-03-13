@@ -75,17 +75,20 @@ export function EventSpecialMoreDatesCard({
 const styles = StyleSheet.create({
   card: {
     borderRadius: businessDetailSpacing.cardRadius,
-    borderWidth: 1,
-    borderColor: businessDetailColors.borderSoft,
-    backgroundColor: businessDetailColors.cardTint,
+    backgroundColor: businessDetailColors.cardBg,
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 4,
   },
   heading: {
     color: businessDetailColors.charcoal,
     fontSize: 19,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   row: {
     minHeight: 32,
@@ -95,7 +98,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   dateText: {
-    color: businessDetailColors.textMuted,
+    color: 'rgba(45,45,45,0.80)',
     fontSize: 14,
     flex: 1,
   },

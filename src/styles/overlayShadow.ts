@@ -1,8 +1,17 @@
 import { Platform, type ViewStyle } from 'react-native';
 
-type WebViewStyle = ViewStyle & {
-  boxShadow?: string;
-};
+type WebViewStyle = ViewStyle & { boxShadow?: string };
+
+// Tailwind shadow-md equivalent
+export const CARD_SHADOW_MD: ViewStyle = Platform.OS === 'web'
+  ? ({ boxShadow: '0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10)' } as WebViewStyle)
+  : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.10,
+      shadowRadius: 6,
+      elevation: 4,
+    };
 
 export function getOverlayShadowStyle(radius: number): ViewStyle {
   if (Platform.OS === 'web') {

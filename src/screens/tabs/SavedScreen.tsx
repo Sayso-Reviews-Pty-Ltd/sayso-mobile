@@ -22,6 +22,7 @@ import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../hooks/useSession';
 import { routes } from '../../navigation/routes';
 import { APP_PAGE_GUTTER } from '../../styles/layout';
+import { StackPageHeader } from '../../components/StackPageHeader';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -368,7 +369,6 @@ export default function SavedScreen() {
   const gridColumns = resolveGridColumns(width);
   const gridGap = isSmUp ? 12 : 16;
   const headingFontSize = isMdUp ? 36 : isSmUp ? 30 : 24;
-  const breadcrumbFontSize = isSmUp ? 16 : 14;
   const titleSectionMarginBottom = isSmUp ? 32 : 24;
   const pillHorizontalPadding = isSmUp ? 16 : 12;
   const pillFontSize = isSmUp ? 14 : 12;
@@ -502,7 +502,7 @@ export default function SavedScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={styles.container}>
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <LinearGradient
           colors={['rgba(125,155,118,0.10)', OFF_WHITE, 'rgba(114,47,55,0.05)']}
@@ -511,6 +511,11 @@ export default function SavedScreen() {
           style={StyleSheet.absoluteFill}
         />
       </View>
+
+      <StackPageHeader
+        navigation={{ canGoBack: () => false, goBack: () => {} }}
+        showBackButton={false}
+      />
 
       <ScrollView
         ref={scrollRef}
@@ -521,20 +526,6 @@ export default function SavedScreen() {
         scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={savedQuery.isRefetching} onRefresh={handleRefetch} />}
       >
-        <TransitionItem variant="header" index={0}>
-          <View style={styles.maxContainer}>
-            <View style={styles.breadcrumbWrap}>
-              <View style={styles.breadcrumbRow}>
-                <Pressable onPress={() => router.push(routes.home() as never)}>
-                  <Text style={[styles.breadcrumbLink, { fontSize: breadcrumbFontSize }]}>Home</Text>
-                </Pressable>
-                <Ionicons name="chevron-forward" size={16} color="rgba(45,45,45,0.6)" />
-                <Text style={[styles.breadcrumbCurrent, { fontSize: breadcrumbFontSize }]}>Saved</Text>
-              </View>
-            </View>
-          </View>
-        </TransitionItem>
-
         {isLoading ? (
           <SavedPageSkeleton columnCount={gridColumns} gridGap={gridGap} />
         ) : errorMessage ? (
@@ -651,24 +642,6 @@ const styles = StyleSheet.create({
     maxWidth: 2000,
     alignSelf: 'center',
     paddingHorizontal: APP_PAGE_GUTTER,
-  },
-
-  breadcrumbWrap: {
-    paddingHorizontal: APP_PAGE_GUTTER,
-    paddingBottom: 4,
-  },
-  breadcrumbRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  breadcrumbLink: {
-    color: 'rgba(45,45,45,0.7)',
-    fontWeight: '500',
-  },
-  breadcrumbCurrent: {
-    color: CHARCOAL,
-    fontWeight: '600',
   },
 
   titleSection: {

@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NAVBAR_BG_90 } from '../../styles/colors';
 import { getOverlayShadowStyle } from '../../styles/overlayShadow';
 import { Text } from '../Typography';
@@ -15,6 +16,7 @@ export function EventDateRibbon({ label }: Props) {
   return (
     <View style={styles.wrap} pointerEvents="none">
       <View style={[styles.ribbon, getOverlayShadowStyle(18)]}>
+        <Ionicons name="calendar-outline" size={12} color="#FFFFFF" />
         <Text style={styles.label} numberOfLines={1}>
           {label}
         </Text>
@@ -26,23 +28,19 @@ export function EventDateRibbon({ label }: Props) {
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',
-    left: -1,
-    top: -1,
-    width: 150,
-    height: 120,
-    overflow: 'hidden',
+    left: 12,
+    top: 12,
   },
   ribbon: {
-    position: 'absolute',
-    left: -40,
-    top: 22,
-    width: 250,
-    paddingVertical: 9,
-    paddingHorizontal: 18,
-    backgroundColor: NAVBAR_BG_90,
-    transform: [{ rotate: '-50deg' }],
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    backgroundColor: NAVBAR_BG_90,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
   },
   label: {
     fontSize: 12,

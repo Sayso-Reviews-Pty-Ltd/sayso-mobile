@@ -10,6 +10,7 @@ import { homeTokens } from '../../screens/tabs/home/HomeTokens';
 export type BusinessHeaderMenuItem = {
   key: string;
   label: string;
+  icon?: string;
   onPress: () => void;
 };
 
@@ -17,7 +18,7 @@ type Props = {
   onPressBack: () => void;
   onPressNotifications: () => void;
   onPressMessages: () => void;
-  menuItems: BusinessHeaderMenuItem[];
+  menuItems?: BusinessHeaderMenuItem[];
   collapsed?: boolean;
   showBackButton?: boolean;
 };
@@ -36,7 +37,7 @@ export function BusinessPageHeader({
   onPressBack,
   onPressNotifications,
   onPressMessages,
-  menuItems,
+  menuItems = [],
   collapsed = false,
   showBackButton = true,
 }: Props) {
@@ -86,7 +87,7 @@ export function BusinessPageHeader({
 
     return {
       left,
-      top: menuAnchor.y + menuAnchor.height + 6,
+      top: menuAnchor.y + menuAnchor.height + 8,
     };
   }, [menuAnchor]);
 
@@ -157,9 +158,16 @@ export function BusinessPageHeader({
             {menuItems.map((item, index) => (
               <Pressable
                 key={item.key}
-                style={[styles.menuItem, index !== menuItems.length - 1 ? styles.menuItemBorder : null]}
+                style={({ pressed }) => [
+                  styles.menuItem,
+                  index !== menuItems.length - 1 ? styles.menuItemBorder : null,
+                  pressed ? styles.menuItemPressed : null,
+                ]}
                 onPress={() => handleSelectMenuItem(item)}
               >
+                {item.icon ? (
+                  <Ionicons name={item.icon as never} size={18} color="rgba(255,255,255,0.6)" />
+                ) : null}
                 <Text style={styles.menuItemText}>{item.label}</Text>
               </Pressable>
             ))}
@@ -232,19 +240,22 @@ const styles = StyleSheet.create({
   },
   menuBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(17,24,39,0.22)',
+    backgroundColor: 'rgba(17,24,39,0.36)',
     zIndex: 9999,
   },
   menuCard: {
     position: 'absolute',
     width: 222,
-    borderRadius: 14,
-    overflow: 'hidden',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.36)',
-    backgroundColor: 'rgba(229,224,229,0.98)',
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: homeTokens.coralDark,
     zIndex: 9999,
-    elevation: 20,
+    elevation: 24,
+    shadowColor: '#111827',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 20,
   },
   menuCardFallback: {
     top: 92,
@@ -252,16 +263,23 @@ const styles = StyleSheet.create({
     marginLeft: -(MENU_WIDTH / 2),
   },
   menuItem: {
-    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  menuItemPressed: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(45,45,45,0.1)',
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   menuItemText: {
-    color: businessDetailColors.charcoal,
+    color: 'rgba(255,255,255,0.9)',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
 });

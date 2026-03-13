@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BADGE_MAPPINGS, BADGE_GROUPS, type BadgeMappingItem } from '../../lib/badgeMappings';
 import { getBadgeImage } from '../../lib/badgeImages';
 import { Text } from '../../components/Typography';
+import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 
 const GRID = 8;
 
@@ -101,6 +104,25 @@ export default function BadgesScreen() {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollTopVisibleRef = useRef(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const setScrollTopVisible = useCallback((v: boolean) => {
+    if (scrollTopVisibleRef.current === v) return;
+    scrollTopVisibleRef.current = v;
+    setShowScrollTop(v);
+  }, []);
+
+  const handleScrollToTop = useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
+  useGlobalScrollToTop({ visible: showScrollTop, enabled: true, onScrollToTop: handleScrollToTop });
+
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setScrollTopVisible(e.nativeEvent.contentOffset.y > 300);
+  }, [setScrollTopVisible]);
+
   const badgesByGroup = useMemo(() => {
     const groups: Record<string, BadgeMappingItem[]> = {
       explorer: [],
@@ -139,6 +161,7 @@ export default function BadgesScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
@@ -146,6 +169,8 @@ export default function BadgesScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         {/* Page header */}
         <View style={styles.pageHeader}>
@@ -391,9 +416,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: GRID * 1.5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
     elevation: 4,
   },
   ctaTitle: {

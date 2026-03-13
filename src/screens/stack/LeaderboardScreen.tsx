@@ -114,15 +114,6 @@ export default function LeaderboardScreen() {
     router.replace(routes.home() as never);
   };
 
-  const menuItems = useMemo(() => [
-    { key: 'home', label: 'Home', onPress: () => router.push(routes.home() as never) },
-    { key: 'for-you', label: 'For You', onPress: () => router.push(routes.forYou() as never) },
-    { key: 'trending', label: 'Trending', onPress: () => router.push(routes.trending() as never) },
-    { key: 'events', label: 'Events & Specials', onPress: () => router.push(routes.eventsSpecials() as never) },
-    { key: 'saved', label: 'Saved', onPress: () => router.push(routes.saved() as never) },
-    { key: 'profile', label: 'Profile', onPress: () => router.push(routes.profile() as never) },
-  ], [router]);
-
   // Business filtering + sorting
   const availableInterestIds = useMemo(() => {
     const ids = new Set<string>(
@@ -173,7 +164,6 @@ export default function LeaderboardScreen() {
           onPressBack={handleBack}
           onPressNotifications={() => router.push(routes.notifications() as never)}
           onPressMessages={() => router.push(routes.dmInbox() as never)}
-          menuItems={menuItems}
           collapsed={true}
         />
       </View>
@@ -465,7 +455,7 @@ const s = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.10,
-    shadowRadius: 12,
+    shadowRadius: 6,
     elevation: 4,
     overflow: 'hidden',
   },

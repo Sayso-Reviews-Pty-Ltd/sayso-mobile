@@ -21,13 +21,13 @@ export const CARD_GRADIENT = ['#9DAB9B', '#9DAB9B', 'rgba(157,171,155,0.95)'] as
 
 // Matches web's shadow-md
 export const cardShadowStyle = Platform.select({
-  web: { boxShadow: '0 4px 10px rgba(0,0,0,0.07)' } as object,
+  web: { boxShadow: '0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10)' } as object,
   default: {
-    shadowColor: '#000000',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 4,
   },
 });
 

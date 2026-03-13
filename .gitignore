@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+package-lock.json
 
 # Expo / React Native
 .expo/
@@ -23,6 +24,8 @@ ios/Pods/
 
 # Logs
 *.log
+*.log.*
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -49,15 +52,24 @@ Thumbs.db
 *.rej
 
 # Local Codex/Claude working data
-.claude/settings.local.json
-.claude/*.local.*
-.claude/**/*.local.*
-.claude/*.lock
-.claude/**/*.lock
-.claude/worktrees/
+.claude/
 
 # Local machine-only config variants
 *.local.json
 *.local.yaml
 *.local.yml
 *.local.toml
+
+# Secrets / signing artifacts
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+*.cer
+*.crt
+*.der
+*.secret
+secrets/

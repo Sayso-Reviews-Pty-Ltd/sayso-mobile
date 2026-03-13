@@ -240,10 +240,10 @@ export default function ForYouRoute() {
 
 const styles = StyleSheet.create({
   heroSection: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 0,
     paddingTop: 16,
     paddingBottom: 12,
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   heroTitle: {
     fontSize: 28,
@@ -262,6 +262,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 4,
     width: '100%',
+    alignSelf: 'stretch',
   },
   resultsCount: {
     fontSize: 13,

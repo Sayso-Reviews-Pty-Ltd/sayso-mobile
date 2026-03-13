@@ -112,6 +112,7 @@ export default function BusinessScreen({ initialTab }: Props) {
   const headerMenuItems = useMemo<BusinessHeaderMenuItem[]>(
     () => [
       { key: 'home', label: 'Home', onPress: () => router.push(routes.home() as never) },
+      { key: 'for-you', label: 'For You', onPress: () => router.push(routes.forYou() as never) },
       { key: 'trending', label: 'Trending', onPress: () => router.push(routes.trending() as never) },
       { key: 'events', label: 'Events & Specials', onPress: () => router.push(routes.eventsSpecials() as never) },
       { key: 'saved', label: 'Saved', onPress: () => router.push(routes.saved() as never) },
@@ -252,11 +253,11 @@ export default function BusinessScreen({ initialTab }: Props) {
 
           {showDeferredSections ? (
             <>
-              <TransitionItem variant="card" index={4}>
+              <TransitionItem variant="card" index={4} animate={false}>
                 <BusinessPhotoGrid businessName={business.name} photos={images} />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={5}>
+              <TransitionItem variant="card" index={5} animate={false}>
                 <BusinessLocationCard
                   name={business.name}
                   address={business.address}
@@ -266,7 +267,7 @@ export default function BusinessScreen({ initialTab }: Props) {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={6}>
+              <TransitionItem variant="card" index={6} animate={false}>
                 <BusinessContactInfoCard
                   phone={business.phone}
                   email={business.email}
@@ -276,7 +277,7 @@ export default function BusinessScreen({ initialTab }: Props) {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={7}>
+              <TransitionItem variant="card" index={7} animate={false}>
                 <BusinessActionCard
                   onPressLeaveReview={handleLeaveReview}
                   onPressEditBusiness={() => router.push('/role-unsupported' as never)}
@@ -284,14 +285,14 @@ export default function BusinessScreen({ initialTab }: Props) {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={8}>
+              <TransitionItem variant="card" index={8} animate={false}>
                 <PersonalizationInsightsCard
                   business={business}
                   onPressLogin={() => router.push(routes.onboarding() as never)}
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={9}>
+              <TransitionItem variant="card" index={9} animate={false}>
                 <BusinessPerformanceInsightsCard
                   punctuality={business.stats?.percentiles?.punctuality}
                   costEffectiveness={business.stats?.percentiles?.['cost-effectiveness']}
@@ -300,7 +301,7 @@ export default function BusinessScreen({ initialTab }: Props) {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={10}>
+              <TransitionItem variant="card" index={10} animate={false}>
                 <BusinessContactCard
                   businessId={business.id}
                   businessName={business.name}
@@ -313,22 +314,22 @@ export default function BusinessScreen({ initialTab }: Props) {
 
         {showDeferredSections ? (
           <>
-            <TransitionItem variant="card" index={11}>
+            <TransitionItem variant="card" index={11} animate={false}>
               <BusinessOwnedEventsSection businessId={business.id} businessName={business.name} />
             </TransitionItem>
 
-            <TransitionItem variant="card" index={12}>
+            <TransitionItem variant="card" index={12} animate={false}>
               <BusinessReviewsSection businessId={business.id} onPressWriteReview={handleLeaveReview} />
             </TransitionItem>
 
-            <TransitionItem variant="card" index={13}>
+            <TransitionItem variant="card" index={13} animate={false}>
               <SimilarBusinessesSection businessId={business.id} />
             </TransitionItem>
           </>
         ) : null}
 
         {initialTab === 'reviews' ? (
-          <TransitionItem variant="card" index={14}>
+          <TransitionItem variant="card" index={14} animate={false}>
             <View style={styles.deeplinkHint}>
               <Text style={styles.deeplinkHintText}>
                 This route now opens the write-review flow to match web behavior.

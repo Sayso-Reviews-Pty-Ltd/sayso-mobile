@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { TopReviewerDto, RecentReviewDto } from '@sayso/contracts';
 import { Text } from '../Typography';
+import { getCardDepthShadowStyle } from '../../styles/overlayShadow';
 import { useAuth } from '../../providers/AuthProvider';
 import { routes } from '../../navigation/routes';
 
@@ -516,13 +517,8 @@ export function ReviewerCard(props: ReviewerCardProps) {
 const reviewerStyles = StyleSheet.create({
   card: {
     width: 240,
-    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    ...getCardDepthShadowStyle(16),
   },
   accent: {
     height: 3,
@@ -655,13 +651,8 @@ const reviewStyles = StyleSheet.create({
     width: 213,
     height: 187,
     backgroundColor: C.cardBg,
-    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    ...getCardDepthShadowStyle(16),
   },
   accent: {
     height: 3,

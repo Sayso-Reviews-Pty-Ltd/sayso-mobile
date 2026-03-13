@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getCardDepthShadowStyle } from '../styles/overlayShadow';
 import { CARD_CTA_RADIUS, CARD_RADIUS } from '../styles/radii';
 import { SkeletonBlock } from './SkeletonBlock';
 
@@ -30,17 +31,13 @@ export function SkeletonCard() {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: CARD_RADIUS,
-    overflow: 'hidden',
     backgroundColor: '#9DAB9B',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 6,
+    ...getCardDepthShadowStyle(CARD_RADIUS),
   },
   cardSurface: {
     width: '100%',
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
   },
   image: {
     position: 'relative',

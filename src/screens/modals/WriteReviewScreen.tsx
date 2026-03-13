@@ -342,6 +342,23 @@ function AnimatedTip({ promptIndex, reducedMotion }: { promptIndex: number; redu
   );
 }
 
+// ─── Gradient star (two-layer clip: bright gold top, deep amber base)
+function GradientStar({ filled, size = 42 }: { filled: boolean; size?: number }) {
+  if (!filled) {
+    return <Ionicons name="star-outline" size={size} color={C.charcoal30} />;
+  }
+  return (
+    <View style={{ width: size, height: size }}>
+      {/* Base layer — deep warm amber */}
+      <Ionicons name="star" size={size} color="#C8720A" />
+      {/* Top 42% — bright gold highlight, clipped */}
+      <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', height: Math.round(size * 0.42) }]}>
+        <Ionicons name="star" size={size} color="#FFD747" />
+      </View>
+    </View>
+  );
+}
+
 // ─── Rating selector
 function RatingSelector({
   value, onChange, disabled,
@@ -413,7 +430,7 @@ function RatingSelector({
               accessibilityRole="button"
               accessibilityLabel={`Rate ${i} star${i !== 1 ? 's' : ''}`}
             >
-              <Ionicons name={i <= value ? 'star' : 'star-outline'} size={42} color={i <= value ? C.amber : C.charcoal30} />
+              <GradientStar filled={i <= value} size={42} />
             </Pressable>
           </Animated.View>
         ))}

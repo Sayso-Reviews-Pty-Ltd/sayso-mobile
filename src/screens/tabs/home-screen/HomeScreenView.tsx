@@ -23,8 +23,12 @@ import { HomeEventsSpecialsRow } from '../home/HomeEventsSpecialsRow';
 import { HomeSearchBar } from '../home/HomeSearchBar';
 import { HomeSearchResults } from '../home/HomeSearchResults';
 import { HomeSearchSuggestions } from '../home/HomeSearchSuggestions';
+import { HomeActivityTicker } from '../home/HomeActivityTicker';
+import { HomeGreetingCard } from '../home/HomeGreetingCard';
+import { HomeMoodPicker } from '../home/HomeMoodPicker';
 import { HomeSectionHeader } from '../home/HomeSectionHeader';
 import { homeTokens } from '../home/HomeTokens';
+import type { EnhancedProfileDto } from '../../../hooks/useProfile';
 import { FROSTED_CARD_BORDER_COLOR } from '../../../styles/cardSurface';
 import { getOverlayShadowStyle } from '../../../styles/overlayShadow';
 import { CARD_CTA_RADIUS, CARD_RADIUS } from '../../../styles/radii';
@@ -54,16 +58,6 @@ type Props = {
   refreshing: boolean;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   headerCollapsed: boolean;
-  headerPaddingTop: Animated.AnimatedInterpolation<number>;
-  headerPaddingBottom: Animated.AnimatedInterpolation<number>;
-  headerRowHeight: Animated.AnimatedInterpolation<number>;
-  headerRowOpacity: Animated.AnimatedInterpolation<number>;
-  headerRowTranslateY: Animated.AnimatedInterpolation<number>;
-  headerRowScale: Animated.AnimatedInterpolation<number>;
-  headerMaterialOpacity: Animated.AnimatedInterpolation<number>;
-  searchBarMarginTop: Animated.AnimatedInterpolation<number>;
-  searchBarTranslateY: Animated.AnimatedInterpolation<number>;
-  searchBarScale: Animated.AnimatedInterpolation<number>;
   forYou: {
     businesses: BusinessListItemDto[];
     isLoading: boolean;
@@ -105,6 +99,9 @@ type Props = {
   onNavigateLeaderboardBusinesses: () => void;
   onNavigateBadges: () => void;
   onNavigateOnboarding: () => void;
+  profile: EnhancedProfileDto | null | undefined;
+  profileLoading: boolean;
+  onSelectMood: (query: string) => void;
 };
 
 function HomeScreenViewComponent({
@@ -130,16 +127,6 @@ function HomeScreenViewComponent({
   refreshing,
   handleScroll,
   headerCollapsed,
-  headerPaddingTop,
-  headerPaddingBottom,
-  headerRowHeight,
-  headerRowOpacity,
-  headerRowTranslateY,
-  headerRowScale,
-  headerMaterialOpacity,
-  searchBarMarginTop,
-  searchBarTranslateY,
-  searchBarScale,
   forYou,
   trending,
   events,
@@ -156,6 +143,9 @@ function HomeScreenViewComponent({
   onNavigateLeaderboardBusinesses,
   onNavigateBadges,
   onNavigateOnboarding,
+  profile,
+  profileLoading,
+  onSelectMood,
 }: Props) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -163,33 +153,19 @@ function HomeScreenViewComponent({
 
   return (
     <SafeAreaView style={styles.container}>
-      <Animated.View
+      <View
         style={[
           styles.headerWrap,
-          {
-            paddingTop: headerPaddingTop,
-            paddingBottom: headerPaddingBottom,
-          },
+          headerCollapsed ? styles.headerWrapCollapsed : styles.headerWrapExpanded,
         ]}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.headerMaterial,
-            headerCollapsed ? styles.headerMaterialCollapsed : null,
-            { opacity: headerMaterialOpacity },
-          ]}
-        />
-        <Animated.View
+        {headerCollapsed ? <View pointerEvents="none" style={[styles.headerMaterial, styles.headerMaterialCollapsed]} /> : null}
+        <View
           pointerEvents={headerCollapsed ? 'none' : 'auto'}
           style={[
             styles.headerRowWrap,
-            {
-              height: headerRowHeight,
-              opacity: headerRowOpacity,
-              transform: [{ translateY: headerRowTranslateY }, { scale: headerRowScale }],
-            },
+            headerCollapsed ? styles.headerRowWrapCollapsed : styles.headerRowWrapExpanded,
           ]}
         >
           <TransitionItem variant="header" index={0}>
@@ -200,16 +176,8 @@ function HomeScreenViewComponent({
               <HeaderDmBellActions />
             </View>
           </TransitionItem>
-        </Animated.View>
-        <Animated.View
-          style={[
-            styles.searchBarWrap,
-            {
-              marginTop: searchBarMarginTop,
-              transform: [{ translateY: searchBarTranslateY }, { scale: searchBarScale }],
-            },
-          ]}
-        >
+        </View>
+        <View style={[styles.searchBarWrap, headerCollapsed ? styles.searchBarWrapCollapsed : styles.searchBarWrapExpanded]}>
           <TransitionItem variant="input" index={1}>
             <HomeSearchBar
               value={searchInput}
@@ -221,8 +189,8 @@ function HomeScreenViewComponent({
               activeFilterCount={activeFilterCount}
             />
           </TransitionItem>
-        </Animated.View>
-      </Animated.View>
+        </View>
+      </View>
 
       {/* Live suggestions overlay — absolute, sits above content below header */}
       {showSuggestions ? (
@@ -279,7 +247,13 @@ function HomeScreenViewComponent({
           onScroll={handleScroll}
           scrollEventThrottle={16}
         >
-          <TransitionItem variant="card" index={2}>
+          <TransitionItem variant="header" index={2}>
+            <HomeGreetingCard profile={profile} loading={profileLoading} />
+            <HomeMoodPicker onSelectMood={onSelectMood} />
+            <HomeActivityTicker reviews={recentReviews.reviews} loading={recentReviews.isLoading} />
+          </TransitionItem>
+
+          <TransitionItem variant="card" index={3}>
             <View style={styles.section}>
             <HomeSectionHeader
               title="For You"
@@ -352,7 +326,7 @@ function HomeScreenViewComponent({
             </View>
           </TransitionItem>
 
-          <TransitionItem variant="card" index={3}>
+          <TransitionItem variant="card" index={4}>
             <View style={styles.section}>
             <HomeSectionHeader
               title="Trending Now"
@@ -370,7 +344,7 @@ function HomeScreenViewComponent({
             </View>
           </TransitionItem>
 
-          <TransitionItem variant="card" index={4}>
+          <TransitionItem variant="card" index={5}>
             <View style={styles.section}>
             <HomeSectionHeader
               title="Events & Specials"
@@ -386,7 +360,7 @@ function HomeScreenViewComponent({
             </View>
           </TransitionItem>
 
-          <TransitionItem variant="card" index={5}>
+          <TransitionItem variant="card" index={6}>
             <HomeCommunityHighlightsSection
               reviewers={reviewers.reviewers}
               reviewersMode={reviewers.mode}
@@ -426,6 +400,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: FROSTED_CARD_BORDER_COLOR,
   },
+  headerWrapExpanded: {
+    paddingTop: 10,
+    paddingBottom: 14,
+  },
+  headerWrapCollapsed: {
+    paddingTop: 6,
+    paddingBottom: 10,
+  },
   headerMaterial: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: homeTokens.coralDark,
@@ -453,6 +435,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  headerRowWrapExpanded: {
+    height: 42,
+    opacity: 1,
+  },
+  headerRowWrapCollapsed: {
+    height: 0,
+    opacity: 0,
+  },
   headerCopy: {
     flex: 1,
   },
@@ -469,6 +459,12 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     position: 'relative',
     zIndex: 30,
+  },
+  searchBarWrapExpanded: {
+    marginTop: 10,
+  },
+  searchBarWrapCollapsed: {
+    marginTop: 3,
   },
   suggestionsOverlay: {
     position: 'absolute',

@@ -4,10 +4,10 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
-import MapLibreGL from '@maplibre/maplibre-react-native';
 import { routes } from '../../navigation/routes';
 import { homeTokens } from '../../screens/tabs/home/HomeTokens';
 import { Text } from '../Typography';
+import { configureMapLibreAccessToken, getMapLibreModule } from '../../lib/maplibre';
 import {
   CAPE_TOWN_CENTER,
   fetchTrendingNearbyPins,
@@ -16,7 +16,7 @@ import {
   type MapCenter,
 } from './mapPreviewShared';
 
-MapLibreGL.setAccessToken(MAPBOX_ACCESS_TOKEN);
+configureMapLibreAccessToken(MAPBOX_ACCESS_TOKEN);
 
 const MAP_STYLE = `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${MAPBOX_ACCESS_TOKEN}`;
 
@@ -26,7 +26,9 @@ type Props = {
 
 export function MapPreviewHero({ style }: Props) {
   const router = useRouter();
-  const cameraRef = useRef<MapLibreGL.Camera>(null);
+  const mapLibre = useMemo(() => getMapLibreModule(), []);
+  const MapLibre = mapLibre as any;
+  const cameraRef = useRef<any>(null);
   const lastMarkerPressAt = useRef(0);
   const [center, setCenter] = useState<MapCenter>(CAPE_TOWN_CENTER);
   const [mapReady, setMapReady] = useState(false);
@@ -65,7 +67,7 @@ export function MapPreviewHero({ style }: Props) {
   );
 
   useEffect(() => {
-    if (!mapReady || mapPins.length === 0) return;
+    if (!mapLibre || !mapReady || mapPins.length === 0) return;
 
     if (mapPins.length === 1) {
       cameraRef.current?.setCamera({
@@ -84,7 +86,7 @@ export function MapPreviewHero({ style }: Props) {
       [24, 24, 24, 24],
       350
     );
-  }, [mapPins, mapReady]);
+  }, [mapLibre, mapPins, mapReady]);
 
   const handleOpenMap = useCallback(() => {
     if (Date.now() - lastMarkerPressAt.current < 300) return;
@@ -109,44 +111,56 @@ export function MapPreviewHero({ style }: Props) {
       <View style={styles.mapWrap}>
         <View style={styles.mapBase} />
 
-        <MapLibreGL.MapView
-          style={styles.nativeMap}
-          styleURL={MAP_STYLE}
-          scrollEnabled={false}
-          zoomEnabled={false}
-          rotateEnabled={false}
-          pitchEnabled={false}
-          onDidFinishLoadingMap={() => setMapReady(true)}
-          onPress={handleOpenMap}
-          attributionEnabled={false}
-          logoEnabled={false}
-          compassEnabled={false}
-          scaleBarEnabled={false}
-        >
-          <MapLibreGL.Camera
-            ref={cameraRef}
-            centerCoordinate={[center.lng, center.lat]}
-            zoomLevel={12}
-            animationDuration={0}
-          />
+        {mapLibre ? (
+          <MapLibre.MapView
+            style={styles.nativeMap}
+            styleURL={MAP_STYLE}
+            scrollEnabled={false}
+            zoomEnabled={false}
+            rotateEnabled={false}
+            pitchEnabled={false}
+            onDidFinishLoadingMap={() => setMapReady(true)}
+            onPress={handleOpenMap}
+            attributionEnabled={false}
+            logoEnabled={false}
+            compassEnabled={false}
+            scaleBarEnabled={false}
+          >
+            <MapLibre.Camera
+              ref={cameraRef}
+              centerCoordinate={[center.lng, center.lat]}
+              zoomLevel={12}
+              animationDuration={0}
+            />
 
-          {mapPins.map((pin) => (
-            <MapLibreGL.MarkerView
-              key={pin.id}
-              id={pin.id}
-              coordinate={[pin.lng, pin.lat]}
-            >
-              <Pressable onPress={() => handleMarkerPress(pin.businessId)} hitSlop={8}>
-                <View style={styles.pinMarkerWrap}>
-                  <View style={styles.pinAura} />
-                  <View style={styles.pin}>
-                    <View style={styles.pinCore} />
+            {mapPins.map((pin) => (
+              <MapLibre.MarkerView
+                key={pin.id}
+                id={pin.id}
+                coordinate={[pin.lng, pin.lat]}
+              >
+                <Pressable onPress={() => handleMarkerPress(pin.businessId)} hitSlop={8}>
+                  <View style={styles.pinMarkerWrap}>
+                    <View style={styles.pinAura} />
+                    <View style={styles.pin}>
+                      <View style={styles.pinCore} />
+                    </View>
                   </View>
-                </View>
-              </Pressable>
-            </MapLibreGL.MarkerView>
-          ))}
-        </MapLibreGL.MapView>
+                </Pressable>
+              </MapLibre.MarkerView>
+            ))}
+          </MapLibre.MapView>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open map preview"
+            onPress={handleOpenMap}
+            style={styles.nativeUnavailable}
+          >
+            <Text style={styles.nativeUnavailableTitle}>Map preview unavailable in Expo Go</Text>
+            <Text style={styles.nativeUnavailableText}>Tap to open the map screen.</Text>
+          </Pressable>
+        )}
 
         <View pointerEvents="none" style={styles.colorWash} />
         <View pointerEvents="none" style={styles.liveBadge}>
@@ -188,6 +202,25 @@ const styles = StyleSheet.create({
   },
   nativeMap: {
     ...StyleSheet.absoluteFillObject,
+  },
+  nativeUnavailable: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    gap: 6,
+    backgroundColor: 'rgba(114,47,55,0.12)',
+  },
+  nativeUnavailableTitle: {
+    color: '#2D2D2D',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  nativeUnavailableText: {
+    color: 'rgba(45,45,45,0.72)',
+    fontSize: 12,
+    textAlign: 'center',
   },
   colorWash: {
     ...StyleSheet.absoluteFillObject,

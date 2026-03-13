@@ -116,6 +116,7 @@ export default function LeaderboardScreen() {
 
   const menuItems = useMemo(() => [
     { key: 'home', label: 'Home', onPress: () => router.push(routes.home() as never) },
+    { key: 'for-you', label: 'For You', onPress: () => router.push(routes.forYou() as never) },
     { key: 'trending', label: 'Trending', onPress: () => router.push(routes.trending() as never) },
     { key: 'events', label: 'Events & Specials', onPress: () => router.push(routes.eventsSpecials() as never) },
     { key: 'saved', label: 'Saved', onPress: () => router.push(routes.saved() as never) },

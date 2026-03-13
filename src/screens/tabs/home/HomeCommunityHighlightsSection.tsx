@@ -19,6 +19,7 @@ import { COMMUNITY_BADGE_MARQUEE_ASSETS } from '../../../lib/communityBadgeMarqu
 import { HomeSectionHeader } from './HomeSectionHeader';
 import { HomeBusinessRow } from './HomeBusinessRow';
 import { homeTokens } from './HomeTokens';
+import { getCardDepthShadowStyle } from '../../../styles/overlayShadow';
 import { CARD_RADIUS } from '../../../styles/radii';
 import { NAVBAR_BG_COLOR } from '../../../styles/colors';
 
@@ -348,14 +349,9 @@ const styles = StyleSheet.create({
   },
   reviewerSkeletonCardShell: {
     width: 240,
-    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: homeTokens.cardBg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 6,
+    ...getCardDepthShadowStyle(16),
   },
   reviewerSkeletonTopAccent: {
     height: 3,

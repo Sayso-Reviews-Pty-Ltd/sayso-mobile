@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { BusinessListItemDto } from '@sayso/contracts';
@@ -7,7 +7,7 @@ import { routes } from '../navigation/routes';
 import { fetchBusinessDetail, getBusinessDetailQueryKey } from '../hooks/useBusinessDetail';
 import { markRouteTransitionStart } from '../lib/perf/perfMarkers';
 import { prefetchRouteIntent } from '../lib/perf/prefetchRouteIntent';
-import { getOverlayShadowStyle } from '../styles/overlayShadow';
+import { getCardDepthShadowStyle, getOverlayShadowStyle } from '../styles/overlayShadow';
 import { CARD_CTA_RADIUS, CARD_RADIUS } from '../styles/radii';
 import { Text } from './Typography';
 import { BusinessCardBadges } from './business-card/BusinessCardBadges';
@@ -28,25 +28,10 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
-type WebViewStyle = ViewStyle & {
-  boxShadow?: string;
-};
-
 const ctaShadowStyle = getOverlayShadowStyle(CARD_CTA_RADIUS);
 const CARD_GRADIENT = ['#9DAB9B', '#9DAB9B', 'rgba(157,171,155,0.95)'] as const;
 const CTA_GRADIENT = ['#722F37', 'rgba(114,47,55,0.90)'] as const;
-const cardShadowStyle: ViewStyle =
-  Platform.OS === 'web'
-    ? ({
-        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)',
-      } as WebViewStyle)
-    : {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
-        shadowRadius: 20,
-        elevation: 6,
-      };
+const cardShadowStyle = getCardDepthShadowStyle(CARD_RADIUS);
 
 function getDistanceBadgeText(business: BusinessListItemDto): string | null {
   const raw = (business as BusinessListItemDto & { distance?: number | string | null }).distance;
@@ -186,11 +171,12 @@ export const BusinessCard = memo(
 const styles = StyleSheet.create({
   card: {
     borderRadius: CARD_RADIUS,
-    overflow: 'hidden',
     backgroundColor: '#9DAB9B',
   },
   cardGradient: {
     width: '100%',
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
   },
   media: {
     width: '100%',

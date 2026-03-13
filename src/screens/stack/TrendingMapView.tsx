@@ -2,17 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import MapLibreGL from '@maplibre/maplibre-react-native';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { routes } from '../../navigation/routes';
 import { businessDetailColors } from '../../components/business-detail/styles';
 import { Text } from '../../components/Typography';
+import { configureMapLibreAccessToken, getMapLibreModule } from '../../lib/maplibre';
 import {
   CAPE_TOWN_CENTER,
   MAPBOX_ACCESS_TOKEN,
 } from '../../components/home/mapPreviewShared';
 
-MapLibreGL.setAccessToken(MAPBOX_ACCESS_TOKEN);
+configureMapLibreAccessToken(MAPBOX_ACCESS_TOKEN);
 
 const MAP_STYLE = `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${MAPBOX_ACCESS_TOKEN}`;
 
@@ -150,7 +150,8 @@ function BusinessCallout({ business, onClose, onView }: CalloutProps) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function TrendingMapView({ businesses, userLocation }: Props) {
   const router = useRouter();
-  const cameraRef = useRef<MapLibreGL.Camera>(null);
+  const mapLibre = useMemo(() => getMapLibreModule(), []);
+  const cameraRef = useRef<any>(null);
   const mapBusinesses = businesses.filter(
     (b): b is MappedBusiness => b.lat != null && b.lng != null
   );
@@ -197,9 +198,27 @@ export function TrendingMapView({ businesses, userLocation }: Props) {
     setSelectedBusiness(null);
   };
 
+  if (!mapLibre) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.unavailableWrap}>
+          <View style={styles.unavailableIconWrap}>
+            <Ionicons name="map-outline" size={18} color="#722F37" />
+          </View>
+          <Text style={styles.unavailableTitle}>Map unavailable in Expo Go</Text>
+          <Text style={styles.unavailableText}>
+            Use a development build to enable the interactive map.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  const MapLibre = mapLibre as any;
+
   return (
     <View style={styles.container}>
-      <MapLibreGL.MapView
+      <MapLibre.MapView
         style={styles.map}
         styleURL={MAP_STYLE}
         onPress={handleMapPress}
@@ -208,21 +227,21 @@ export function TrendingMapView({ businesses, userLocation }: Props) {
         compassEnabled={false}
         scaleBarEnabled={false}
       >
-        <MapLibreGL.Camera
+        <MapLibre.Camera
           ref={cameraRef}
           centerCoordinate={[mapCenter.lng, mapCenter.lat]}
           zoomLevel={12}
           animationDuration={0}
         />
 
-        <MapLibreGL.UserLocation visible />
+        <MapLibre.UserLocation visible />
 
         {clusters.map((cluster) => {
           if (cluster.members.length <= 1) {
             const business = cluster.members[0];
             const isSelected = selectedBusiness?.id === business.id;
             return (
-              <MapLibreGL.MarkerView
+              <MapLibre.MarkerView
                 key={business.id}
                 id={business.id}
                 coordinate={[business.lng, business.lat]}
@@ -235,14 +254,14 @@ export function TrendingMapView({ businesses, userLocation }: Props) {
                     </View>
                   </View>
                 </Pressable>
-              </MapLibreGL.MarkerView>
+              </MapLibre.MarkerView>
             );
           }
 
           const isExpanded = expandedClusterId === cluster.id;
           if (!isExpanded) {
             return (
-              <MapLibreGL.MarkerView
+              <MapLibre.MarkerView
                 key={cluster.id}
                 id={cluster.id}
                 coordinate={[cluster.centerLng, cluster.centerLat]}
@@ -256,7 +275,7 @@ export function TrendingMapView({ businesses, userLocation }: Props) {
                     </View>
                   </View>
                 </Pressable>
-              </MapLibreGL.MarkerView>
+              </MapLibre.MarkerView>
             );
           }
 
@@ -269,7 +288,7 @@ export function TrendingMapView({ businesses, userLocation }: Props) {
             );
             const isSelected = selectedBusiness?.id === business.id;
             return (
-              <MapLibreGL.MarkerView
+              <MapLibre.MarkerView
                 key={`${cluster.id}-${business.id}`}
                 id={`${cluster.id}-${business.id}`}
                 coordinate={[offset.longitude, offset.latitude]}
@@ -282,11 +301,11 @@ export function TrendingMapView({ businesses, userLocation }: Props) {
                     </View>
                   </View>
                 </Pressable>
-              </MapLibreGL.MarkerView>
+              </MapLibre.MarkerView>
             );
           });
         })}
-      </MapLibreGL.MapView>
+      </MapLibre.MapView>
 
       {/* Business Callout */}
       {selectedBusiness ? (
@@ -308,6 +327,38 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
     marginBottom: 8,
+  },
+  unavailableWrap: {
+    flex: 1,
+    marginBottom: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(114,47,55,0.16)',
+    backgroundColor: '#F3F5F8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  unavailableIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(114,47,55,0.12)',
+  },
+  unavailableTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#2D2D2D',
+    textAlign: 'center',
+  },
+  unavailableText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: 'rgba(45,45,45,0.65)',
+    textAlign: 'center',
   },
   pinMarkerWrap: {
     width: 20,

@@ -101,7 +101,7 @@ export function BusinessPageHeader({
               onPress={onPressBack}
               accessibilityLabel="Go back"
             >
-              <Ionicons name="chevron-back" size={20} color={foregroundColor} />
+              <Ionicons name="chevron-back-outline" size={20} color={foregroundColor} />
             </Pressable>
           ) : (
             <View style={styles.backButtonSpacer} />

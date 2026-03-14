@@ -147,7 +147,7 @@ function Avatar({
           }}
         >
           {size >= 40 ? (
-            <Ionicons name="person" size={size * 0.42} color={isTopCard ? 'rgba(251,211,77,0.5)' : C.charcoal40} />
+            <Ionicons name="person-outline" size={size * 0.42} color={isTopCard ? 'rgba(251,211,77,0.5)' : C.charcoal40} />
           ) : (
             <Text style={{ fontSize: size * 0.42, fontWeight: '700', color: isTopCard ? C.amber300 : C.sage }}>
               {initial}
@@ -160,14 +160,14 @@ function Avatar({
       {badge === 'verified' && (
         <View style={avatarStyles.badgeOverlay}>
           <View style={avatarStyles.verifiedDot}>
-            <Ionicons name="checkmark" size={8} color={C.white} />
+            <Ionicons name="checkmark-outline" size={8} color={C.white} />
           </View>
         </View>
       )}
       {badge === 'top' && (
         <View style={avatarStyles.badgeOverlay}>
           <View style={[avatarStyles.topDot, { backgroundColor: C.amber400 }]}>
-            <Ionicons name="star" size={8} color={C.white} />
+            <Ionicons name="star-outline" size={8} color={C.white} />
           </View>
         </View>
       )}
@@ -272,7 +272,7 @@ export function ReviewerCard(props: ReviewerCardProps) {
               </Text>
               {isTopReviewer ? (
                 <View style={reviewerStyles.topLabelRow}>
-                  <Ionicons name="star" size={10} color={C.amber400} />
+                  <Ionicons name="star-outline" size={10} color={C.amber400} />
                   <Text style={reviewerStyles.topLabel}>Top Reviewer</Text>
                 </View>
               ) : reviewer.location ? (
@@ -393,7 +393,7 @@ export function ReviewerCard(props: ReviewerCardProps) {
               View profile
             </Text>
             <Ionicons
-              name="chevron-forward"
+              name="chevron-forward-outline"
               size={12}
               color="rgba(125,155,118,0.65)"
             />
@@ -500,11 +500,11 @@ export function ReviewerCard(props: ReviewerCardProps) {
             <View style={reviewStyles.footerRight}>
               {(review.likes ?? 0) > 0 && (
                 <View style={reviewStyles.likesRow}>
-                  <Ionicons name="heart" size={12} color={C.coralFill} />
+                  <Ionicons name="heart-outline" size={12} color={C.coralFill} />
                   <Text style={reviewStyles.likesCount}>{review.likes}</Text>
                 </View>
               )}
-              <Ionicons name="chevron-forward" size={14} color={C.charcoal20} />
+              <Ionicons name="chevron-forward-outline" size={14} color={C.charcoal20} />
             </View>
           </View>
         </View>

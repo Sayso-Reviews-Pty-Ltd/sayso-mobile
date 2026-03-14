@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../Typography';
 import { businessDetailColors, businessDetailSpacing } from '../business-detail/styles';
 
@@ -30,13 +29,6 @@ export function EventSpecialDescriptionCard({ description, title = 'About This L
         <Text style={styles.body} numberOfLines={!expanded && isCollapsible ? 5 : undefined}>
           {normalizedDescription}
         </Text>
-        {!expanded && isCollapsible ? (
-          <LinearGradient
-            colors={['transparent', businessDetailColors.cardBg]}
-            style={styles.fadeOverlay}
-            pointerEvents="none"
-          />
-        ) : null}
       </View>
 
       {isCollapsible ? (
@@ -66,20 +58,11 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: '600',
   },
-  textContainer: {
-    position: 'relative',
-  },
+  textContainer: {},
   body: {
     color: businessDetailColors.textMuted,
     fontSize: 14,
     lineHeight: 22,
-  },
-  fadeOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 32,
   },
   toggleButton: {
     alignSelf: 'flex-start',

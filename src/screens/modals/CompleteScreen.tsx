@@ -314,7 +314,7 @@ export default function CompleteScreen() {
 
           <Animated.View style={{ opacity: badgeOpacity, transform: [{ translateY: badgeY }] }}>
             <View style={styles.badge}>
-              <Ionicons name="checkmark-circle" size={14} color={ONBOARDING_TOKENS.sage} />
+              <Ionicons name="checkmark-circle-outline" size={14} color={ONBOARDING_TOKENS.sage} />
               <Text style={styles.badgeText}>Setup Complete</Text>
             </View>
             <Text style={styles.autoRedirectHint}>Redirecting automatically...</Text>

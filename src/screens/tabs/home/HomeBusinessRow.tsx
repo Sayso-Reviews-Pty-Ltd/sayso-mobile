@@ -1,47 +1,11 @@
-import { memo, useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View, ScrollView, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, ScrollView, useWindowDimensions } from 'react-native';
 import type { BusinessListItemDto, FeaturedBusinessDto } from '@sayso/contracts';
 import { BusinessCard } from '../../../components/BusinessCard';
 import { Text } from '../../../components/Typography';
 import { SkeletonCard } from '../../../components/SkeletonCard';
 import { homeTokens } from './HomeTokens';
 import { CARD_RADIUS } from '../../../styles/radii';
-
-type AnimatedCardProps = {
-  index: number;
-  business: BusinessListItemDto | FeaturedBusinessDto;
-  cardWidth: number;
-};
-
-const AnimatedBusinessCard = memo(function AnimatedBusinessCard({ index, business, cardWidth }: AnimatedCardProps) {
-  const anim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const delay = Math.min(index, 4) * 60;
-    const t = setTimeout(() => {
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 440,
-        easing: Easing.out(Easing.back(1.08)),
-        useNativeDriver: true,
-      }).start();
-    }, delay);
-    return () => clearTimeout(t);
-  }, []);
-
-  return (
-    <Animated.View
-      style={{
-        opacity: anim,
-        transform: [
-          { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) },
-        ],
-      }}
-    >
-      <BusinessCard business={business} style={[styles.cardWrap, { width: cardWidth }]} />
-    </Animated.View>
-  );
-});
+import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
 
 type Props<T extends BusinessListItemDto | FeaturedBusinessDto> = {
   items: T[];
@@ -62,6 +26,7 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
 }: Props<T>) {
   const { width: windowWidth } = useWindowDimensions();
   const cardWidth = windowWidth - homeTokens.pageGutter - 14 - 40;
+  const snapInterval = cardWidth + 14;
   const resolvedContentPaddingBottom = Math.max(contentPaddingBottom, 12);
 
   if (loading) {
@@ -69,6 +34,10 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        snapToInterval={snapInterval}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        disableIntervalMomentum
         style={styles.row}
         contentContainerStyle={[styles.content, { paddingBottom: resolvedContentPaddingBottom }]}
       >
@@ -106,8 +75,8 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
       style={styles.row}
       contentContainerStyle={[styles.content, { paddingBottom: resolvedContentPaddingBottom }]}
     >
-      {items.map((item, index) => (
-        <AnimatedBusinessCard key={item.id} index={index} business={item} cardWidth={cardWidth} />
+      {items.map((item) => (
+        <BusinessCard key={item.id} business={item} style={[styles.cardWrap, { width: cardWidth }]} />
       ))}
     </ScrollView>
   );
@@ -134,6 +103,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: homeTokens.borderSoft,
     backgroundColor: homeTokens.cardBg,
+    ...CARD_SHADOW_MD,
   },
   messageTitle: {
     fontSize: 16,
@@ -143,7 +113,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 14,
     lineHeight: 20,
-    color: 'rgba(45,55,72,0.9)',
+    color: homeTokens.textSecondary,
     marginTop: 6,
   },
 });

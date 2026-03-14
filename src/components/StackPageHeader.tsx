@@ -46,9 +46,14 @@ const styles = StyleSheet.create({
   wrap: {
     backgroundColor: businessDetailColors.coral,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: FROSTED_CARD_BORDER_COLOR,
+    borderBottomColor: 'rgba(255,255,255,0.12)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 6,
     zIndex: 50,
   },
 });

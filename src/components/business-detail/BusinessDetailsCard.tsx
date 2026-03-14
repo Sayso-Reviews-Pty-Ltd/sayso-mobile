@@ -31,7 +31,7 @@ export function BusinessDetailsCard({ priceRange, verified, hours, openingHours,
 
       <View style={styles.row}>
         <View style={styles.iconPill}>
-          <Ionicons name="cash" size={15} color={businessDetailColors.charcoal} />
+          <Ionicons name="cash-outline" size={15} color={businessDetailColors.charcoal} />
         </View>
         <View style={styles.valueWrap}>
           <Text style={styles.label}>Price Range</Text>
@@ -48,7 +48,7 @@ export function BusinessDetailsCard({ priceRange, verified, hours, openingHours,
 
       <View style={styles.row}>
         <View style={styles.iconPill}>
-          <Ionicons name="time" size={15} color={businessDetailColors.charcoal} />
+          <Ionicons name="time-outline" size={15} color={businessDetailColors.charcoal} />
         </View>
         <View style={styles.valueWrap}>
           <View style={styles.hoursHeader}>

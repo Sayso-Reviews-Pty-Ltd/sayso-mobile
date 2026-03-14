@@ -152,7 +152,7 @@ function BadgeRow({ badge, earned }: { badge: BadgeDto; earned: boolean }) {
         ) : null}
       </View>
       {earned && (
-        <Ionicons name="checkmark-circle" size={18} color={C.gold} style={styles.badgeCheckmark} />
+        <Ionicons name="checkmark-circle-outline" size={18} color={C.gold} style={styles.badgeCheckmark} />
       )}
     </View>
   );
@@ -243,7 +243,7 @@ export default function AchievementsScreen() {
       {/* Back button */}
       <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
         <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color={C.white} />
+          <Ionicons name="chevron-back-outline" size={22} color={C.white} />
         </Pressable>
       </View>
 

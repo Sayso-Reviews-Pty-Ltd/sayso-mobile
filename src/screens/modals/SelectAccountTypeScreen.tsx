@@ -72,7 +72,7 @@ export default function SelectAccountTypeScreen() {
 
       <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
         <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color={C.charcoal} />
+          <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
         </Pressable>
       </View>
 

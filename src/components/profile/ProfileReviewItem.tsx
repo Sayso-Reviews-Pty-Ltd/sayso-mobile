@@ -120,7 +120,7 @@ export function ProfileReviewItem({
       <View style={styles.footerRow}>
         <Pressable onPress={onViewClick} style={styles.viewCta} accessibilityLabel={`Read full review for ${businessName}`}>
           <Text style={styles.viewCtaText}>Read full review</Text>
-          <Ionicons name="arrow-forward" size={14} color="#722F37" />
+          <Ionicons name="arrow-forward-outline" size={14} color="#722F37" />
         </Pressable>
         <Text style={styles.dateText}>{formatDate(createdAt)}</Text>
       </View>

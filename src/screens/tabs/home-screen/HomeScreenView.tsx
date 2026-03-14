@@ -23,14 +23,10 @@ import { HomeEventsSpecialsRow } from '../home/HomeEventsSpecialsRow';
 import { HomeSearchBar } from '../home/HomeSearchBar';
 import { HomeSearchResults } from '../home/HomeSearchResults';
 import { HomeSearchSuggestions } from '../home/HomeSearchSuggestions';
-import { HomeActivityTicker } from '../home/HomeActivityTicker';
-import { HomeGreetingCard } from '../home/HomeGreetingCard';
-import { HomeMoodPicker } from '../home/HomeMoodPicker';
 import { HomeSectionHeader } from '../home/HomeSectionHeader';
 import { homeTokens } from '../home/HomeTokens';
-import type { EnhancedProfileDto } from '../../../hooks/useProfile';
 import { FROSTED_CARD_BORDER_COLOR } from '../../../styles/cardSurface';
-import { getOverlayShadowStyle } from '../../../styles/overlayShadow';
+import { CARD_SHADOW_MD, getOverlayShadowStyle } from '../../../styles/overlayShadow';
 import { CARD_CTA_RADIUS, CARD_RADIUS } from '../../../styles/radii';
 
 const ctaShadowStyle = getOverlayShadowStyle(CARD_CTA_RADIUS);
@@ -99,9 +95,6 @@ type Props = {
   onNavigateLeaderboardBusinesses: () => void;
   onNavigateBadges: () => void;
   onNavigateOnboarding: () => void;
-  profile: EnhancedProfileDto | null | undefined;
-  profileLoading: boolean;
-  onSelectMood: (query: string) => void;
 };
 
 function HomeScreenViewComponent({
@@ -143,9 +136,6 @@ function HomeScreenViewComponent({
   onNavigateLeaderboardBusinesses,
   onNavigateBadges,
   onNavigateOnboarding,
-  profile,
-  profileLoading,
-  onSelectMood,
 }: Props) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -247,12 +237,6 @@ function HomeScreenViewComponent({
           onScroll={handleScroll}
           scrollEventThrottle={16}
         >
-          <TransitionItem variant="header" index={2}>
-            <HomeGreetingCard profile={profile} loading={profileLoading} />
-            <HomeMoodPicker onSelectMood={onSelectMood} />
-            <HomeActivityTicker reviews={recentReviews.reviews} loading={recentReviews.isLoading} />
-          </TransitionItem>
-
           <TransitionItem variant="card" index={3}>
             <View style={styles.section}>
             <HomeSectionHeader
@@ -474,9 +458,10 @@ const styles = StyleSheet.create({
   },
   content: {
     backgroundColor: homeTokens.offWhite,
+    paddingBottom: 48,
   },
   section: {
-    paddingTop: 18,
+    paddingTop: 24,
     backgroundColor: homeTokens.offWhite,
   },
   scroll: {
@@ -550,6 +535,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: homeTokens.borderSoft,
     backgroundColor: homeTokens.cardBg,
+    ...CARD_SHADOW_MD,
   },
   messageTitle: {
     fontSize: 16,
@@ -559,7 +545,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 14,
     lineHeight: 20,
-    color: 'rgba(45,55,72,0.9)',
+    color: homeTokens.textSecondary,
     marginTop: 6,
   },
 });

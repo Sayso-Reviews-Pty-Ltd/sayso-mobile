@@ -15,6 +15,7 @@ import { BusinessCard } from '../../../components/BusinessCard';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { homeTokens } from './HomeTokens';
 import { APP_PAGE_GUTTER } from '../../../styles/layout';
+import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
 
 type Props = {
   query: string;
@@ -194,7 +195,7 @@ export function HomeSearchResults({
         accessibilityLabel="Back to top"
         style={styles.backToTopInner}
       >
-        <Ionicons name="arrow-up" size={16} color={homeTokens.white} />
+        <Ionicons name="arrow-up-outline" size={16} color={homeTokens.white} />
         <Text style={styles.backToTopText}>Top</Text>
       </TouchableOpacity>
     </Animated.View>
@@ -302,6 +303,7 @@ const styles = StyleSheet.create({
     backgroundColor: homeTokens.white,
     paddingHorizontal: 20,
     paddingVertical: 24,
+    ...CARD_SHADOW_MD,
   },
   emptyText: {
     fontSize: 14,
@@ -345,6 +347,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(114,47,55,0.10)',
     paddingHorizontal: 16,
     paddingVertical: 20,
+    ...CARD_SHADOW_MD,
   },
   errorText: {
     fontSize: 14,

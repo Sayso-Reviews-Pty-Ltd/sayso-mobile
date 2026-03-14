@@ -147,7 +147,7 @@ export function ReviewsList({
   if (error) {
     return (
       <View style={styles.errorCard}>
-        <Ionicons name="alert-circle" size={24} color="#EF4444" />
+        <Ionicons name="alert-circle-outline" size={24} color="#EF4444" />
         <Text style={styles.errorTitle}>Unable to load reviews</Text>
         <Text style={styles.errorBody}>{error}</Text>
       </View>
@@ -158,19 +158,21 @@ export function ReviewsList({
     return (
       <View style={styles.emptyWrap}>
         <View style={styles.emptyIconCircle}>
-          <Ionicons name="chatbubble-outline" size={32} color={C.charcoal60} />
+          <Ionicons name="chatbubble-outline" size={32} color="rgba(255,255,255,0.70)" />
         </View>
         <Text style={styles.emptyTitle}>No reviews yet</Text>
         <Text style={styles.emptyBody}>{emptyMessage}</Text>
         {emptyStateAction && (
           <Pressable
-            style={[
+            style={({ pressed }) => [
               styles.emptyAction,
               emptyStateAction.disabled && styles.emptyActionDisabled,
+              pressed && styles.emptyActionPressed,
             ]}
             onPress={emptyStateAction.onPress}
             disabled={emptyStateAction.disabled}
           >
+            <Ionicons name="create-outline" size={16} color={C.white} />
             <Text style={styles.emptyActionText}>{emptyStateAction.label}</Text>
           </Pressable>
         )}
@@ -278,34 +280,44 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 32,
     paddingHorizontal: 24,
+    borderRadius: 16,
+    backgroundColor: '#722F37',
   },
   emptyIconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(229,224,229,0.80)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: C.charcoal,
+    color: C.white,
   },
   emptyBody: {
     fontSize: 14,
     fontWeight: '500',
-    color: C.charcoal60,
+    color: 'rgba(255,255,255,0.70)',
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 300,
   },
   emptyAction: {
     marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     borderRadius: 999,
-    backgroundColor: C.coral,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+  },
+  emptyActionPressed: {
+    opacity: 0.88,
   },
   emptyActionDisabled: {
     backgroundColor: 'rgba(45,45,45,0.20)',
@@ -314,6 +326,7 @@ const styles = StyleSheet.create({
     color: C.white,
     fontSize: 14,
     fontWeight: '700',
+    letterSpacing: 0.1,
   },
   // Count footer
   countText: {

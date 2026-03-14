@@ -145,7 +145,7 @@ function ForYouRouteViewComponent({
           <View style={styles.loadingHeader}>{heroSection}</View>
           <TransitionItem variant="card" index={3}>
             <View style={styles.personalizingPill}>
-              <Ionicons name="sparkles" size={13} color={homeTokens.coral} />
+              <Ionicons name="sparkles-outline" size={13} color={homeTokens.coral} />
               <Text style={styles.personalizingText}>Personalizing your feed...</Text>
             </View>
           </TransitionItem>

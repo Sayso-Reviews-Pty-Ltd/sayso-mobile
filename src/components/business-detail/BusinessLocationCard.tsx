@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SkeletonBlock } from '../SkeletonBlock';
 import { Text } from '../Typography';
 import { businessDetailColors, businessDetailSpacing } from './styles';
+import { CARD_SHADOW_MD } from '../../styles/overlayShadow';
 import {
   buildBusinessMapPreviewUrl,
   buildGoogleDirectionsUrl,
@@ -121,7 +122,7 @@ export function BusinessLocationCard({ name, address, location, latitude, longit
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.iconPill}>
-            <Ionicons name="location" size={16} color={businessDetailColors.charcoal} />
+            <Ionicons name="location-outline" size={16} color={businessDetailColors.charcoal} />
           </View>
           <Text style={styles.heading}>Location</Text>
         </View>
@@ -140,7 +141,7 @@ export function BusinessLocationCard({ name, address, location, latitude, longit
             </Pressable>
           ) : null}
           <Pressable onPress={handleShare} style={styles.headerAction} accessibilityLabel="Share business location">
-            <Ionicons name="share-social" size={15} color={businessDetailColors.charcoal} />
+            <Ionicons name="share-social-outline" size={15} color={businessDetailColors.charcoal} />
           </Pressable>
         </View>
       </View>
@@ -156,16 +157,16 @@ export function BusinessLocationCard({ name, address, location, latitude, longit
       ) : distance !== null ? (
         <View style={styles.pillRow}>
           <View style={styles.pill}>
-            <Ionicons name="navigate" size={12} color={businessDetailColors.sage} />
+            <Ionicons name="navigate-outline" size={12} color={businessDetailColors.sage} />
             <Text style={styles.pillText}>{formatDistance(distance)} away</Text>
           </View>
           <View style={styles.pill}>
-            <Ionicons name="car" size={12} color={businessDetailColors.coral} />
+            <Ionicons name="car-outline" size={12} color={businessDetailColors.coral} />
             <Text style={styles.pillText}>{estimateTravelTime(distance, 'drive')}</Text>
           </View>
           {distance < 3 ? (
             <View style={styles.pill}>
-              <Ionicons name="walk" size={12} color={businessDetailColors.textMuted} />
+              <Ionicons name="walk-outline" size={12} color={businessDetailColors.textMuted} />
               <Text style={styles.pillText}>{estimateTravelTime(distance, 'walk')}</Text>
             </View>
           ) : null}
@@ -177,26 +178,26 @@ export function BusinessLocationCard({ name, address, location, latitude, longit
           <Image source={{ uri: mapPreviewUrl }} style={styles.mapPreview} contentFit="cover" />
           <View style={styles.mapOverlay}>
             <View style={styles.mapOverlayPill}>
-              <Ionicons name="expand" size={14} color={businessDetailColors.charcoal} />
+              <Ionicons name="expand-outline" size={14} color={businessDetailColors.charcoal} />
               <Text style={styles.mapOverlayText}>View larger</Text>
             </View>
           </View>
         </Pressable>
       ) : (
         <View style={styles.mapFallback}>
-          <Ionicons name="map" size={28} color={businessDetailColors.textMuted} />
+          <Ionicons name="map-outline" size={28} color={businessDetailColors.textMuted} />
           <Text style={styles.mapFallbackText}>Map coordinates are not available yet.</Text>
         </View>
       )}
 
       <View style={styles.actionRow}>
         <Pressable style={styles.actionPrimary} onPress={() => Linking.openURL(directionsUrl)}>
-          <Ionicons name="navigate" size={15} color={businessDetailColors.white} />
+          <Ionicons name="navigate-outline" size={15} color={businessDetailColors.white} />
           <Text style={styles.actionPrimaryText}>Get directions</Text>
         </Pressable>
 
         <Pressable style={styles.actionCircle} onPress={() => Linking.openURL(walkingUrl)}>
-          <Ionicons name="walk" size={15} color={businessDetailColors.charcoal} />
+          <Ionicons name="walk-outline" size={15} color={businessDetailColors.charcoal} />
         </Pressable>
       </View>
 
@@ -221,7 +222,7 @@ export function BusinessLocationCard({ name, address, location, latitude, longit
                 ) : null}
               </View>
               <Pressable style={styles.modalClose} onPress={() => setMapModalOpen(false)}>
-                <Ionicons name="close" size={20} color={businessDetailColors.white} />
+                <Ionicons name="close-outline" size={20} color={businessDetailColors.white} />
               </Pressable>
             </View>
 
@@ -229,23 +230,23 @@ export function BusinessLocationCard({ name, address, location, latitude, longit
               <Image source={{ uri: mapPreviewUrl }} style={styles.modalMap} contentFit="cover" />
             ) : (
               <View style={styles.modalMapFallback}>
-                <Ionicons name="map" size={34} color="rgba(255,255,255,0.72)" />
+                <Ionicons name="map-outline" size={34} color="rgba(255,255,255,0.72)" />
               </View>
             )}
 
             <View style={styles.modalFooter}>
               <Pressable style={styles.modalActionPrimary} onPress={() => Linking.openURL(directionsUrl)}>
-                <Ionicons name="car" size={15} color={businessDetailColors.white} />
+                <Ionicons name="car-outline" size={15} color={businessDetailColors.white} />
                 <Text style={styles.modalActionPrimaryText}>Drive</Text>
               </Pressable>
 
               <Pressable style={styles.modalActionSecondary} onPress={() => Linking.openURL(walkingUrl)}>
-                <Ionicons name="walk" size={15} color={businessDetailColors.white} />
+                <Ionicons name="walk-outline" size={15} color={businessDetailColors.white} />
                 <Text style={styles.modalActionSecondaryText}>Walk</Text>
               </Pressable>
 
               <Pressable style={styles.modalShare} onPress={handleShare}>
-                <Ionicons name="share-social" size={17} color={businessDetailColors.white} />
+                <Ionicons name="share-social-outline" size={17} color={businessDetailColors.white} />
               </Pressable>
             </View>
           </View>
@@ -264,6 +265,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 10,
+    ...CARD_SHADOW_MD,
   },
   header: {
     flexDirection: 'row',

@@ -16,7 +16,7 @@ function getStarColor(value: number) {
 export function EventRatingBadge({ rating }: Props) {
   return (
     <View style={[styles.badge, getOverlayShadowStyle(999)]} pointerEvents="none">
-      <Ionicons name="star" size={14} color={getStarColor(rating)} />
+      <Ionicons name="star-outline" size={14} color={getStarColor(rating)} />
       <Text style={styles.label}>{rating.toFixed(1)}</Text>
     </View>
   );

@@ -52,7 +52,7 @@ function StarRow({ rating }: { rating: number }) {
       {Array.from({ length: 5 }, (_, i) => (
         <Ionicons
           key={i}
-          name="star"
+          name="star-outline"
           size={8}
           color={i < filled ? '#F5C842' : 'rgba(255,255,255,0.25)'}
         />

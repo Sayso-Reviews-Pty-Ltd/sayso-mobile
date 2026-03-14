@@ -29,7 +29,7 @@ export function BusinessCardBadges({
     <>
       {verified ? (
         <View style={[styles.badge, getOverlayShadowStyle(999), styles.leftBadge]}>
-          <Ionicons name="checkmark-circle" size={13} color="#2563EB" />
+          <Ionicons name="checkmark-circle-outline" size={13} color="#2563EB" />
           <Text style={styles.badgeText}>Verified</Text>
         </View>
       ) : null}
@@ -37,7 +37,7 @@ export function BusinessCardBadges({
       <View style={[styles.badge, getOverlayShadowStyle(999), styles.rightBadge]}>
         {hasRating && rating != null ? (
           <>
-            <Ionicons name="star" size={14} color={getStarColor(rating)} />
+            <Ionicons name="star-outline" size={14} color={getStarColor(rating)} />
             <Text style={styles.badgeText}>{rating.toFixed(1)}</Text>
           </>
         ) : (

@@ -22,6 +22,7 @@ import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../hooks/useSession';
 import { routes } from '../../navigation/routes';
 import { APP_PAGE_GUTTER } from '../../styles/layout';
+import { CARD_SHADOW_MD } from '../../styles/overlayShadow';
 import { StackPageHeader } from '../../components/StackPageHeader';
 
 const ITEMS_PER_PAGE = 12;
@@ -191,7 +192,7 @@ function SavedPagination({
       >
         {currentPage === 1 || disabled ? (
           <View style={styles.paginationNavButtonDisabled}>
-            <Ionicons name="chevron-back" size={20} color="rgba(45,45,45,0.3)" />
+            <Ionicons name="chevron-back-outline" size={20} color="rgba(45,45,45,0.3)" />
           </View>
         ) : (
           <LinearGradient
@@ -200,7 +201,7 @@ function SavedPagination({
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
+            <Ionicons name="chevron-back-outline" size={20} color="#FFFFFF" />
           </LinearGradient>
         )}
       </Pressable>
@@ -251,7 +252,7 @@ function SavedPagination({
       >
         {currentPage === totalPages || disabled ? (
           <View style={styles.paginationNavButtonDisabled}>
-            <Ionicons name="chevron-forward" size={20} color="rgba(45,45,45,0.3)" />
+            <Ionicons name="chevron-forward-outline" size={20} color="rgba(45,45,45,0.3)" />
           </View>
         ) : (
           <LinearGradient
@@ -260,7 +261,7 @@ function SavedPagination({
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+            <Ionicons name="chevron-forward-outline" size={20} color="#FFFFFF" />
           </LinearGradient>
         )}
       </Pressable>
@@ -917,6 +918,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: CARD_BG,
+    ...CARD_SHADOW_MD,
   },
   skeletonCardMedia: {
     width: '100%',

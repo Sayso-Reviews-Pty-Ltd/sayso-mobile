@@ -1,9 +1,7 @@
 import { useCallback, useRef } from 'react';
-import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { useNavigation } from 'expo-router';
-import { homeTokens } from '../../src/screens/tabs/home/HomeTokens';
 import { EventsSpecialsFeedScreen } from '../../src/screens/shared/EventsSpecialsFeedScreen';
 
 const NAVBAR_BG = '#722F37';
@@ -26,19 +24,19 @@ export default function EventsSpecialsRoute() {
   }, [navigation]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Stack.Screen options={{ title: 'Events & Specials' }} />
       <EventsSpecialsFeedScreen
         subtitle="Upcoming events and live specials worth checking out next."
         onScrollY={handleScrollY}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: homeTokens.offWhite,
+    backgroundColor: '#E5E0E5',
   },
 });

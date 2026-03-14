@@ -174,7 +174,7 @@ export default function ResetPasswordScreen() {
       {screenState !== 'checking' && (
         <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
           <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-            <Ionicons name="chevron-back" size={22} color={C.charcoal} />
+            <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
           </Pressable>
         </View>
       )}
@@ -236,7 +236,7 @@ export default function ResetPasswordScreen() {
                     <>
                       <View style={styles.stateIconWrap}>
                         <View style={[styles.stateCircle, styles.stateCircleWarning]}>
-                          <Ionicons name="close" size={32} color="#F59E0B" />
+                          <Ionicons name="close-outline" size={32} color="#F59E0B" />
                         </View>
                       </View>
                       <Text style={styles.stateMessage}>
@@ -271,7 +271,7 @@ export default function ResetPasswordScreen() {
                     <>
                       <View style={styles.stateIconWrap}>
                         <View style={[styles.stateCircle, styles.stateCircleSuccess]}>
-                          <Ionicons name="checkmark" size={36} color={C.sage} />
+                          <Ionicons name="checkmark-outline" size={36} color={C.sage} />
                         </View>
                       </View>
                       <Text style={styles.stateMessage}>
@@ -284,7 +284,7 @@ export default function ResetPasswordScreen() {
                     <>
                       {!!error && (
                         <View style={styles.errorBanner}>
-                          <Ionicons name="alert-circle" size={16} color={C.errorText} />
+                          <Ionicons name="alert-circle-outline" size={16} color={C.errorText} />
                           <Text style={styles.errorText}>{error}</Text>
                         </View>
                       )}

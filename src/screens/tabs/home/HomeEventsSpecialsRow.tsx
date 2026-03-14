@@ -1,47 +1,11 @@
-import { memo, useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View, ScrollView, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, ScrollView, useWindowDimensions } from 'react-native';
 import type { EventSpecialListItemDto } from '@sayso/contracts';
 import { EventCard } from '../../../components/EventCard';
 import { EventCardSkeleton } from '../../../components/EventCardSkeleton';
 import { Text } from '../../../components/Typography';
 import { homeTokens } from './HomeTokens';
 import { CARD_RADIUS } from '../../../styles/radii';
-
-type AnimatedEventCardProps = {
-  index: number;
-  item: EventSpecialListItemDto;
-  cardWidth: number;
-};
-
-const AnimatedEventCard = memo(function AnimatedEventCard({ index, item, cardWidth }: AnimatedEventCardProps) {
-  const anim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const delay = Math.min(index, 4) * 60;
-    const t = setTimeout(() => {
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 440,
-        easing: Easing.out(Easing.back(1.08)),
-        useNativeDriver: true,
-      }).start();
-    }, delay);
-    return () => clearTimeout(t);
-  }, []);
-
-  return (
-    <Animated.View
-      style={{
-        opacity: anim,
-        transform: [
-          { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) },
-        ],
-      }}
-    >
-      <EventCard item={item} style={[styles.cardWrap, { width: cardWidth }]} />
-    </Animated.View>
-  );
-});
+import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
 
 type Props = {
   items: EventSpecialListItemDto[];
@@ -52,12 +16,17 @@ type Props = {
 export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const cardWidth = windowWidth - homeTokens.pageGutter - 14 - 40;
+  const snapInterval = cardWidth + 14;
 
   if (loading) {
     return (
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        snapToInterval={snapInterval}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        disableIntervalMomentum
         style={styles.row}
         contentContainerStyle={styles.content}
       >
@@ -88,8 +57,8 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
       style={styles.row}
       contentContainerStyle={styles.content}
     >
-      {items.map((item, index) => (
-        <AnimatedEventCard key={`${item.type}-${item.id}`} index={index} item={item} cardWidth={cardWidth} />
+      {items.map((item) => (
+        <EventCard key={`${item.type}-${item.id}`} item={item} style={[styles.cardWrap, { width: cardWidth }]} />
       ))}
     </ScrollView>
   );
@@ -117,6 +86,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: homeTokens.borderSoft,
     backgroundColor: homeTokens.cardBg,
+    ...CARD_SHADOW_MD,
   },
   messageTitle: {
     fontSize: 16,
@@ -126,7 +96,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 14,
     lineHeight: 20,
-    color: 'rgba(45,55,72,0.9)',
+    color: homeTokens.textSecondary,
     marginTop: 6,
   },
 });

@@ -17,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { compressImageForUpload } from '../../lib/compressImage';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, apiFetch } from '../../lib/api';
 import { Text, TextInput } from '../../components/Typography';
@@ -194,10 +196,10 @@ function ReviewHeroCarousel({ images, name, subcategorySlug }: { images: string[
       {total > 1 && (
         <>
           <Pressable style={[carouselStyles.navBtn, carouselStyles.navBtnLeft]} onPress={() => goTo(currentIndex - 1)}>
-            <Ionicons name="chevron-back" size={22} color={C.charcoal} />
+            <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
           </Pressable>
           <Pressable style={[carouselStyles.navBtn, carouselStyles.navBtnRight]} onPress={() => goTo(currentIndex + 1)}>
-            <Ionicons name="chevron-forward" size={22} color={C.charcoal} />
+            <Ionicons name="chevron-forward-outline" size={22} color={C.charcoal} />
           </Pressable>
           <View style={carouselStyles.dotsRow}>
             {validImages.map((_, i) => (
@@ -350,10 +352,10 @@ function GradientStar({ filled, size = 42 }: { filled: boolean; size?: number })
   return (
     <View style={{ width: size, height: size }}>
       {/* Base layer — deep warm amber */}
-      <Ionicons name="star" size={size} color="#C8720A" />
+      <Ionicons name="star-outline" size={size} color="#C8720A" />
       {/* Top 42% — bright gold highlight, clipped */}
       <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', height: Math.round(size * 0.42) }]}>
-        <Ionicons name="star" size={size} color="#FFD747" />
+        <Ionicons name="star-outline" size={size} color="#FFD747" />
       </View>
     </View>
   );
@@ -543,7 +545,7 @@ function TagSelector({
     <View style={tStyles.section}>
       <View style={tStyles.header}>
         <View style={tStyles.headerLeft}>
-          <Ionicons name="sparkles" size={16} color={C.coral} style={{ opacity: 0.8 }} />
+          <Ionicons name="sparkles-outline" size={16} color={C.coral} style={{ opacity: 0.8 }} />
           <Text style={tStyles.heading}>Quick tags</Text>
         </View>
         <View style={[tStyles.counterPill, selected.length > 0 && tStyles.counterPillActive]}>
@@ -628,7 +630,7 @@ function CommunityReviewCard({ review }: { review: CommunityReview }) {
           {review.avatarUrl && !avatarError ? (
             <Image source={{ uri: review.avatarUrl }} style={crStyles.avatarImg} onError={() => setAvatarError(true)} />
           ) : (
-            <Ionicons name="person" size={16} color={C.sage} style={{ opacity: 0.7 }} />
+            <Ionicons name="person-outline" size={16} color={C.sage} style={{ opacity: 0.7 }} />
           )}
         </View>
         <View style={crStyles.meta}>
@@ -636,7 +638,7 @@ function CommunityReviewCard({ review }: { review: CommunityReview }) {
           <Text style={crStyles.date}>{review.date}</Text>
         </View>
         <View style={crStyles.ratingRow}>
-          <Ionicons name="star" size={12} color={C.coral} />
+          <Ionicons name="star-outline" size={12} color={C.coral} />
           <Text style={crStyles.ratingText}>{review.rating}</Text>
         </View>
       </View>
@@ -1033,8 +1035,34 @@ export default function WriteReviewScreen() {
     onScrollToTop: handleScrollToTop,
   });
 
-  const handlePickImage = () => {
-    Alert.alert('Photo Upload', 'Photo upload requires expo-image-picker.\n\nRun: npx expo install expo-image-picker');
+  const handlePickImage = async () => {
+    if (selectedImages.length >= MAX_PHOTOS) return;
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Photo library access is needed to attach images.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    try {
+      const compressed = await compressImageForUpload(asset.uri);
+      const filename = asset.fileName ?? `photo_${Date.now()}.jpg`;
+      setSelectedImages((prev) => [
+        ...prev,
+        { uri: compressed.uri, name: filename, mimeType: compressed.mimeType },
+      ]);
+    } catch {
+      Alert.alert('Unable to process image', 'Please try a different photo.');
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -1382,7 +1410,7 @@ export default function WriteReviewScreen() {
                   <View key={i} style={styles.photoThumb}>
                     <Image source={{ uri: img.uri }} style={styles.photoImg} />
                     <Pressable style={styles.photoRemoveBtn} onPress={() => handleRemoveImage(i)} disabled={controlsDisabled}>
-                      <Ionicons name="close" size={11} color={C.white} />
+                      <Ionicons name="close-outline" size={11} color={C.white} />
                     </Pressable>
                   </View>
                 ))}
@@ -1404,7 +1432,7 @@ export default function WriteReviewScreen() {
           {/* ── Error */}
           {formError ? (
             <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle" size={18} color={C.coral} />
+              <Ionicons name="alert-circle-outline" size={18} color={C.coral} />
               <Text style={styles.errorText}>{formError}</Text>
             </View>
           ) : null}
@@ -1417,7 +1445,7 @@ export default function WriteReviewScreen() {
                   <Text style={styles.submitText}>
                     {submitting ? (isEditMode ? 'Saving...' : 'Submitting...') : (isEditMode ? 'Save Changes' : 'Submit Review')}
                   </Text>
-                  {!submitting ? <Ionicons name="send" size={16} color={C.white} /> : null}
+                  {!submitting ? <Ionicons name="send-outline" size={16} color={C.white} /> : null}
                 </LinearGradient>
               ) : (
                 <View style={[styles.submitBtn, styles.submitBtnDisabled]}>

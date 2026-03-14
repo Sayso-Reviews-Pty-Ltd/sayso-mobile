@@ -139,7 +139,7 @@ function ReviewCard({ review }: { review: ReviewerReview }) {
             <Image source={{ uri: review.businessImageUrl }} style={styles.reviewBizImg} />
           ) : (
             <View style={[styles.reviewBizImg, styles.reviewBizImgFallback]}>
-              <Ionicons name="storefront" size={14} color={C.charcoal50} />
+              <Ionicons name="storefront-outline" size={14} color={C.charcoal50} />
             </View>
           )}
           <View style={styles.reviewBizText}>
@@ -239,7 +239,7 @@ export default function ReviewerProfileScreen() {
       {/* Back button */}
       <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
         <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color={C.charcoal} />
+          <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
         </Pressable>
       </View>
 
@@ -281,17 +281,17 @@ export default function ReviewerProfileScreen() {
                   />
                 ) : (
                   <View style={[styles.avatar, styles.avatarFallback]}>
-                    <Ionicons name="person" size={40} color={C.charcoal50} />
+                    <Ionicons name="person-outline" size={40} color={C.charcoal50} />
                   </View>
                 )}
                 {reviewer.badge === 'verified' && (
                   <View style={[styles.badgeDot, styles.badgeDotVerified]}>
-                    <Ionicons name="checkmark" size={10} color={C.white} strokeWidth={3} />
+                    <Ionicons name="checkmark-outline" size={10} color={C.white} strokeWidth={3} />
                   </View>
                 )}
                 {reviewer.badge === 'top' && (
                   <View style={[styles.badgeDot, styles.badgeDotTop]}>
-                    <Ionicons name="trophy" size={10} color={C.white} />
+                    <Ionicons name="trophy-outline" size={10} color={C.white} />
                   </View>
                 )}
               </View>

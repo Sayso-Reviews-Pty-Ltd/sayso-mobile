@@ -140,7 +140,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
                     <Text style={styles.anonText}>Anonymous</Text>
                   </View>
                 ) : (
-                  <Ionicons name="checkmark-circle" size={14} color={C.sage} />
+                  <Ionicons name="checkmark-circle-outline" size={14} color={C.sage} />
                 )}
               </View>
             </View>
@@ -223,9 +223,9 @@ const styles = StyleSheet.create({
     padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 4,
   } as object,
   row: {
     flexDirection: 'row',

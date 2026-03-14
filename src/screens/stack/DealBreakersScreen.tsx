@@ -241,7 +241,7 @@ export default function DealBreakersScreen() {
             <Text style={styles.counterText}>
               {selected.size} of {MAX} selected
             </Text>
-            {selected.size > 0 ? <Ionicons name="checkmark-circle" size={15} color={ONBOARDING_TOKENS.sage} /> : null}
+            {selected.size > 0 ? <Ionicons name="checkmark-circle-outline" size={15} color={ONBOARDING_TOKENS.sage} /> : null}
           </View>
           <Text style={styles.counterHint}>{helperText}</Text>
         </Animated.View>
@@ -328,7 +328,7 @@ export default function DealBreakersScreen() {
                           <Ionicons name={DEALBREAKER_ICONS[item.id]} size={28} color={ONBOARDING_TOKENS.white} />
                         </View>
                         <View style={styles.selectedCheck}>
-                          <Ionicons name="checkmark-circle" size={15} color={ONBOARDING_TOKENS.coral} />
+                          <Ionicons name="checkmark-circle-outline" size={15} color={ONBOARDING_TOKENS.coral} />
                         </View>
                       </LinearGradient>
                     </Animated.View>

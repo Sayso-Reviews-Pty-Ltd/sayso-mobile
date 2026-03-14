@@ -23,7 +23,7 @@ export function BusinessInfoBlock({ name, rating, category, location }: Props) {
 
       <View style={styles.metaRow}>
         <View style={styles.metaPill}>
-          <Ionicons name="star" size={13} color={getStarColor(rating)} />
+          <Ionicons name="star-outline" size={13} color={getStarColor(rating)} />
           <Text style={styles.metaText}>{rating > 0 ? rating.toFixed(1) : '0.0'}</Text>
         </View>
 
@@ -32,7 +32,7 @@ export function BusinessInfoBlock({ name, rating, category, location }: Props) {
         </View>
 
         <View style={styles.locationPill}>
-          <Ionicons name="location" size={13} color={businessDetailColors.charcoal} />
+          <Ionicons name="location-outline" size={13} color={businessDetailColors.charcoal} />
           <Text style={styles.locationText} numberOfLines={1}>
             {location}
           </Text>

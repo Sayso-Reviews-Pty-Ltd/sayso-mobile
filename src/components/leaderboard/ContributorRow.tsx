@@ -43,7 +43,7 @@ function Avatar({ src }: { src?: string }) {
       end={{ x: 1, y: 1 }}
       style={[s.avatar, s.avatarFallback]}
     >
-      <Ionicons name="person" size={20} color="rgba(45,45,45,0.60)" />
+      <Ionicons name="person-outline" size={20} color="rgba(45,45,45,0.60)" />
     </LinearGradient>
   );
 }
@@ -76,7 +76,7 @@ export function ContributorRow({ reviewer, rank }: Props) {
           end={{ x: 1, y: 1 }}
         >
           {rank <= 3
-            ? <Ionicons name="trophy" size={13} color={badge.textColor} />
+            ? <Ionicons name="trophy-outline" size={13} color={badge.textColor} />
             : <Text style={[s.badgeNum, { color: badge.textColor }]}>{rank}</Text>
           }
         </LinearGradient>
@@ -92,7 +92,7 @@ export function ContributorRow({ reviewer, rank }: Props) {
       <View style={s.right}>
         {rating != null && (
           <View style={s.ratingPill}>
-            <Ionicons name="star" size={11} color={CORAL} />
+            <Ionicons name="star-outline" size={11} color={CORAL} />
             <Text style={s.ratingText}>{rating.toFixed(1)}</Text>
           </View>
         )}

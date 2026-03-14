@@ -75,7 +75,7 @@ export function PercentileChipsSection({
       </View>
 
       <View style={styles.footerRow}>
-        <Ionicons name="checkmark-circle" size={12} color={businessDetailColors.sage} />
+        <Ionicons name="checkmark-circle-outline" size={12} color={businessDetailColors.sage} />
         <Text style={styles.footer}>Community verified metrics from verified reviews</Text>
       </View>
     </View>

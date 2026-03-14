@@ -7,6 +7,7 @@ import { useAuthSession } from '../../hooks/useSession';
 import { calculatePersonalizationScore } from '../../lib/personalizationService';
 import { Text } from '../Typography';
 import { businessDetailColors, businessDetailSpacing } from './styles';
+import { CARD_SHADOW_MD } from '../../styles/overlayShadow';
 
 type Props = {
   business: BusinessDetail;
@@ -57,7 +58,7 @@ export function PersonalizationInsightsCard({ business, onPressLogin }: Props) {
       <View style={styles.card}>
         <View style={styles.headingRow}>
           <View style={styles.infoIconWrap}>
-            <Ionicons name="information" size={12} color={businessDetailColors.charcoal} />
+            <Ionicons name="information-circle-outline" size={12} color={businessDetailColors.charcoal} />
           </View>
           <Text style={styles.heading}>Personalized for You</Text>
         </View>
@@ -66,7 +67,7 @@ export function PersonalizationInsightsCard({ business, onPressLogin }: Props) {
           {LOCKED_INSIGHTS.map((insight, index) => (
             <View key={index} style={styles.insightRow}>
               <View style={styles.lockIconWrap}>
-                <Ionicons name="lock-closed" size={10} color={businessDetailColors.charcoal} />
+                <Ionicons name="lock-closed-outline" size={10} color={businessDetailColors.charcoal} />
               </View>
               <Text style={styles.lockedInsight}>{insight}</Text>
             </View>
@@ -98,7 +99,7 @@ export function PersonalizationInsightsCard({ business, onPressLogin }: Props) {
     <View style={styles.card}>
       <View style={styles.headingRow}>
         <View style={styles.infoIconWrap}>
-          <Ionicons name="information" size={12} color={businessDetailColors.charcoal} />
+          <Ionicons name="information-circle-outline" size={12} color={businessDetailColors.charcoal} />
         </View>
         <Text style={styles.heading}>Personalized for You</Text>
       </View>
@@ -107,7 +108,7 @@ export function PersonalizationInsightsCard({ business, onPressLogin }: Props) {
         {positiveInsights.map((insight, index) => (
           <View key={`insight-${index}`} style={styles.insightRow}>
             <View style={styles.checkIconWrap}>
-              <Ionicons name="checkmark" size={10} color={businessDetailColors.charcoal} />
+              <Ionicons name="checkmark-outline" size={10} color={businessDetailColors.charcoal} />
             </View>
             <Text style={styles.insightText}>{insight}</Text>
           </View>
@@ -127,6 +128,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 10,
+    ...CARD_SHADOW_MD,
   },
   headingRow: {
     flexDirection: 'row',

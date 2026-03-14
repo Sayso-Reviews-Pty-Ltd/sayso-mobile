@@ -117,7 +117,7 @@ export default function ForgotPasswordScreen() {
     <View style={[styles.root, { backgroundColor: C.page }]}>
       <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
         <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color={C.charcoal} />
+          <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
         </Pressable>
       </View>
 
@@ -163,7 +163,7 @@ export default function ForgotPasswordScreen() {
                   <>
                     {!!error && (
                       <View style={styles.errorBanner}>
-                        <Ionicons name="alert-circle" size={16} color={C.errorText} />
+                        <Ionicons name="alert-circle-outline" size={16} color={C.errorText} />
                         <Text style={styles.errorText}>{error}</Text>
                       </View>
                     )}

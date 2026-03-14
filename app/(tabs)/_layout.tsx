@@ -16,7 +16,8 @@ export default function TabsLayout() {
         headerShown: false,
         sceneStyle: { backgroundColor: '#E5E0E5' },
         tabBarActiveTintColor: '#FFFFFF',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.72)',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
+        tabBarLabelStyle: { fontFamily: 'Urbanist_600SemiBold', fontSize: 11, letterSpacing: 0.2 },
         tabBarStyle: isWeb ? styles.webTabBar : styles.nativeTabBar,
         tabBarBackground: isWeb ? undefined : () => <View style={styles.nativeTabBarBackground} />,
       }}
@@ -79,11 +80,12 @@ const styles = StyleSheet.create({
   nativeTabBarBackground: {
     flex: 1,
     backgroundColor: NAVBAR_BG_COLOR,
-    borderTopWidth: 0,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.10)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.04,
-    shadowRadius: 18,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 12,
   },
 });

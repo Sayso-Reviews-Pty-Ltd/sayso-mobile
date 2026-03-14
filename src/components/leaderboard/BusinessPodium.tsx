@@ -111,7 +111,7 @@ function PodiumItem({ business, rank }: { business: FeaturedBusinessDto; rank: 1
           end={{ x: 1, y: 1 }}
         >
           {rank === 1
-            ? <Ionicons name="trophy" size={bSz * 0.48} color="#fff" />
+            ? <Ionicons name="trophy-outline" size={bSz * 0.48} color="#fff" />
             : <Text style={{ fontSize: bSz * 0.44, fontWeight: '800', color: badgeTextColor }}>{rank}</Text>
           }
         </LinearGradient>
@@ -120,7 +120,7 @@ function PodiumItem({ business, rank }: { business: FeaturedBusinessDto; rank: 1
       <Text style={[s.name, rank === 1 && s.nameFirst]} numberOfLines={2}>{business.name}</Text>
 
       <View style={s.ratingRow}>
-        <Ionicons name="star" size={10} color={CORAL} />
+        <Ionicons name="star-outline" size={10} color={CORAL} />
         <Text style={s.ratingText}>{rating > 0 ? rating.toFixed(1) : '–'}</Text>
         <Text style={s.reviewCount}>({reviewCount})</Text>
       </View>

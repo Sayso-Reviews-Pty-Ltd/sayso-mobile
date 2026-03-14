@@ -72,7 +72,7 @@ function SimilarBusinessCard({ business }: SimilarBusinessCardProps) {
         {/* Verified badge */}
         {business.verified ? (
           <View style={[styles.badge, styles.badgeTopLeft]}>
-            <Ionicons name="checkmark-circle" size={12} color={businessDetailColors.sage} />
+            <Ionicons name="checkmark-circle-outline" size={12} color={businessDetailColors.sage} />
             <Text style={styles.badgeText}>Verified</Text>
           </View>
         ) : null}
@@ -81,7 +81,7 @@ function SimilarBusinessCard({ business }: SimilarBusinessCardProps) {
         <View style={[styles.badge, styles.badgeTopRight]}>
           {hasRating && displayRating != null ? (
             <>
-              <Ionicons name="star" size={12} color={businessDetailColors.charcoal} />
+              <Ionicons name="star-outline" size={12} color={businessDetailColors.charcoal} />
               <Text style={styles.badgeText}>{displayRating.toFixed(1)}</Text>
             </>
           ) : (
@@ -99,7 +99,7 @@ function SimilarBusinessCard({ business }: SimilarBusinessCardProps) {
           <View style={styles.metaRow}>
             {hasRating && displayRating != null ? (
               <View style={styles.metaInner}>
-                <Ionicons name="star" size={11} color={businessDetailColors.coral} />
+                <Ionicons name="star-outline" size={11} color={businessDetailColors.coral} />
                 <Text style={styles.metaStrong}>{displayRating.toFixed(1)}</Text>
               </View>
             ) : null}
@@ -135,7 +135,7 @@ function SimilarBusinessCard({ business }: SimilarBusinessCardProps) {
             style={styles.ctaButton}
           >
             <Text style={styles.ctaText}>Go to business</Text>
-            <Ionicons name="arrow-forward" size={14} color={businessDetailColors.white} />
+            <Ionicons name="arrow-forward-outline" size={14} color={businessDetailColors.white} />
           </LinearGradient>
         </Pressable>
       </View>

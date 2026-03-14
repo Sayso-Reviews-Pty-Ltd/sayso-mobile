@@ -96,7 +96,7 @@ export function BusinessRow({ business, rank }: Props) {
           end={{ x: 1, y: 1 }}
         >
           {rank <= 3
-            ? <Ionicons name="trophy" size={13} color={badge.textColor} />
+            ? <Ionicons name="trophy-outline" size={13} color={badge.textColor} />
             : <Text style={[s.badgeNum, { color: badge.textColor }]}>{rank}</Text>
           }
         </LinearGradient>
@@ -111,7 +111,7 @@ export function BusinessRow({ business, rank }: Props) {
 
       <View style={s.right}>
         <View style={s.ratingPill}>
-          <Ionicons name="star" size={11} color={CORAL} />
+          <Ionicons name="star-outline" size={11} color={CORAL} />
           <Text style={s.ratingText}>
             {reviewCount > 0 ? rating.toFixed(1) : 'New'}
           </Text>

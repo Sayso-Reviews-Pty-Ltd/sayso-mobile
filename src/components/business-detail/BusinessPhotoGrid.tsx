@@ -78,7 +78,7 @@ export function BusinessPhotoGrid({ businessName, photos }: Props) {
           </View>
           
           <View style={styles.emptyHintRow}>
-            <Ionicons name="arrow-down" size={14} color="rgba(45,45,45,0.4)" />
+            <Ionicons name="arrow-down-outline" size={14} color="rgba(45,45,45,0.4)" />
             <Text style={styles.emptyHintText}>Scroll down for similar businesses at the bottom</Text>
           </View>
 
@@ -93,18 +93,18 @@ export function BusinessPhotoGrid({ businessName, photos }: Props) {
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setModalVisible(false)} />
           <View style={styles.modalContent}>
             <Pressable style={styles.modalClose} onPress={() => setModalVisible(false)}>
-              <Ionicons name="close" size={22} color="#FFFFFF" />
+              <Ionicons name="close-outline" size={22} color="#FFFFFF" />
             </Pressable>
 
             {normalizedPhotos.length > 1 ? (
               <Pressable style={styles.modalArrowLeft} onPress={goPrev}>
-                <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+                <Ionicons name="chevron-back-outline" size={22} color="#FFFFFF" />
               </Pressable>
             ) : null}
 
             {normalizedPhotos.length > 1 ? (
               <Pressable style={styles.modalArrowRight} onPress={goNext}>
-                <Ionicons name="chevron-forward" size={22} color="#FFFFFF" />
+                <Ionicons name="chevron-forward-outline" size={22} color="#FFFFFF" />
               </Pressable>
             ) : null}
 

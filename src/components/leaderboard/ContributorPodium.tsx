@@ -51,7 +51,7 @@ function Avatar({ src, size }: { src?: string; size: number }) {
       end={{ x: 1, y: 1 }}
       style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 2.5, borderColor: '#fff' }}
     >
-      <Ionicons name="person" size={size * 0.45} color="rgba(45,45,45,0.60)" />
+      <Ionicons name="person-outline" size={size * 0.45} color="rgba(45,45,45,0.60)" />
     </LinearGradient>
   );
 }
@@ -89,7 +89,7 @@ function PodiumItem({ reviewer, rank }: { reviewer: TopReviewerDto; rank: 1 | 2 
           end={{ x: 1, y: 1 }}
         >
           {rank === 1
-            ? <Ionicons name="trophy" size={bSz * 0.48} color="#fff" />
+            ? <Ionicons name="trophy-outline" size={bSz * 0.48} color="#fff" />
             : <Text style={{ fontSize: bSz * 0.44, fontWeight: '800', color: badgeTextColor }}>{rank}</Text>
           }
         </LinearGradient>

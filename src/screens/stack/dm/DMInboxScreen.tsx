@@ -227,7 +227,7 @@ export default function DMInboxScreen() {
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-              <Ionicons name="close-circle" size={16} color={C.charcoal50} />
+              <Ionicons name="close-circle-outline" size={16} color={C.charcoal50} />
             </Pressable>
           )}
         </View>

@@ -139,7 +139,7 @@ function BusinessCallout({ business, onClose, onView }: CalloutProps) {
 
           <Pressable style={calloutStyles.viewBtn} onPress={onView} accessibilityLabel="View business">
             <Text style={calloutStyles.viewBtnText}>View</Text>
-            <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+            <Ionicons name="arrow-forward-outline" size={14} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>

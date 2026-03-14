@@ -261,11 +261,11 @@ export default function LeaderboardScreen() {
                         style={s.expandBtn}
                         onPress={() => setShowAllContributors(v => !v)}
                       >
-                        {showAllContributors && <Ionicons name="chevron-up" size={15} color="#fff" />}
+                        {showAllContributors && <Ionicons name="chevron-up-outline" size={15} color="#fff" />}
                         <Text style={s.expandText}>
                           {showAllContributors ? 'Show Less' : 'View Full Leaderboard'}
                         </Text>
-                        {!showAllContributors && <Ionicons name="chevron-down" size={15} color="#fff" />}
+                        {!showAllContributors && <Ionicons name="chevron-down-outline" size={15} color="#fff" />}
                       </Pressable>
                     )}
                   </>
@@ -320,11 +320,11 @@ export default function LeaderboardScreen() {
                         style={s.expandBtn}
                         onPress={() => setShowAllBusinesses(v => !v)}
                       >
-                        {showAllBusinesses && <Ionicons name="chevron-up" size={15} color="#fff" />}
+                        {showAllBusinesses && <Ionicons name="chevron-up-outline" size={15} color="#fff" />}
                         <Text style={s.expandText}>
                           {showAllBusinesses ? 'Show Less' : 'View Full Leaderboard'}
                         </Text>
-                        {!showAllBusinesses && <Ionicons name="chevron-down" size={15} color="#fff" />}
+                        {!showAllBusinesses && <Ionicons name="chevron-down-outline" size={15} color="#fff" />}
                       </Pressable>
                     )}
                   </>

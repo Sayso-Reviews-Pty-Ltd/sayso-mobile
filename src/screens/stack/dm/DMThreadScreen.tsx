@@ -96,7 +96,7 @@ function MessageBubble({
               <Image source={{ uri: otherAvatar }} style={styles.bubbleAvatar} />
             ) : (
               <View style={[styles.bubbleAvatar, styles.bubbleAvatarFallback]}>
-                <Ionicons name="person" size={12} color={C.charcoal50} />
+                <Ionicons name="person-outline" size={12} color={C.charcoal50} />
               </View>
             )
           ) : null}
@@ -132,7 +132,7 @@ function MessageBubble({
             )}
             {isFailed && (
               <Pressable style={styles.retryBtn} onPress={onRetry}>
-                <Ionicons name="alert-circle" size={13} color={C.wine} />
+                <Ionicons name="alert-circle-outline" size={13} color={C.wine} />
                 <Text style={styles.retryText}>Failed · Tap to retry</Text>
               </Pressable>
             )}
@@ -279,7 +279,7 @@ export default function DMThreadScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + GRID * 1.5 }]}>
         <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color={C.charcoal} />
+          <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
         </Pressable>
         <View style={styles.headerInfo}>
           <Text style={styles.headerName} numberOfLines={1}>{otherName}</Text>
@@ -294,7 +294,7 @@ export default function DMThreadScreen() {
           <Image source={{ uri: conversation.other_user_avatar }} style={styles.headerAvatar} />
         ) : (
           <View style={[styles.headerAvatar, styles.headerAvatarFallback]}>
-            <Ionicons name="person" size={16} color={C.charcoal50} />
+            <Ionicons name="person-outline" size={16} color={C.charcoal50} />
           </View>
         )}
       </View>
@@ -371,7 +371,7 @@ export default function DMThreadScreen() {
             disabled={!inputText.trim()}
           >
             <Ionicons
-              name="arrow-up"
+              name="arrow-up-outline"
               size={20}
               color={inputText.trim() ? C.white : C.charcoal50}
             />

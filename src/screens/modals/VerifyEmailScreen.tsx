@@ -193,7 +193,7 @@ export default function VerifyEmailScreen() {
     <View style={[styles.root, { backgroundColor: C.page }]}> 
       <View style={[styles.backWrap, { top: insets.top + 8 }]}> 
         <Pressable onPress={() => router.replace(routes.home() as never)} hitSlop={10} style={styles.backBtn}> 
-          <Ionicons name="arrow-back" size={22} color={C.charcoal} />
+          <Ionicons name="arrow-back-outline" size={22} color={C.charcoal} />
         </Pressable>
       </View>
 
@@ -230,7 +230,7 @@ export default function VerifyEmailScreen() {
 
           <View style={styles.whyCard}>
             <View style={styles.whyTitleRow}>
-              <Ionicons name="checkmark-circle" size={17} color={C.sage} />
+              <Ionicons name="checkmark-circle-outline" size={17} color={C.sage} />
               <Text style={styles.whyTitle}>Why verify your email?</Text>
             </View>
             {[

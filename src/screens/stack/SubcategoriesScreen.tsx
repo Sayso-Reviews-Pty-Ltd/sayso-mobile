@@ -486,7 +486,7 @@ export default function SubcategoriesScreen() {
         <Animated.View style={[styles.counterWrap, { opacity: counterOpacity, transform: [{ translateY: counterY }] }]}>
           <View style={[styles.counterPill, selected.size > 0 && styles.counterPillReady]}>
             <Text style={styles.counterText}>{selected.size} of {MAX} selected</Text>
-            {selected.size > 0 ? <Ionicons name="checkmark-circle" size={15} color={ONBOARDING_TOKENS.sage} /> : null}
+            {selected.size > 0 ? <Ionicons name="checkmark-circle-outline" size={15} color={ONBOARDING_TOKENS.sage} /> : null}
           </View>
           <Text style={styles.counterHint}>{helperText}</Text>
         </Animated.View>
@@ -549,7 +549,7 @@ export default function SubcategoriesScreen() {
                               <Animated.View
                                 style={{ transform: [{ scale: pillAnim.checkScale }], opacity: pillAnim.checkScale }}
                               >
-                                <Ionicons name="checkmark-circle" size={14} color={ONBOARDING_TOKENS.white} />
+                                <Ionicons name="checkmark-circle-outline" size={14} color={ONBOARDING_TOKENS.white} />
                               </Animated.View>
                             ) : null}
                           </LinearGradient>

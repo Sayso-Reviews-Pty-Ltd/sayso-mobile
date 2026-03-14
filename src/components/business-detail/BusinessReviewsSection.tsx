@@ -143,7 +143,7 @@ export function BusinessReviewsSection({ businessId, onPressWriteReview }: Props
         >
           <Text style={styles.toggleText}>{isExpanded ? 'Show fewer reviews' : viewMoreLabel}</Text>
           <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-            <Ionicons name="chevron-down" size={15} color={businessDetailColors.charcoal} />
+            <Ionicons name="chevron-down-outline" size={15} color={businessDetailColors.charcoal} />
           </Animated.View>
         </Pressable>
       )}

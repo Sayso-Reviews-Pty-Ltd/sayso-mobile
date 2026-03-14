@@ -18,12 +18,12 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingTop: 6,
-    paddingBottom: 26,
-    gap: 16,
+    paddingTop: 8,
+    paddingBottom: 48,
+    gap: 20,
   },
   mainColumn: {
     marginHorizontal: businessDetailSpacing.pageGutter,
-    gap: 14,
+    gap: 16,
   },
 });

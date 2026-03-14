@@ -240,7 +240,7 @@ export function OnboardingLayout({
           ]}
         >
           <Pressable style={styles.backBtn} onPress={onBack} hitSlop={12}>
-            <Ionicons name="arrow-back" size={22} color={ONBOARDING_TOKENS.white} />
+            <Ionicons name="arrow-back-outline" size={22} color={ONBOARDING_TOKENS.white} />
           </Pressable>
         </Animated.View>
       ) : null}
@@ -296,7 +296,7 @@ export function OnboardingLayout({
                 ) : (
                   <>
                     <Text style={styles.continueTxt}>{continueLabel}</Text>
-                    <Ionicons name="arrow-forward" size={17} color={ONBOARDING_TOKENS.white} style={{ marginLeft: 8 }} />
+                    <Ionicons name="arrow-forward-outline" size={17} color={ONBOARDING_TOKENS.white} style={{ marginLeft: 8 }} />
                   </>
                 )}
               </LinearGradient>

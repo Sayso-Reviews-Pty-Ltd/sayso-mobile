@@ -22,7 +22,7 @@ export default function AuthCodeErrorScreen() {
           {error || 'The sign-in callback did not complete correctly.'}
         </Text>
         <Pressable style={styles.button} onPress={() => router.replace(routes.login() as never)}>
-          <Ionicons name="arrow-back" size={16} color="#FFFFFF" />
+          <Ionicons name="arrow-back-outline" size={16} color="#FFFFFF" />
           <Text style={styles.buttonText}>Try Again</Text>
         </Pressable>
       </View>

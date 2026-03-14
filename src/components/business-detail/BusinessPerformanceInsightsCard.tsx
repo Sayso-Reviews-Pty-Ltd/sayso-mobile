@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { PercentileChipsSection } from './PercentileChipsSection';
 import { businessDetailColors, businessDetailSpacing } from './styles';
+import { CARD_SHADOW_MD } from '../../styles/overlayShadow';
 
 type Props = {
   punctuality?: number;
@@ -35,5 +36,6 @@ const styles = StyleSheet.create({
     backgroundColor: businessDetailColors.cardTint,
     paddingHorizontal: 16,
     paddingVertical: 14,
+    ...CARD_SHADOW_MD,
   },
 });

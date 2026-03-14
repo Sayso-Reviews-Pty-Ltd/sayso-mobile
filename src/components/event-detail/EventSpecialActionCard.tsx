@@ -132,10 +132,8 @@ export function EventSpecialActionCard({
         </LinearGradient>
       </Pressable>
 
-      <Pressable style={styles.ctaButton} onPress={onPressWriteReview}>
-        <LinearGradient colors={CTA_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaGradient}>
-          <Text style={styles.ctaText}>Write Review</Text>
-        </LinearGradient>
+      <Pressable style={styles.writeReviewButton} onPress={onPressWriteReview}>
+        <Text style={styles.writeReviewText}>Write Review</Text>
       </Pressable>
 
       <View style={styles.quickActionsContainer}>
@@ -143,24 +141,24 @@ export function EventSpecialActionCard({
 
         <View style={styles.actionsGrid}>
           <Pressable style={[styles.quickAction, isGoing ? styles.quickActionActive : null]} onPress={onPressGoing}>
-            <Ionicons name="people" size={17} color={businessDetailColors.charcoal} />
+            <Ionicons name="people-outline" size={17} color={businessDetailColors.charcoal} />
             <Text style={styles.quickActionText}>Going</Text>
             {rsvpBusy ? <Text style={styles.busyLabel}>...</Text> : null}
           </Pressable>
 
           <Pressable style={[styles.quickAction, hasAnyReminder ? styles.quickActionReminder : null]} onPress={handleReminderChoice}>
-            <Ionicons name="notifications" size={17} color={businessDetailColors.charcoal} />
+            <Ionicons name="notifications-outline" size={17} color={businessDetailColors.charcoal} />
             <Text style={styles.quickActionText}>Remind</Text>
             {reminderBusy ? <Text style={styles.busyLabel}>...</Text> : null}
           </Pressable>
 
           <Pressable style={styles.quickAction} onPress={handleCalendar}>
-            <Ionicons name="calendar" size={17} color={businessDetailColors.charcoal} />
+            <Ionicons name="calendar-outline" size={17} color={businessDetailColors.charcoal} />
             <Text style={styles.quickActionText}>Calendar</Text>
           </Pressable>
 
           <Pressable style={styles.quickAction} onPress={handleShare}>
-            <Ionicons name="share-social" size={17} color={businessDetailColors.charcoal} />
+            <Ionicons name="share-social-outline" size={17} color={businessDetailColors.charcoal} />
             <Text style={styles.quickActionText}>Share</Text>
           </Pressable>
         </View>
@@ -185,7 +183,7 @@ const styles = StyleSheet.create({
   heading: {
     color: businessDetailColors.charcoal,
     fontSize: 19,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   ctaButton: {
     borderRadius: 999,
@@ -215,7 +213,7 @@ const styles = StyleSheet.create({
   quickActionsLabel: {
     fontSize: 11,
     fontWeight: '600',
-    letterSpacing: 2.0,
+    letterSpacing: 1.2,
     color: 'rgba(45,45,45,0.55)',
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -255,6 +253,22 @@ const styles = StyleSheet.create({
     top: 8,
     color: businessDetailColors.textSubtle,
     fontSize: 11,
+    fontWeight: '700',
+  },
+  writeReviewButton: {
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: businessDetailColors.coral,
+    backgroundColor: 'rgba(114,47,55,0.08)',
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  writeReviewText: {
+    color: businessDetailColors.coral,
+    fontSize: 14,
     fontWeight: '700',
   },
 });

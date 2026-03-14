@@ -277,15 +277,23 @@ export default function EventSpecialScreen({ routeType }: Props) {
               title={item.type === 'special' ? 'About This Special' : 'About This Event'}
             />
           </TransitionItem>
-
-          <TransitionItem variant="card" index={3}>
-            <EventSpecialDetailsCard item={item} />
-          </TransitionItem>
         </View>
 
         {showDeferredSections ? (
           <>
             <View style={styles.mainColumn}>
+              <TransitionItem variant="card" index={3}>
+                <EventSpecialMoreDatesCard
+                  currentStartISO={item.startDateISO}
+                  currentEndISO={item.endDateISO}
+                  occurrences={item.occurrencesList}
+                  onPressDate={(occurrenceId) => {
+                    const target = item.type === 'special' ? routes.specialDetail(occurrenceId) : routes.eventDetail(occurrenceId);
+                    router.push(target as never);
+                  }}
+                />
+              </TransitionItem>
+
               <TransitionItem variant="card" index={4}>
                 <EventSpecialActionCard
                   item={item}
@@ -303,15 +311,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
               </TransitionItem>
 
               <TransitionItem variant="card" index={5}>
-                <EventSpecialMoreDatesCard
-                  currentStartISO={item.startDateISO}
-                  currentEndISO={item.endDateISO}
-                  occurrences={item.occurrencesList}
-                  onPressDate={(occurrenceId) => {
-                    const target = item.type === 'special' ? routes.specialDetail(occurrenceId) : routes.eventDetail(occurrenceId);
-                    router.push(target as never);
-                  }}
-                />
+                <EventSpecialDetailsCard item={item} />
               </TransitionItem>
 
               <TransitionItem variant="card" index={6}>
@@ -320,15 +320,6 @@ export default function EventSpecialScreen({ routeType }: Props) {
             </View>
 
             <TransitionItem variant="card" index={7}>
-              <EventSpecialRelatedSection
-                title={item.type === 'special' ? 'More Specials Near You' : 'More Events Near You'}
-                items={related.items}
-                isLoading={related.isLoading}
-                error={related.error}
-              />
-            </TransitionItem>
-
-            <TransitionItem variant="card" index={8}>
               <EventSpecialReviewsSection
                 title={item.type === 'special' ? 'Special Reviews' : 'Event Reviews'}
                 targetId={id ?? item.id}
@@ -339,6 +330,15 @@ export default function EventSpecialScreen({ routeType }: Props) {
                   void reviews.refetch();
                 }}
                 onPressWriteReview={handlePressWriteReview}
+              />
+            </TransitionItem>
+
+            <TransitionItem variant="card" index={8}>
+              <EventSpecialRelatedSection
+                title={item.type === 'special' ? 'More Specials Near You' : 'More Events Near You'}
+                items={related.items}
+                isLoading={related.isLoading}
+                error={related.error}
               />
             </TransitionItem>
           </>

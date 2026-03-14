@@ -19,7 +19,7 @@ import { COMMUNITY_BADGE_MARQUEE_ASSETS } from '../../../lib/communityBadgeMarqu
 import { HomeSectionHeader } from './HomeSectionHeader';
 import { HomeBusinessRow } from './HomeBusinessRow';
 import { homeTokens } from './HomeTokens';
-import { getCardDepthShadowStyle } from '../../../styles/overlayShadow';
+import { CARD_SHADOW_MD, getCardDepthShadowStyle } from '../../../styles/overlayShadow';
 import { CARD_RADIUS } from '../../../styles/radii';
 import { NAVBAR_BG_COLOR } from '../../../styles/colors';
 
@@ -137,7 +137,7 @@ export function HomeCommunityHighlightsSection({
   useEffect(() => {
     const animateBadgesEntrance = () => {
       Animated.sequence([
-        Animated.delay(800), // Wait a bit before starting
+        Animated.delay(200),
         Animated.parallel([
           Animated.timing(badgesAnimValue, {
             toValue: 1,
@@ -187,6 +187,10 @@ export function HomeCommunityHighlightsSection({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            snapToInterval={256}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            disableIntervalMomentum
             style={styles.row}
             contentContainerStyle={styles.rowContent}
           >
@@ -226,7 +230,7 @@ export function HomeCommunityHighlightsSection({
             </Text>
             <TouchableOpacity style={styles.exploreBadgesButton} onPress={onPressBadges} activeOpacity={0.88}>
               <Text style={styles.exploreBadgesText}>Explore badges</Text>
-              <Ionicons name="arrow-forward" size={15} color={homeTokens.white} />
+              <Ionicons name="arrow-forward-outline" size={15} color={homeTokens.white} />
             </TouchableOpacity>
             <CommunityBadgeMarquee />
           </View>
@@ -234,6 +238,10 @@ export function HomeCommunityHighlightsSection({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            snapToInterval={256}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            disableIntervalMomentum
             style={styles.row}
             contentContainerStyle={styles.rowContent}
           >
@@ -263,7 +271,7 @@ export function HomeCommunityHighlightsSection({
             activeOpacity={0.8}
           >
             <Text style={styles.subsectionAction}>See More</Text>
-            <Ionicons name="arrow-forward" size={14} color={homeTokens.charcoal} style={styles.subsectionActionIcon} />
+            <Ionicons name="arrow-forward-outline" size={14} color={homeTokens.coral} style={styles.subsectionActionIcon} />
           </TouchableOpacity>
         </View>
 
@@ -314,7 +322,7 @@ const styles = StyleSheet.create({
   subsectionAction: {
     fontSize: 14,
     fontWeight: '600',
-    color: homeTokens.charcoal,
+    color: homeTokens.coral,
   },
   subsectionActionButton: {
     minWidth: 40,
@@ -399,6 +407,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: homeTokens.borderSoft,
     backgroundColor: homeTokens.cardBg,
+    ...CARD_SHADOW_MD,
   },
   messageTitle: {
     fontSize: 16,
@@ -408,7 +417,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 14,
     lineHeight: 20,
-    color: 'rgba(45,55,72,0.9)',
+    color: homeTokens.textSecondary,
     marginTop: 8,
   },
   emptyContributorsCard: {
@@ -421,6 +430,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(92, 37, 43, 0.46)',
     backgroundColor: NAVBAR_BG_COLOR,
     alignItems: 'center',
+    ...CARD_SHADOW_MD,
   },
   emptyContributorsTitle: {
     fontSize: 22,
@@ -446,7 +456,7 @@ const styles = StyleSheet.create({
   },
   logoWordmark: {
     fontSize: 26,
-    lineHeight: 26,
+    lineHeight: 34,
     fontFamily: 'MonarchParadox',
     letterSpacing: 0.2,
     textTransform: 'none',
@@ -464,10 +474,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: NAVBAR_BG_COLOR,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
   },
   exploreBadgesText: {
     fontSize: 13,
@@ -475,15 +487,17 @@ const styles = StyleSheet.create({
     color: homeTokens.white,
   },
   badgeMarqueeContainer: {
-    marginTop: 16,
+    marginTop: 20,
     marginHorizontal: -20,
     alignSelf: 'stretch',
     backgroundColor: NAVBAR_BG_COLOR,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.10)',
+    paddingVertical: 12,
   },
   badgeMarqueeViewport: {
     width: '100%',
     overflow: 'hidden',
-    backgroundColor: NAVBAR_BG_COLOR,
   },
   badgeTrack: {
     flexDirection: 'row',
@@ -492,9 +506,8 @@ const styles = StyleSheet.create({
   badgeTrackGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 8,
-    paddingBottom: 4,
   },
   badgeChip: {
     flexDirection: 'row',
@@ -504,13 +517,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(45, 55, 72, 0.1)',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderColor: 'rgba(255,255,255,0.36)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   badgeChipIcon: {
     width: 18,
@@ -519,6 +532,6 @@ const styles = StyleSheet.create({
   badgeChipLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: 'rgba(45, 55, 72, 0.8)',
+    color: 'rgba(45,45,45,0.80)',
   },
 });

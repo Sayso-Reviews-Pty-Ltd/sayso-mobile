@@ -293,8 +293,6 @@ export function EventsSpecialsFeedScreen({ subtitle, onScrollY }: Props) {
       isRefreshing={query.isRefetching && !query.isFetchingNextPage}
       onRefresh={handleRefresh}
       onScroll={handleScroll}
-      showBackToTop={showScrollTopButton}
-      onScrollToTop={handleScrollToTop}
     />
   );
 }

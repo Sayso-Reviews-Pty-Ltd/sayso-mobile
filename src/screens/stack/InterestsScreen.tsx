@@ -278,7 +278,7 @@ export default function InterestsScreen() {
                 {selected.size} of {MIN}-{MAX} selected
               </Text>
               {selected.size >= MIN ? (
-                <Ionicons name="checkmark-circle" size={15} color={ONBOARDING_TOKENS.sage} />
+                <Ionicons name="checkmark-circle-outline" size={15} color={ONBOARDING_TOKENS.sage} />
               ) : null}
             </View>
             <Text style={styles.selectionHint}>{helperText}</Text>
@@ -326,7 +326,7 @@ export default function InterestsScreen() {
                   </Pressable>
                   {isSelected ? (
                     <Animated.View style={[styles.checkBadge, { transform: [{ scale: anim.checkScale }] }]}>
-                      <Ionicons name="checkmark-circle" size={22} color={ONBOARDING_TOKENS.sage} />
+                      <Ionicons name="checkmark-circle-outline" size={22} color={ONBOARDING_TOKENS.sage} />
                     </Animated.View>
                   ) : null}
                 </Animated.View>

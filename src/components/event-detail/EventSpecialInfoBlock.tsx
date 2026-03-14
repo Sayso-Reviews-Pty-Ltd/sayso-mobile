@@ -17,7 +17,7 @@ export function EventSpecialInfoBlock({ title, rating, location, type }: Props) 
 
       <View style={styles.metaRow}>
         <View style={styles.metaPill}>
-          <Ionicons name="star" size={13} color="#F59E0B" />
+          <Ionicons name="star-outline" size={13} color="#F59E0B" />
           <Text style={styles.metaText}>{rating > 0 ? rating.toFixed(1) : '0.0'}</Text>
         </View>
 
@@ -26,7 +26,7 @@ export function EventSpecialInfoBlock({ title, rating, location, type }: Props) 
         </View>
 
         <View style={styles.locationPill}>
-          <Ionicons name="location" size={13} color={businessDetailColors.charcoal} />
+          <Ionicons name="location-outline" size={13} color={businessDetailColors.charcoal} />
           <Text numberOfLines={1} style={styles.locationText}>
             {location || 'Cape Town'}
           </Text>
@@ -38,13 +38,14 @@ export function EventSpecialInfoBlock({ title, rating, location, type }: Props) 
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: 10,
+    gap: 12,
   },
   title: {
     color: businessDetailColors.charcoal,
-    fontSize: 29,
-    lineHeight: 34,
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: '800',
+    letterSpacing: -0.8,
   },
   metaRow: {
     flexDirection: 'row',

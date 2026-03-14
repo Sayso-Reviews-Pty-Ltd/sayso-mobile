@@ -65,7 +65,7 @@ export function BusinessHeroCarousel({ businessName, images, rating, verified, s
       ) : null}
 
       <View style={styles.ratingBadge}>
-        <Ionicons name="star" size={14} color={getStarColor(displayRating)} />
+        <Ionicons name="star-outline" size={14} color={getStarColor(displayRating)} />
         <Text style={styles.ratingText}>{displayRating > 0 ? displayRating.toFixed(1) : '0.0'}</Text>
       </View>
 
@@ -77,7 +77,7 @@ export function BusinessHeroCarousel({ businessName, images, rating, verified, s
             onPress={() => setIndex((current) => (current === 0 ? images.length - 1 : current - 1))}
             style={styles.carouselArrowLeft}
           >
-            <Ionicons name="chevron-back" size={20} color={businessDetailColors.charcoal} />
+            <Ionicons name="chevron-back-outline" size={20} color={businessDetailColors.charcoal} />
           </Pressable>
 
           <Pressable
@@ -86,7 +86,7 @@ export function BusinessHeroCarousel({ businessName, images, rating, verified, s
             onPress={() => setIndex((current) => (current === images.length - 1 ? 0 : current + 1))}
             style={styles.carouselArrowRight}
           >
-            <Ionicons name="chevron-forward" size={20} color={businessDetailColors.charcoal} />
+            <Ionicons name="chevron-forward-outline" size={20} color={businessDetailColors.charcoal} />
           </Pressable>
         </>
       ) : null}

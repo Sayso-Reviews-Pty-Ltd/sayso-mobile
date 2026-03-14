@@ -285,7 +285,7 @@ export default function TrendingScreen() {
 
           <View style={styles.filterGroup}>
             <View style={styles.filterLabelRow}>
-              <Ionicons name="star" size={13} color={businessDetailColors.textMuted} />
+              <Ionicons name="star-outline" size={13} color={businessDetailColors.textMuted} />
               <Text style={styles.filterLabelText}>Min Rating</Text>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
@@ -319,7 +319,7 @@ export default function TrendingScreen() {
               onPress={() => setFilters((prev) => ({ ...prev, minRating: null }))}
             >
               <Text style={styles.activeBadgeText}>★ {filters.minRating.toFixed(1)}+</Text>
-              <Ionicons name="close" size={11} color={businessDetailColors.white} />
+              <Ionicons name="close-outline" size={11} color={businessDetailColors.white} />
             </Pressable>
           )}
           {filters.radiusKm !== null && (
@@ -328,7 +328,7 @@ export default function TrendingScreen() {
               onPress={() => setFilters((prev) => ({ ...prev, radiusKm: null }))}
             >
               <Text style={styles.activeBadgeText}>{filters.radiusKm} km</Text>
-              <Ionicons name="close" size={11} color={businessDetailColors.white} />
+              <Ionicons name="close-outline" size={11} color={businessDetailColors.white} />
             </Pressable>
           )}
           <Pressable style={styles.clearBadge} onPress={handleClearFilters}>

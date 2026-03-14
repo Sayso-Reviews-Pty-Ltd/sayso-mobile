@@ -36,7 +36,7 @@ export function ScrollToTopFab({ visible, onPress }: Props) {
         accessibilityRole="button"
         accessibilityLabel="Scroll to top"
       >
-        <Ionicons name="chevron-up" size={20} color="#2D2D2D" />
+        <Ionicons name="chevron-up-outline" size={20} color="#2D2D2D" />
       </Pressable>
     </Animated.View>
   );

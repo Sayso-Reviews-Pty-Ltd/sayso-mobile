@@ -250,7 +250,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
     <View style={[styles.root, { backgroundColor: C.page }]}>
       <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
         <Pressable style={styles.backBtn} onPress={handleBack} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color={C.charcoal} />
+          <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
         </Pressable>
       </View>
 
@@ -339,7 +339,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                 <Animated.View style={{ opacity: formOpacity, transform: [{ translateY: formTranslateY }] }}>
                   {error ? (
                     <View style={styles.errorBanner}>
-                      <Ionicons name="alert-circle" size={16} color={C.error} />
+                      <Ionicons name="alert-circle-outline" size={16} color={C.error} />
                       <Text style={styles.errorText}>{error}</Text>
                     </View>
                   ) : null}
@@ -501,7 +501,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                   {isRegister ? (
                     <Pressable style={styles.consentRow} onPress={() => setConsent((v) => !v)}>
                       <View style={[styles.checkbox, consent ? styles.checkboxChecked : null]}>
-                        {consent ? <Ionicons name="checkmark" size={12} color={C.white} /> : null}
+                        {consent ? <Ionicons name="checkmark-outline" size={12} color={C.white} /> : null}
                       </View>
                       <Text style={styles.consentText}>
                         I agree to the{' '}

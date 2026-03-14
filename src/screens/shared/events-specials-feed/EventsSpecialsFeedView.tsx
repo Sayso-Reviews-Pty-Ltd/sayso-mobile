@@ -1,15 +1,8 @@
 import { memo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View, type ListRenderItem, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import type { EventSpecialListItemDto } from '@sayso/contracts';
-import { EventCard } from '../../../components/EventCard';
-import { EventCardSkeleton } from '../../../components/EventCardSkeleton';
-import { EmptyState } from '../../../components/EmptyState';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
-import { ScrollToTopFab } from '../../../components/ScrollToTopFab';
 import { Text } from '../../../components/Typography';
-import { FeedFooter } from '../../../components/feed/FeedFooter';
-import { LoadMoreButton } from '../../../components/feed/LoadMoreButton';
 import { HomeSearchBar } from '../../tabs/home/HomeSearchBar';
 import { APP_PAGE_GUTTER } from '../../../styles/layout';
 
@@ -124,8 +117,6 @@ type Props = {
   isRefreshing: boolean;
   onRefresh: () => void;
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  showBackToTop: boolean;
-  onScrollToTop: () => void;
 };
 
 function EventsSpecialsFeedViewComponent({
@@ -148,8 +139,6 @@ function EventsSpecialsFeedViewComponent({
   isRefreshing,
   onRefresh,
   onScroll,
-  showBackToTop,
-  onScrollToTop,
 }: Props) {
   return (
     <View style={s.container}>
@@ -185,7 +174,6 @@ function EventsSpecialsFeedViewComponent({
         scrollEventThrottle={32}
         showsVerticalScrollIndicator={false}
       />
-      <ScrollToTopFab visible={showBackToTop} onPress={onScrollToTop} />
     </View>
   );
 }
@@ -193,26 +181,25 @@ function EventsSpecialsFeedViewComponent({
 export const EventsSpecialsFeedView = memo(EventsSpecialsFeedViewComponent);
 
 const s = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#E5E0E5' },
   list: { flexGrow: 1, paddingHorizontal: APP_PAGE_GUTTER, paddingTop: 8, paddingBottom: 24 },
   hero: {
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
     alignItems: 'center',
   },
   heroTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
     color: CHARCOAL,
     textAlign: 'center',
-    marginBottom: 6,
   },
   heroSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: 'rgba(45,45,45,0.65)',
+    fontSize: 15,
+    lineHeight: 22,
+    color: 'rgba(45,45,45,0.70)',
     textAlign: 'center',
-    maxWidth: 320,
+    marginTop: 6,
   },
   searchWrap: {
     marginBottom: 12,
@@ -229,7 +216,7 @@ const s = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.80)',
     borderWidth: 1,
-    borderColor: 'rgba(45,45,45,0.18)',
+    borderColor: 'rgba(45,45,45,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -257,12 +244,13 @@ const s = StyleSheet.create({
     marginTop: 12,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: CHARCOAL,
+    letterSpacing: -0.2,
   },
   cardWrap: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   skeletonStack: { gap: 12, paddingTop: 4 },
   loadMoreWrap: { paddingVertical: 4, gap: 6 },

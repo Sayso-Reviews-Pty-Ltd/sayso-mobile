@@ -508,7 +508,7 @@ export default function ProfileScreen() {
                     <Image source={{ uri: profile.avatar_url }} style={styles.avatar} contentFit="cover" />
                   ) : (
                     <View style={[styles.avatar, styles.avatarFallback]}>
-                      <Ionicons name="person" size={38} color="rgba(45,45,45,0.50)" />
+                      <Ionicons name="person-outline" size={38} color="rgba(45,45,45,0.50)" />
                     </View>
                   )}
 
@@ -591,7 +591,7 @@ export default function ProfileScreen() {
 
                   <Pressable style={styles.inlineLink} onPress={() => router.push(routes.saved() as never)}>
                     <Text style={styles.inlineLinkText}>View saved</Text>
-                    <Ionicons name="chevron-forward" size={14} color={CORAL} />
+                    <Ionicons name="chevron-forward-outline" size={14} color={CORAL} />
                   </Pressable>
                 </LinearGradient>
               </View>
@@ -608,7 +608,7 @@ export default function ProfileScreen() {
                   <View style={styles.sectionHeaderRow}>
                     <View style={styles.sectionHeaderLeft}>
                       <View style={styles.sectionIconCircle}>
-                        <Ionicons name="bookmark" size={14} color="rgba(45,45,45,0.84)" />
+                        <Ionicons name="bookmark-outline" size={14} color="rgba(45,45,45,0.84)" />
                       </View>
                       <Text style={styles.sectionTitle}>Saved Businesses</Text>
                       <View style={styles.countBadge}>
@@ -617,7 +617,7 @@ export default function ProfileScreen() {
                     </View>
                     <Pressable style={styles.inlineLink} onPress={() => router.push(routes.saved() as never)}>
                       <Text style={styles.inlineLinkText}>View all</Text>
-                      <Ionicons name="chevron-forward" size={14} color={CORAL} />
+                      <Ionicons name="chevron-forward-outline" size={14} color={CORAL} />
                     </Pressable>
                   </View>
 
@@ -630,7 +630,7 @@ export default function ProfileScreen() {
                       <View key={business.id} style={styles.savedBusinessCardWrap}>
                         <BusinessCard business={business} />
                         <View style={styles.savedIndicator}>
-                          <Ionicons name="bookmark" size={12} color="#FFFFFF" />
+                          <Ionicons name="bookmark-outline" size={12} color="#FFFFFF" />
                         </View>
                       </View>
                     ))}
@@ -656,7 +656,7 @@ export default function ProfileScreen() {
                   {earnedBadges.length > 0 ? (
                     <Pressable style={styles.inlineLink} onPress={() => router.push(routes.achievements() as never)}>
                       <Text style={styles.inlineLinkText}>View all</Text>
-                      <Ionicons name="chevron-forward" size={14} color={CORAL} />
+                      <Ionicons name="chevron-forward-outline" size={14} color={CORAL} />
                     </Pressable>
                   ) : null}
                 </View>
@@ -813,7 +813,7 @@ export default function ProfileScreen() {
 
                   {locationStatus === 'granted' ? (
                     <View style={styles.enabledPill}>
-                      <Ionicons name="checkmark" size={13} color="#7D9B76" />
+                      <Ionicons name="checkmark-outline" size={13} color="#7D9B76" />
                       <Text style={styles.enabledPillText}>Enabled</Text>
                     </View>
                   ) : (

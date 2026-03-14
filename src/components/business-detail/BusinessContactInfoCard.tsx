@@ -22,14 +22,14 @@ export function BusinessContactInfoCard({ phone, email, website, address, locati
     <LinearGradient colors={CARD_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
       <View style={styles.row}>
         <View style={styles.iconPill}>
-          <Ionicons name="call" size={15} color={businessDetailColors.charcoal} />
+          <Ionicons name="call-outline" size={15} color={businessDetailColors.charcoal} />
         </View>
         {displayPhone ? <Text style={styles.valueText}>{displayPhone}</Text> : <Text style={styles.valueFallback}>Phone number coming soon</Text>}
       </View>
 
       <View style={styles.row}>
         <View style={styles.iconPill}>
-          <Ionicons name="mail" size={15} color={businessDetailColors.charcoal} />
+          <Ionicons name="mail-outline" size={15} color={businessDetailColors.charcoal} />
         </View>
         {email ? (
           <Pressable onPress={() => Linking.openURL(`mailto:${email}`)}>
@@ -42,7 +42,7 @@ export function BusinessContactInfoCard({ phone, email, website, address, locati
 
       <View style={styles.row}>
         <View style={styles.iconPill}>
-          <Ionicons name="globe" size={15} color={businessDetailColors.charcoal} />
+          <Ionicons name="globe-outline" size={15} color={businessDetailColors.charcoal} />
         </View>
         {websiteHref ? (
           <Pressable onPress={() => Linking.openURL(websiteHref)}>
@@ -55,7 +55,7 @@ export function BusinessContactInfoCard({ phone, email, website, address, locati
 
       <View style={styles.row}>
         <View style={styles.iconPill}>
-          <Ionicons name="location" size={15} color={businessDetailColors.charcoal} />
+          <Ionicons name="location-outline" size={15} color={businessDetailColors.charcoal} />
         </View>
         {addressText ? <Text style={styles.valueText}>{addressText}</Text> : <Text style={styles.valueFallback}>Address coming soon</Text>}
       </View>

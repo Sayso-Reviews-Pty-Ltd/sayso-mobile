@@ -2,7 +2,7 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { EventSpecialDetail } from '../../hooks/useEventSpecialDetail';
 import { Text } from '../Typography';
-import { businessDetailColors, businessDetailSpacing } from '../business-detail/styles';
+import { businessDetailSpacing } from '../business-detail/styles';
 
 type Props = {
   item: EventSpecialDetail;
@@ -27,8 +27,6 @@ export function EventSpecialContactInfoCard({ item }: Props) {
           key: 'phone',
           label: phone,
           icon: 'call' as keyof typeof Ionicons.glyphMap,
-          iconBg: 'rgba(114,47,55,0.10)',
-          iconColor: businessDetailColors.coral,
           onPress: () => Linking.openURL(`tel:${phone}`),
         }
       : null,
@@ -37,8 +35,6 @@ export function EventSpecialContactInfoCard({ item }: Props) {
           key: 'website',
           label: 'Visit booking page',
           icon: 'globe' as keyof typeof Ionicons.glyphMap,
-          iconBg: 'rgba(125,155,118,0.15)',
-          iconColor: businessDetailColors.sage,
           onPress: () => Linking.openURL(website),
         }
       : null,
@@ -47,16 +43,12 @@ export function EventSpecialContactInfoCard({ item }: Props) {
           key: 'location',
           label: address,
           icon: 'location' as keyof typeof Ionicons.glyphMap,
-          iconBg: 'rgba(114,47,55,0.10)',
-          iconColor: businessDetailColors.coral,
         }
       : null,
   ].filter(Boolean) as Array<{
     key: string;
     label: string;
     icon: keyof typeof Ionicons.glyphMap;
-    iconBg: string;
-    iconColor: string;
     onPress?: () => void;
   }>;
 
@@ -70,12 +62,16 @@ export function EventSpecialContactInfoCard({ item }: Props) {
       {rows.length === 0 ? (
         <Text style={styles.fallback}>Contact details are not available for this listing yet.</Text>
       ) : (
-        rows.map((row) => {
+        rows.map((row, index) => {
           const Container = row.onPress ? Pressable : View;
           return (
-            <Container key={row.key} style={styles.row} onPress={row.onPress}>
-              <View style={[styles.iconWrap, { backgroundColor: row.iconBg }]}>
-                <Ionicons name={row.icon} size={15} color={row.iconColor} />
+            <Container
+              key={row.key}
+              style={[styles.row, index < rows.length - 1 ? styles.rowBorder : null]}
+              onPress={row.onPress}
+            >
+              <View style={styles.iconWrap}>
+                <Ionicons name={row.icon} size={15} color="rgba(255,255,255,0.80)" />
               </View>
               <Text style={styles.rowText}>{row.label}</Text>
             </Container>
@@ -89,7 +85,7 @@ export function EventSpecialContactInfoCard({ item }: Props) {
 const styles = StyleSheet.create({
   card: {
     borderRadius: businessDetailSpacing.cardRadius,
-    backgroundColor: businessDetailColors.cardBg,
+    backgroundColor: '#722F37',
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 10,
@@ -100,15 +96,20 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   heading: {
-    color: businessDetailColors.charcoal,
+    color: '#FFFFFF',
     fontSize: 19,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    minHeight: 36,
+    minHeight: 40,
+    paddingVertical: 4,
+  },
+  rowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.15)',
   },
   iconWrap: {
     width: 32,
@@ -116,15 +117,18 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.20)',
   },
   rowText: {
     flex: 1,
-    color: businessDetailColors.textMuted,
+    color: 'rgba(255,255,255,0.80)',
     fontSize: 14,
     lineHeight: 20,
   },
   fallback: {
-    color: businessDetailColors.textMuted,
+    color: 'rgba(255,255,255,0.60)',
     fontSize: 14,
     lineHeight: 20,
   },

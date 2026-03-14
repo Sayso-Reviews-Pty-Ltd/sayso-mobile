@@ -5,6 +5,7 @@ import { Text, TextInput } from '../Typography';
 import { businessDetailColors, businessDetailSpacing } from './styles';
 import { normalizePhoneDigits } from './utils';
 import { apiFetch } from '../../lib/api';
+import { CARD_SHADOW_MD } from '../../styles/overlayShadow';
 
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -214,6 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 10,
+    ...CARD_SHADOW_MD,
   },
   heading: {
     color: businessDetailColors.charcoal,

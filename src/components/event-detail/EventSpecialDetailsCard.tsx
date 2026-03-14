@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { EventSpecialDetail } from '../../hooks/useEventSpecialDetail';
 import { Text } from '../Typography';
-import { businessDetailColors, businessDetailSpacing } from '../business-detail/styles';
+import { businessDetailSpacing } from '../business-detail/styles';
 
 type Props = {
   item: EventSpecialDetail;
@@ -22,7 +22,7 @@ export function EventSpecialDetailsCard({ item }: Props) {
         <>
           <View style={styles.row}>
             <View style={styles.iconWrap}>
-              <Ionicons name="calendar" size={15} color={businessDetailColors.charcoal} />
+              <Ionicons name="calendar-outline" size={15} color="rgba(255,255,255,0.80)" />
             </View>
             <View style={styles.copyWrap}>
               <Text style={styles.label}>Valid from</Text>
@@ -33,7 +33,7 @@ export function EventSpecialDetailsCard({ item }: Props) {
           {item.endDate ? (
             <View style={styles.row}>
               <View style={styles.iconWrap}>
-                <Ionicons name="calendar-outline" size={15} color={businessDetailColors.charcoal} />
+                <Ionicons name="calendar-outline" size={15} color="rgba(255,255,255,0.80)" />
               </View>
               <View style={styles.copyWrap}>
                 <Text style={styles.label}>Valid until</Text>
@@ -45,7 +45,7 @@ export function EventSpecialDetailsCard({ item }: Props) {
       ) : (
         <View style={styles.row}>
           <View style={styles.iconWrap}>
-            <Ionicons name="calendar" size={15} color={businessDetailColors.charcoal} />
+            <Ionicons name="calendar-outline" size={15} color="rgba(255,255,255,0.80)" />
           </View>
           <View style={styles.copyWrap}>
             <Text style={styles.label}>Date</Text>
@@ -57,7 +57,7 @@ export function EventSpecialDetailsCard({ item }: Props) {
 
       <View style={styles.row}>
         <View style={styles.iconWrap}>
-          <Ionicons name="location" size={15} color={businessDetailColors.charcoal} />
+          <Ionicons name="location-outline" size={15} color="rgba(255,255,255,0.80)" />
         </View>
         <View style={styles.copyWrap}>
           <Text style={styles.label}>Venue</Text>
@@ -80,7 +80,7 @@ export function EventSpecialDetailsCard({ item }: Props) {
       {item.type === 'special' && item.businessName ? (
         <View style={styles.row}>
           <View style={styles.iconWrap}>
-            <Ionicons name="storefront" size={15} color={businessDetailColors.charcoal} />
+            <Ionicons name="storefront-outline" size={15} color="rgba(255,255,255,0.80)" />
           </View>
           <View style={styles.copyWrap}>
             <Text style={styles.label}>Offered by</Text>
@@ -92,7 +92,7 @@ export function EventSpecialDetailsCard({ item }: Props) {
       {item.occurrencesCount && item.occurrencesCount > 1 ? (
         <View style={styles.row}>
           <View style={styles.iconWrap}>
-            <Ionicons name="repeat" size={15} color={businessDetailColors.charcoal} />
+            <Ionicons name="repeat-outline" size={15} color="rgba(255,255,255,0.80)" />
           </View>
           <View style={styles.copyWrap}>
             <Text style={styles.label}>Occurrences</Text>
@@ -107,7 +107,7 @@ export function EventSpecialDetailsCard({ item }: Props) {
 const styles = StyleSheet.create({
   card: {
     borderRadius: businessDetailSpacing.cardRadius,
-    backgroundColor: businessDetailColors.cardBg,
+    backgroundColor: '#722F37',
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 10,
@@ -118,15 +118,18 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   heading: {
-    color: businessDetailColors.charcoal,
+    color: '#FFFFFF',
     fontSize: 19,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 4,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.15)',
   },
   iconWrap: {
     width: 32,
@@ -134,30 +137,32 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(229,224,229,0.74)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.20)',
     marginTop: 2,
   },
   copyWrap: {
     flex: 1,
   },
   label: {
-    color: businessDetailColors.textSubtle,
+    color: 'rgba(255,255,255,0.55)',
     fontSize: 12,
     fontWeight: '600',
   },
   value: {
-    color: businessDetailColors.charcoal,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
     marginTop: 1,
   },
   subValue: {
-    color: businessDetailColors.textMuted,
+    color: 'rgba(255,255,255,0.65)',
     fontSize: 13,
     marginTop: 1,
   },
   rIcon: {
-    color: businessDetailColors.charcoal,
+    color: 'rgba(255,255,255,0.80)',
     fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',

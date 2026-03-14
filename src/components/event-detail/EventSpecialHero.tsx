@@ -27,7 +27,7 @@ export function EventSpecialHero({ item, rating }: Props) {
         </>
       ) : (
         <View style={styles.imageFallback}>
-          <Ionicons name="image" size={48} color="rgba(255,255,255,0.82)" />
+          <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.82)" />
         </View>
       )}
 
@@ -58,7 +58,7 @@ export function EventSpecialHero({ item, rating }: Props) {
       ) : null}
 
       <View style={[styles.ratingBadge, item.availabilityStatus ? styles.ratingBadgeShifted : null]}>
-        <Ionicons name="star" size={14} color="#F59E0B" />
+        <Ionicons name="star-outline" size={14} color="#F59E0B" />
         <Text style={styles.ratingText}>{displayRating > 0 ? displayRating.toFixed(1) : '0.0'}</Text>
       </View>
     </View>

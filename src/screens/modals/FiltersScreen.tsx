@@ -62,7 +62,7 @@ export default function FiltersScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Filters</Text>
         <Pressable style={styles.closeBtn} onPress={handleClose} hitSlop={12}>
-          <Ionicons name="close" size={20} color={C.charcoal} />
+          <Ionicons name="close-outline" size={20} color={C.charcoal} />
         </Pressable>
       </View>
 
@@ -77,7 +77,7 @@ export default function FiltersScreen() {
         {/* Rating Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <Ionicons name="star" size={16} color={C.wine} />
+            <Ionicons name="star-outline" size={16} color={C.wine} />
             <Text style={styles.sectionTitle}>Minimum Rating</Text>
           </View>
           <Text style={styles.sectionSubtitle}>Show only businesses rated at or above</Text>
@@ -95,7 +95,7 @@ export default function FiltersScreen() {
                   onPress={() => setDraftRating(active ? null : r)}
                 >
                   <Ionicons
-                    name="star"
+                    name="star-outline"
                     size={13}
                     color={active ? C.white : C.charcoal70}
                     style={styles.pillIcon}
@@ -114,7 +114,7 @@ export default function FiltersScreen() {
         {/* Distance Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <Ionicons name="location" size={16} color={C.wine} />
+            <Ionicons name="location-outline" size={16} color={C.wine} />
             <Text style={styles.sectionTitle}>Distance</Text>
           </View>
           <Text style={styles.sectionSubtitle}>Show businesses within this radius of you</Text>

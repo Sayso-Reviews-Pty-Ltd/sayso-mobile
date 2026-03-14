@@ -15,7 +15,6 @@ import { routes } from '../../navigation/routes';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
 import { useFilters } from '../../providers/FiltersProvider';
-import { useProfile } from '../../hooks/useProfile';
 import { HomeScreenView } from './home-screen/HomeScreenView';
 
 export default function HomeScreen() {
@@ -46,10 +45,6 @@ export default function HomeScreen() {
 
   const isSearchActive = debouncedQuery.length >= 2;
   const discoveryEnabled = !isSearchActive;
-
-  const profileQuery = useProfile();
-  const profile = profileQuery.data?.data ?? null;
-  const profileLoading = profileQuery.isLoading;
 
   const forYou = useForYouBusinesses(20, discoveryEnabled);
   const trending = useTrending(20, discoveryEnabled);
@@ -259,9 +254,6 @@ export default function HomeScreen() {
       onNavigateLeaderboardBusinesses={() => router.push(routes.leaderboard('businesses') as never)}
       onNavigateBadges={() => router.push(routes.badges() as never)}
       onNavigateOnboarding={() => router.push(routes.onboarding() as never)}
-      profile={user ? profile : null}
-      profileLoading={profileLoading}
-      onSelectMood={setSearchInput}
     />
   );
 }

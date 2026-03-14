@@ -171,7 +171,7 @@ export function HomeSearchSuggestions({ query, onSelect, onSelectQuery }: Props)
                   <Text style={styles.rowMeta} numberOfLines={1}>{meta}</Text>
                 ) : null}
               </View>
-              <Ionicons name="arrow-forward" size={14} color="rgba(45,45,45,0.25)" />
+              <Ionicons name="arrow-forward-outline" size={14} color="rgba(45,45,45,0.25)" />
             </Pressable>
           );
         })
@@ -184,7 +184,7 @@ export function HomeSearchSuggestions({ query, onSelect, onSelectQuery }: Props)
         accessibilityLabel="View all search results"
       >
         <Text style={styles.viewAllText}>View all results</Text>
-        <Ionicons name="arrow-forward" size={14} color={homeTokens.sage} />
+        <Ionicons name="arrow-forward-outline" size={14} color={homeTokens.sage} />
       </Pressable>
     </View>
   );

@@ -118,7 +118,7 @@ export function HomeSearchBar({
 
   return (
     <View style={[styles.wrap, focused ? styles.wrapFocused : null]}>
-      <Ionicons name="search" size={18} color={homeTokens.textTertiary} style={styles.icon} />
+      <Ionicons name="search-outline" size={18} color={homeTokens.textTertiary} style={styles.icon} />
       <View style={styles.inputWrap}>
         {isPlaceholderVisible ? (
           <View pointerEvents="none" style={styles.placeholderWrap}>
@@ -169,7 +169,7 @@ export function HomeSearchBar({
 
       {value.length > 0 ? (
         <TouchableOpacity style={styles.clearButton} onPress={onClear} activeOpacity={0.8}>
-          <Ionicons name="close" size={16} color={homeTokens.charcoal} />
+          <Ionicons name="close-outline" size={16} color={homeTokens.charcoal} />
         </TouchableOpacity>
       ) : null}
     </View>

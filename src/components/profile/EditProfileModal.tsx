@@ -129,7 +129,7 @@ export function EditProfileModal({
           <View style={styles.headerRow}>
             <Text style={styles.title}>Edit Profile</Text>
             <Pressable onPress={() => !saving && onClose()} style={styles.closeButton} disabled={saving}>
-              <Ionicons name="close" size={18} color="rgba(45,45,45,0.75)" />
+              <Ionicons name="close-outline" size={18} color="rgba(45,45,45,0.75)" />
             </Pressable>
           </View>
 
@@ -140,7 +140,7 @@ export function EditProfileModal({
               <Image source={{ uri: avatarPreview }} style={styles.avatar} contentFit="cover" />
             ) : (
               <View style={[styles.avatar, styles.avatarFallback]}>
-                <Ionicons name="person" size={28} color="rgba(45,45,45,0.55)" />
+                <Ionicons name="person-outline" size={28} color="rgba(45,45,45,0.55)" />
               </View>
             )}
 

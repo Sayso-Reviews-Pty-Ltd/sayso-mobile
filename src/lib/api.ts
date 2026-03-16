@@ -102,7 +102,17 @@ function delay(ms: number) {
 }
 
 function isFormDataBody(value: unknown): value is FormData {
-  return typeof FormData !== 'undefined' && value instanceof FormData;
+  if (!value || typeof value !== 'object') return false;
+  if (typeof FormData !== 'undefined' && value instanceof FormData) return true;
+
+  // React Native may provide a FormData implementation that can fail `instanceof`
+  // checks across JS realms. Fall back to structural + tag checks.
+  const formDataLike = value as { append?: unknown; getParts?: unknown };
+  if (typeof formDataLike.append === 'function' && typeof formDataLike.getParts === 'function') {
+    return true;
+  }
+
+  return Object.prototype.toString.call(value) === '[object FormData]';
 }
 
 async function buildAuthHeaders(
@@ -166,7 +176,13 @@ async function requestOnce<T>(path: string, init: ApiFetchInit): Promise<T> {
       const envelope = extractErrorPayload(payload);
       const status = response.status;
       const code = String(envelope.code || `HTTP_${status}`);
-      const message = getSafeStatusMessage(status);
+      const envelopeMessage =
+        typeof envelope.message === 'string' && envelope.message.trim().length > 0
+          ? envelope.message.trim()
+          : typeof envelope.error === 'string' && envelope.error.trim().length > 0
+            ? envelope.error.trim()
+            : null;
+      const message = envelopeMessage ?? getSafeStatusMessage(status);
 
       throw new ApiError({
         status,

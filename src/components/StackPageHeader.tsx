@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BusinessPageHeader } from './business-detail/BusinessPageHeader';
+import { BusinessPageHeader, type BusinessHeaderRightAction } from './business-detail/BusinessPageHeader';
 import { businessDetailColors } from './business-detail/styles';
 import { FROSTED_CARD_BORDER_COLOR } from '../styles/cardSurface';
 
@@ -10,9 +10,10 @@ type Props = {
   options?: { headerStyle?: unknown; headerTintColor?: string };
   onPressBack?: () => void;
   showBackButton?: boolean;
+  rightActions?: BusinessHeaderRightAction[];
 };
 
-export function StackPageHeader({ navigation, options, onPressBack, showBackButton }: Props) {
+export function StackPageHeader({ navigation, options, onPressBack, showBackButton, rightActions }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const flattenedHeaderStyle = options?.headerStyle
@@ -34,6 +35,7 @@ export function StackPageHeader({ navigation, options, onPressBack, showBackButt
         }}
         onPressNotifications={() => router.push('/(stack)/notifications')}
         onPressMessages={() => router.push('/(stack)/dm')}
+        rightActions={rightActions}
         menuItems={[]}
         collapsed={true}
         showBackButton={effectiveShowBackButton}

@@ -5,6 +5,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
+  Share,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import {
   EventSpecialInfoBlock,
   EventSpecialMoreDatesCard,
   EventSpecialPageHeader,
+  type EventSpecialHeaderRightAction,
   EventSpecialRelatedSection,
   EventSpecialReviewsSection,
   EventSpecialSkeleton,
@@ -32,8 +34,11 @@ import { useEventSpecialDetail } from '../../hooks/useEventSpecialDetail';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
 import { useRelatedEventSpecials } from '../../hooks/useRelatedEventSpecials';
+import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import { TransitionItem } from '../../components/motion/TransitionItem';
 import { useAuthSession } from '../../hooks/useSession';
+import { apiFetch } from '../../lib/api';
+import { ENV } from '../../lib/env';
 import { markFirstContentful, markInteractive } from '../../lib/perf/perfMarkers';
 import { routes } from '../../navigation/routes';
 import { styles } from './event-special-screen/eventSpecialScreenStyles';
@@ -50,9 +55,33 @@ export default function EventSpecialScreen({ routeType }: Props) {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuthSession();
+  const savedQuery = useSavedBusinesses();
+  const [saveBusy, setSaveBusy] = useState(false);
 
   const detailQuery = useEventSpecialDetail(id);
   const item = detailQuery.data;
+  const linkedBusinessId = useMemo(() => {
+    if (!item) return null;
+    const snakeCaseId = (item as unknown as Record<string, unknown>).business_id;
+
+    if (typeof item.businessId === 'string' && item.businessId.trim().length > 0) {
+      return item.businessId;
+    }
+    if (typeof snakeCaseId === 'string' && snakeCaseId.trim().length > 0) {
+      return snakeCaseId;
+    }
+    return null;
+  }, [item]);
+  const savedBusinessIds = useMemo(() => {
+    const ids = ((savedQuery.data?.businesses ?? []) as Array<{ id?: string | null }>)
+      .map((savedItem: { id?: string | null }) => savedItem?.id)
+      .filter(
+        (savedId: string | null | undefined): savedId is string =>
+          typeof savedId === 'string' && savedId.trim().length > 0
+      );
+    return new Set(ids);
+  }, [savedQuery.data?.businesses]);
+  const isLinkedBusinessSaved = Boolean(linkedBusinessId && savedBusinessIds.has(linkedBusinessId));
 
   useEffect(() => {
     if (item && !detailQuery.isLoading) {
@@ -203,6 +232,83 @@ export default function EventSpecialScreen({ routeType }: Props) {
     router.push(routes.writeReview(routeType, id) as never);
   };
 
+  const handleShareEventSpecial = useCallback(async () => {
+    if (!item) return;
+    const origin = ENV.apiBaseUrl || 'https://www.sayso.co.za';
+    const detailPath = routeType === 'special' ? routes.specialDetail(item.id) : routes.eventDetail(item.id);
+
+    try {
+      await Share.share({
+        title: item.title,
+        message: `Check out ${item.title} on Sayso\n${origin}${detailPath}`,
+      });
+    } catch {
+      // Non-blocking.
+    }
+  }, [item, routeType]);
+
+  const handleToggleSaveFromEventSpecial = useCallback(async () => {
+    if (!linkedBusinessId) {
+      Alert.alert('Save unavailable', 'Saving is unavailable for this listing.');
+      return;
+    }
+    if (!user) {
+      router.push(routes.onboarding() as never);
+      return;
+    }
+    if (saveBusy) return;
+
+    setSaveBusy(true);
+    try {
+      if (savedBusinessIds.has(linkedBusinessId)) {
+        await apiFetch<{ success?: boolean; message?: string }>(
+          `/api/user/saved?business_id=${linkedBusinessId}`,
+          { method: 'DELETE' }
+        );
+      } else {
+        await apiFetch<{ success?: boolean; message?: string }>('/api/user/saved', {
+          method: 'POST',
+          body: JSON.stringify({ business_id: linkedBusinessId }),
+        });
+      }
+      await savedQuery.refetch();
+    } catch (error) {
+      Alert.alert(
+        'Save unavailable',
+        error instanceof Error ? error.message : 'Unable to update saved items right now.'
+      );
+    } finally {
+      setSaveBusy(false);
+    }
+  }, [linkedBusinessId, router, saveBusy, savedBusinessIds, savedQuery, user]);
+
+  const headerRightActions = useMemo<EventSpecialHeaderRightAction[]>(
+    () => [
+      {
+        key: 'share',
+        icon: 'share-social-outline',
+        onPress: () => {
+          void handleShareEventSpecial();
+        },
+        accessibilityLabel: 'Share listing',
+      },
+      {
+        key: 'save',
+        icon: isLinkedBusinessSaved ? 'bookmark' : 'bookmark-outline',
+        onPress: () => {
+          void handleToggleSaveFromEventSpecial();
+        },
+        accessibilityLabel: linkedBusinessId
+          ? isLinkedBusinessSaved
+            ? 'Unsave business'
+            : 'Save business'
+          : 'Save unavailable',
+        disabled: saveBusy,
+      },
+    ],
+    [handleShareEventSpecial, handleToggleSaveFromEventSpecial, isLinkedBusinessSaved, linkedBusinessId, saveBusy]
+  );
+
   if (detailQuery.isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -245,6 +351,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
           onPressBack={handleBack}
           onPressNotifications={() => router.push(routes.notifications() as never)}
           onPressMessages={() => router.push(routes.dmInbox() as never)}
+          rightActions={headerRightActions}
           collapsed={true}
         />
       </View>

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -17,6 +18,7 @@ type Props = {
 function RelatedCard({ item }: { item: EventSpecialListItemDto }) {
   const router = useRouter();
   const { image } = resolveEventMediaImage(item);
+  const [imageError, setImageError] = useState(false);
   const dateLabel = getDateRibbonLabel(item);
   const meta = [dateLabel, item.city].filter(Boolean).join(' · ');
 
@@ -25,8 +27,8 @@ function RelatedCard({ item }: { item: EventSpecialListItemDto }) {
       style={({ pressed }) => [styles.card, pressed ? styles.cardPressed : null]}
       onPress={() => router.push(getEventDetailHref(item) as never)}
     >
-      {image ? (
-        <Image source={{ uri: image }} style={styles.thumb} contentFit="cover" />
+      {image && !imageError ? (
+        <Image source={{ uri: image }} style={styles.thumb} contentFit="cover" onError={() => setImageError(true)} />
       ) : (
         <View style={[styles.thumb, styles.thumbFallback]} />
       )}

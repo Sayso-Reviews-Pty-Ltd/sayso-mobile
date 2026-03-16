@@ -13,8 +13,6 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "../sayso_web/packages/contracts/src/**/*.ts",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "../sayso_web/packages/contracts/src/**/*.ts"
   ]
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,16 +15,18 @@ type Props = {
 
 export function EventSpecialHero({ item, rating }: Props) {
   const { image } = resolveEventMediaImage(item);
+  const [imageError, setImageError] = useState(false);
   const displayRating = Number.isFinite(rating) ? rating : 0;
+  const showImage = image && !imageError;
 
   const typeBadgeStyle = item.type === 'special' ? styles.typeBadgeSpecial : styles.typeBadgeEvent;
 
   return (
     <View style={styles.wrap}>
-      {image ? (
+      {showImage ? (
         <>
-          <Image source={{ uri: image }} style={styles.imageBlur} contentFit="cover" blurRadius={26} />
-          <Image source={{ uri: image }} style={styles.image} contentFit="cover" />
+          <Image source={{ uri: image }} style={styles.imageBlur} contentFit="cover" blurRadius={26} onError={() => setImageError(true)} />
+          <Image source={{ uri: image }} style={styles.image} contentFit="cover" onError={() => setImageError(true)} />
         </>
       ) : (
         <View style={styles.imageFallback}>

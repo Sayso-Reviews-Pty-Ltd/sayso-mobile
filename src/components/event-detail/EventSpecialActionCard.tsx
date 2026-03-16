@@ -8,6 +8,7 @@ import { ENV } from '../../lib/env';
 import { buildGoogleCalendarUrl } from '../../lib/events/calendar';
 import { resolveCtaTarget } from '../../lib/events/cta';
 import { routes } from '../../navigation/routes';
+import { NAVBAR_BG_COLOR } from '../../styles/colors';
 import { Text } from '../Typography';
 import { businessDetailColors, businessDetailSpacing } from '../business-detail/styles';
 
@@ -207,14 +208,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.70)',
-    backgroundColor: 'rgba(229,224,229,0.70)',
+    backgroundColor: NAVBAR_BG_COLOR,
     padding: 12,
   },
   quickActionsLabel: {
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 1.2,
-    color: 'rgba(45,45,45,0.55)',
+    color: 'rgba(255,255,255,0.70)',
     textTransform: 'uppercase',
     marginBottom: 8,
   },

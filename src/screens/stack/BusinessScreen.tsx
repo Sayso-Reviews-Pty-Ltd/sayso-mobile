@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   InteractionManager,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
+  Share,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +23,7 @@ import {
   BusinessLocationCard,
   BusinessOwnedEventsSection,
   BusinessPageHeader,
+  type BusinessHeaderRightAction,
   BusinessPerformanceInsightsCard,
   BusinessPhotoGrid,
   BusinessReviewsSection,
@@ -38,8 +41,11 @@ import {
 import { useBusinessDetail } from '../../hooks/useBusinessDetail';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
+import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../hooks/useSession';
 import { TransitionItem } from '../../components/motion/TransitionItem';
+import { apiFetch } from '../../lib/api';
+import { ENV } from '../../lib/env';
 import { markFirstContentful, markInteractive } from '../../lib/perf/perfMarkers';
 import { routes } from '../../navigation/routes';
 import { businessDetailColors } from '../../components/business-detail/styles';
@@ -53,6 +59,8 @@ export default function BusinessScreen({ initialTab }: Props) {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuthSession();
+  const savedQuery = useSavedBusinesses();
+  const [saveBusy, setSaveBusy] = useState(false);
 
   const { data: business, isLoading, isError } = useBusinessDetail(id);
 
@@ -83,6 +91,16 @@ export default function BusinessScreen({ initialTab }: Props) {
   const categoryText = useMemo(() => (business ? normalizeCategoryText(business) : 'Business'), [business]);
   const locationText = useMemo(() => (business ? normalizeLocationText(business) : 'Cape Town'), [business]);
   const descriptionText = useMemo(() => (business ? normalizeDescriptionText(business) : ''), [business]);
+  const savedBusinessIds = useMemo(() => {
+    const ids = ((savedQuery.data?.businesses ?? []) as Array<{ id?: string | null }>)
+      .map((savedItem: { id?: string | null }) => savedItem?.id)
+      .filter(
+        (savedId: string | null | undefined): savedId is string =>
+          typeof savedId === 'string' && savedId.trim().length > 0
+      );
+    return new Set(ids);
+  }, [savedQuery.data?.businesses]);
+  const isBusinessSaved = Boolean(business?.id && savedBusinessIds.has(business.id));
 
   useEffect(() => {
     if (business && !isLoading) {
@@ -108,6 +126,74 @@ export default function BusinessScreen({ initialTab }: Props) {
     router.push(routes.dmInbox() as never);
   };
 
+  const handleShareBusiness = useCallback(async () => {
+    if (!business) return;
+    const origin = ENV.apiBaseUrl || 'https://www.sayso.co.za';
+    const businessPath = routes.businessDetail(business.id);
+
+    try {
+      await Share.share({
+        title: business.name,
+        message: `Check out ${business.name} on Sayso\n${origin}${businessPath}`,
+      });
+    } catch {
+      // Non-blocking.
+    }
+  }, [business]);
+
+  const handleToggleSaveBusiness = useCallback(async () => {
+    if (!business) return;
+    if (!user) {
+      router.push(routes.onboarding() as never);
+      return;
+    }
+    if (saveBusy) return;
+
+    setSaveBusy(true);
+    try {
+      if (savedBusinessIds.has(business.id)) {
+        await apiFetch<{ success?: boolean; message?: string }>(`/api/user/saved?business_id=${business.id}`, {
+          method: 'DELETE',
+        });
+      } else {
+        await apiFetch<{ success?: boolean; message?: string }>('/api/user/saved', {
+          method: 'POST',
+          body: JSON.stringify({ business_id: business.id }),
+        });
+      }
+      await savedQuery.refetch();
+    } catch (error) {
+      Alert.alert(
+        'Save unavailable',
+        error instanceof Error ? error.message : 'Unable to update saved items right now.'
+      );
+    } finally {
+      setSaveBusy(false);
+    }
+  }, [business, router, saveBusy, savedBusinessIds, savedQuery, user]);
+
+  const headerRightActions = useMemo<BusinessHeaderRightAction[]>(
+    () => [
+      {
+        key: 'share',
+        icon: 'share-social-outline',
+        onPress: () => {
+          void handleShareBusiness();
+        },
+        accessibilityLabel: 'Share business',
+      },
+      {
+        key: 'save',
+        icon: isBusinessSaved ? 'bookmark' : 'bookmark-outline',
+        onPress: () => {
+          void handleToggleSaveBusiness();
+        },
+        accessibilityLabel: isBusinessSaved ? 'Unsave business' : 'Save business',
+        disabled: saveBusy,
+      },
+    ],
+    [handleShareBusiness, handleToggleSaveBusiness, isBusinessSaved, saveBusy]
+  );
 
   const handleLeaveReview = () => {
     if (!business) return;
@@ -191,6 +277,7 @@ export default function BusinessScreen({ initialTab }: Props) {
           onPressBack={handleBack}
           onPressNotifications={handleOpenNotifications}
           onPressMessages={handleOpenMessages}
+          rightActions={headerRightActions}
           menuItems={[]}
           collapsed={true}
         />

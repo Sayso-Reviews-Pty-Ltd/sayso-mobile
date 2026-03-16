@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { type ComponentProps, useCallback, useMemo, useRef, useState } from 'react';
 import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../Typography';
@@ -14,11 +14,20 @@ export type BusinessHeaderMenuItem = {
   onPress: () => void;
 };
 
+export type BusinessHeaderRightAction = {
+  key: string;
+  icon: ComponentProps<typeof Ionicons>['name'];
+  onPress: () => void;
+  accessibilityLabel: string;
+  disabled?: boolean;
+};
+
 type Props = {
   onPressBack: () => void;
   onPressNotifications: () => void;
   onPressMessages: () => void;
   menuItems?: BusinessHeaderMenuItem[];
+  rightActions?: BusinessHeaderRightAction[];
   collapsed?: boolean;
   showBackButton?: boolean;
 };
@@ -38,6 +47,7 @@ export function BusinessPageHeader({
   onPressNotifications,
   onPressMessages,
   menuItems = [],
+  rightActions,
   collapsed = false,
   showBackButton = true,
 }: Props) {
@@ -129,20 +139,40 @@ export function BusinessPageHeader({
         </View>
 
         <View style={styles.rightSlot}>
-          <Pressable
-            style={[styles.iconButton, { backgroundColor: actionButtonBg, borderColor: actionButtonBorder }]}
-            onPress={onPressMessages}
-            accessibilityLabel="Messages"
-          >
-            <Ionicons name="chatbubble-outline" size={20} color={foregroundColor} />
-          </Pressable>
-          <Pressable
-            style={[styles.iconButton, { backgroundColor: actionButtonBg, borderColor: actionButtonBorder }]}
-            onPress={onPressNotifications}
-            accessibilityLabel="Notifications"
-          >
-            <Ionicons name="notifications-outline" size={20} color={foregroundColor} />
-          </Pressable>
+          {Array.isArray(rightActions) && rightActions.length > 0 ? (
+            rightActions.map((action) => (
+              <Pressable
+                key={action.key}
+                style={[
+                  styles.iconButton,
+                  { backgroundColor: actionButtonBg, borderColor: actionButtonBorder },
+                  action.disabled ? styles.iconButtonDisabled : null,
+                ]}
+                onPress={action.onPress}
+                accessibilityLabel={action.accessibilityLabel}
+                disabled={action.disabled}
+              >
+                <Ionicons name={action.icon} size={20} color={foregroundColor} />
+              </Pressable>
+            ))
+          ) : (
+            <>
+              <Pressable
+                style={[styles.iconButton, { backgroundColor: actionButtonBg, borderColor: actionButtonBorder }]}
+                onPress={onPressMessages}
+                accessibilityLabel="Messages"
+              >
+                <Ionicons name="chatbubble-outline" size={20} color={foregroundColor} />
+              </Pressable>
+              <Pressable
+                style={[styles.iconButton, { backgroundColor: actionButtonBg, borderColor: actionButtonBorder }]}
+                onPress={onPressNotifications}
+                accessibilityLabel="Notifications"
+              >
+                <Ionicons name="notifications-outline" size={20} color={foregroundColor} />
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
 
@@ -237,6 +267,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: homeTokens.borderSoft,
     backgroundColor: businessDetailColors.white,
+  },
+  iconButtonDisabled: {
+    opacity: 0.58,
   },
   menuBackdrop: {
     flex: 1,

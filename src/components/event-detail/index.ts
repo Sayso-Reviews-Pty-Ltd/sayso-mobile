@@ -6,7 +6,7 @@ export { EventSpecialHero } from './EventSpecialHero';
 export { EventSpecialInfoBlock } from './EventSpecialInfoBlock';
 export { EventSpecialMoreDatesCard } from './EventSpecialMoreDatesCard';
 export { EventSpecialPageHeader } from './EventSpecialPageHeader';
-export type { EventSpecialHeaderMenuItem } from './EventSpecialPageHeader';
+export type { EventSpecialHeaderMenuItem, EventSpecialHeaderRightAction } from './EventSpecialPageHeader';
 export { EventSpecialRelatedSection } from './EventSpecialRelatedSection';
 export { EventSpecialReviewsSection } from './EventSpecialReviewsSection';
 export { EventSpecialSkeleton } from './EventSpecialSkeleton';

@@ -8,7 +8,7 @@ export { BusinessInfoBlock } from './BusinessInfoBlock';
 export { BusinessLocationCard } from './BusinessLocationCard';
 export { BusinessOwnedEventsSection } from './BusinessOwnedEventsSection';
 export { BusinessPageHeader } from './BusinessPageHeader';
-export type { BusinessHeaderMenuItem } from './BusinessPageHeader';
+export type { BusinessHeaderMenuItem, BusinessHeaderRightAction } from './BusinessPageHeader';
 export { BusinessPhotoGrid } from './BusinessPhotoGrid';
 export { BusinessPerformanceInsightsCard } from './BusinessPerformanceInsightsCard';
 export { BusinessReviewsSection } from './BusinessReviewsSection';

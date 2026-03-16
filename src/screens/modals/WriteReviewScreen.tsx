@@ -4,11 +4,13 @@ import {
   Animated,
   Dimensions,
   Image,
+  InteractionManager,
   KeyboardAvoidingView,
   Platform,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
+  Share,
   ScrollView,
   StyleSheet,
   View,
@@ -26,25 +28,26 @@ import { StackPageHeader } from '../../components/StackPageHeader';
 import { useAuth } from '../../providers/AuthProvider';
 import { useSecurity } from '../../providers/SecurityProvider';
 import { useBusinessDetail } from '../../hooks/useBusinessDetail';
-import { useBusinessReviews, type ReviewItem } from '../../hooks/useBusinessReviews';
 import { useEventSpecialDetail } from '../../hooks/useEventSpecialDetail';
-import { useEventReviews, type EventReviewItem } from '../../hooks/useEventReviews';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import type { WriteReviewParams } from '../../navigation/types';
+import { routes } from '../../navigation/routes';
 import { NAVBAR_BG_COLOR, CARD_BG_COLOR } from '../../styles/colors';
 import { getBusinessPlaceholder } from '../../lib/businessPlaceholders';
-import { BusinessHeroCarousel } from '../../components/business-detail';
+import { BusinessHeroCarousel, type BusinessHeaderRightAction } from '../../components/business-detail';
 import { normalizeBusinessRating } from '../../components/business-detail/utils';
 import { CARD_GRADIENT, cardShadowStyle } from '../../components/business-detail/styles';
+import { ENV } from '../../lib/env';
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 // ─── Constants
 const MIN_CHARS = 10;
 const MAX_CHARS = 5000;
-const MAX_TITLE_CHARS = 200;
+const MAX_TITLE_CHARS = 100;
 const MAX_PHOTOS = 2;
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HERO_WIDTH = SCREEN_WIDTH - 16; // matches page inline padding (px-2)
@@ -63,24 +66,50 @@ const FALLBACK_TAGS = ['Trustworthy', 'On Time', 'Friendly', 'Good Value'];
 
 const REVIEW_ERROR_MESSAGES: Record<string, string> = {
   NOT_AUTHENTICATED: 'You can post as Anonymous, or sign in for a verified profile review.',
+  EMAIL_NOT_VERIFIED: 'Please verify your email to submit reviews.',
   MISSING_FIELDS: 'Please fill in all required fields.',
   INVALID_RATING: 'Please select a rating (1–5 stars).',
   CONTENT_TOO_SHORT: 'Your review is too short. Please write at least 10 characters.',
+  CONTENT_TOO_LONG: 'Your review is too long. Please keep it under 5000 characters.',
+  TITLE_TOO_LONG: 'Review title is too long. Please keep it under 100 characters.',
   VALIDATION_FAILED: 'Please check your review and try again.',
   CONTENT_MODERATION_FAILED: "Your review contains content that doesn't meet our guidelines.",
+  BUSINESS_NOT_FOUND: "We couldn't find that business. Please try again.",
   EVENT_NOT_FOUND: "We couldn't find that event. It may have been removed.",
   SPECIAL_NOT_FOUND: "We couldn't find that special. It may have expired.",
+  DUPLICATE_REVIEW: "You've already reviewed this. You can edit your existing review instead.",
   DUPLICATE_ANON_REVIEW: 'You already posted an anonymous review for this item on this device.',
   RATE_LIMITED: 'Too many anonymous reviews in a short time. Please try again later.',
   SPAM_DETECTED: 'This review was flagged as spam-like. Please adjust wording and try again.',
+  RLS_BLOCKED: "We couldn't save your review right now. Please try again.",
   DB_ERROR: "We couldn't save your review. Please try again.",
+  IMAGE_UPLOAD_FAILED: "Some images couldn't be uploaded. Your review was saved.",
+  SERVER_MISCONFIG: 'Server configuration issue. Please contact support.',
   SERVER_ERROR: 'Something went wrong on our side. Please try again.',
 };
 
+const GENERIC_API_MESSAGES = new Set([
+  'Request failed',
+  'The request could not be processed. Please try again.',
+  'Unauthorized',
+  'Your session has expired. Please sign in again.',
+  'You are not allowed to perform this action.',
+  'The requested resource was not found.',
+  'Too many requests. Please wait and try again.',
+  'Server error. Please try again in a moment.',
+  'Network request failed. Check your connection and try again.',
+]);
+
+function isGenericApiMessage(message?: string): boolean {
+  if (!message) return false;
+  return GENERIC_API_MESSAGES.has(message.trim());
+}
+
 function getErrorMessage(result: { message?: string; code?: string; error?: string }): string {
-  if (result.message) return result.message;
+  if (result.message && !isGenericApiMessage(result.message)) return result.message;
   if (result.code && REVIEW_ERROR_MESSAGES[result.code]) return REVIEW_ERROR_MESSAGES[result.code];
   if (result.error) return result.error;
+  if (result.message) return result.message;
   return 'An error occurred. Please try again.';
 }
 
@@ -743,6 +772,7 @@ export default function WriteReviewScreen() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const { guardSensitiveAction } = useSecurity();
+  const savedQuery = useSavedBusinesses();
   const reducedMotion = useReducedMotion();
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollTopVisibleRef = useRef(false);
@@ -759,6 +789,8 @@ export default function WriteReviewScreen() {
   const [promptIndex, setPromptIndex] = useState(0);
   const [textFocused, setTextFocused] = useState(false);
   const [titleFocused, setTitleFocused] = useState(false);
+  const [nonCriticalReady, setNonCriticalReady] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
 
   // Form card entrance (matches web: opacity 0→1, y 20→0, duration 0.4s)
   const formOpacity = useRef(new Animated.Value(0)).current;
@@ -810,7 +842,7 @@ export default function WriteReviewScreen() {
           table: 'reviews',
           filter: `business_id=eq.${id}`,
           queryKeys: [['business-reviews', id], ['business', id]],
-          enabled: Boolean(id),
+          enabled: nonCriticalReady && Boolean(id),
         },
       ]
     : [
@@ -819,36 +851,12 @@ export default function WriteReviewScreen() {
           table: 'reviews',
           filter: `event_id=eq.${id}`,
           queryKeys: [['event-reviews', id], ['event-ratings', id], ['event-special-detail', id]],
-          enabled: Boolean(id),
+          enabled: nonCriticalReady && Boolean(id),
         },
       ],
-  [id, isBusinessReview]);
+  [id, isBusinessReview, nonCriticalReady]);
 
   useRealtimeQueryInvalidation(realtimeTargets);
-
-  // Community reviews
-  const bizReviewsQuery = useBusinessReviews(isBusinessReview ? id : '');
-  const eventReviewsQuery = useEventReviews(!isBusinessReview ? id : null);
-
-  const communityReviews: CommunityReview[] = isBusinessReview
-    ? (bizReviewsQuery.data?.pages[0]?.data ?? []).map((r: ReviewItem) => ({
-        id: r.id,
-        userName: r.display_name ?? r.username ?? 'Anonymous',
-        avatarUrl: r.avatar_url,
-        rating: r.rating,
-        text: r.body ?? '',
-        date: r.created_at ? new Date(r.created_at).toLocaleDateString() : '',
-      }))
-    : (eventReviewsQuery.reviews ?? []).map((r: EventReviewItem) => ({
-        id: r.id,
-        userName: r.user.name,
-        avatarUrl: r.user.avatarUrl,
-        rating: r.rating,
-        text: r.content,
-        date: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '',
-      }));
-
-  const communityLoading = isBusinessReview ? bizReviewsQuery.isLoading : eventReviewsQuery.isLoading;
 
   // Hero images — align source precedence with web
   const heroImages: string[] = isBusinessReview && businessDetail
@@ -955,6 +963,16 @@ export default function WriteReviewScreen() {
   }, [reviewText.length, textFocused]);
 
   useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setNonCriticalReady(true);
+    });
+    return () => {
+      task.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!nonCriticalReady) return;
     let active = true;
     apiFetch<{ dealBreakers?: Array<{ label?: string }> }>('/api/deal-breakers')
       .then((payload) => {
@@ -966,7 +984,7 @@ export default function WriteReviewScreen() {
       })
       .catch(() => {});
     return () => { active = false; };
-  }, []);
+  }, [nonCriticalReady]);
 
   useEffect(() => {
     if (!isEditMode || reviewPrefilledRef.current) return;
@@ -1156,7 +1174,34 @@ export default function WriteReviewScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     } catch (err) {
-      if (err instanceof ApiError) { setFormError(getErrorMessage({ message: err.message, code: err.code })); return; }
+      if (err instanceof ApiError) {
+        const details =
+          err.details && typeof err.details === 'object'
+            ? (err.details as Record<string, unknown>)
+            : null;
+        const detailsMessage =
+          details && typeof details.message === 'string' ? details.message : undefined;
+        const detailsError =
+          details && typeof details.error === 'string' ? details.error : undefined;
+
+        if (__DEV__) {
+          console.warn('[WriteReview] submit failed', {
+            status: err.status,
+            code: err.code,
+            requestId: err.requestId,
+            details: err.details,
+          });
+        }
+
+        setFormError(
+          getErrorMessage({
+            message: detailsMessage || err.message,
+            code: err.code,
+            error: detailsError,
+          })
+        );
+        return;
+      }
       setFormError(err instanceof Error ? err.message : 'Failed to submit your review.');
     } finally {
       setSubmitting(false);
@@ -1195,6 +1240,110 @@ export default function WriteReviewScreen() {
     }
   }
 
+  const linkedBusinessId = useMemo(() => {
+    if (isBusinessReview) {
+      if (typeof businessDetail?.id === 'string' && businessDetail.id.trim().length > 0) return businessDetail.id;
+      return typeof id === 'string' && id.trim().length > 0 ? id : null;
+    }
+    const es = eventSpecial as unknown as Record<string, unknown> | null;
+    const camelId = es && typeof es.businessId === 'string' ? es.businessId.trim() : '';
+    if (camelId) return camelId;
+    const snakeId = es && typeof es.business_id === 'string' ? es.business_id.trim() : '';
+    return snakeId || null;
+  }, [businessDetail?.id, eventSpecial, id, isBusinessReview]);
+
+  const savedBusinessIds = useMemo(() => {
+    const ids = ((savedQuery.data?.businesses ?? []) as Array<{ id?: string | null }>)
+      .map((savedItem: { id?: string | null }) => savedItem?.id)
+      .filter(
+        (savedId: string | null | undefined): savedId is string =>
+          typeof savedId === 'string' && savedId.trim().length > 0
+      );
+    return new Set(ids);
+  }, [savedQuery.data?.businesses]);
+
+  const isLinkedBusinessSaved = Boolean(linkedBusinessId && savedBusinessIds.has(linkedBusinessId));
+
+  const handleHeaderShare = useCallback(async () => {
+    const origin = ENV.apiBaseUrl || 'https://www.sayso.co.za';
+    const shareTitle = displayTitle || 'Sayso';
+    const targetPath = isBusinessReview
+      ? routes.businessDetail((businessDetail?.id ?? id) || id)
+      : type === 'special'
+        ? routes.specialDetail(id)
+        : routes.eventDetail(id);
+
+    try {
+      await Share.share({
+        title: shareTitle,
+        message: `Check out ${shareTitle} on Sayso\n${origin}${targetPath}`,
+      });
+    } catch {
+      // Non-blocking.
+    }
+  }, [businessDetail?.id, displayTitle, id, isBusinessReview, type]);
+
+  const handleHeaderSave = useCallback(async () => {
+    if (!linkedBusinessId) {
+      Alert.alert('Save unavailable', 'Saving is unavailable for this listing.');
+      return;
+    }
+    if (!user) {
+      router.push(routes.onboarding() as never);
+      return;
+    }
+    if (saveBusy) return;
+
+    setSaveBusy(true);
+    try {
+      if (savedBusinessIds.has(linkedBusinessId)) {
+        await apiFetch<{ success?: boolean; message?: string }>(`/api/user/saved?business_id=${linkedBusinessId}`, {
+          method: 'DELETE',
+        });
+      } else {
+        await apiFetch<{ success?: boolean; message?: string }>('/api/user/saved', {
+          method: 'POST',
+          body: JSON.stringify({ business_id: linkedBusinessId }),
+        });
+      }
+      await savedQuery.refetch();
+    } catch (error) {
+      Alert.alert(
+        'Save unavailable',
+        error instanceof Error ? error.message : 'Unable to update saved items right now.'
+      );
+    } finally {
+      setSaveBusy(false);
+    }
+  }, [linkedBusinessId, router, saveBusy, savedBusinessIds, savedQuery, user]);
+
+  const headerRightActions = useMemo<BusinessHeaderRightAction[]>(
+    () => [
+      {
+        key: 'share',
+        icon: 'share-social-outline',
+        onPress: () => {
+          void handleHeaderShare();
+        },
+        accessibilityLabel: 'Share listing',
+      },
+      {
+        key: 'save',
+        icon: isLinkedBusinessSaved ? 'bookmark' : 'bookmark-outline',
+        onPress: () => {
+          void handleHeaderSave();
+        },
+        accessibilityLabel: linkedBusinessId
+          ? isLinkedBusinessSaved
+            ? 'Unsave business'
+            : 'Save business'
+          : 'Save unavailable',
+        disabled: saveBusy,
+      },
+    ],
+    [handleHeaderSave, handleHeaderShare, isLinkedBusinessSaved, linkedBusinessId, saveBusy]
+  );
+
   return (
     <SafeAreaView edges={['left', 'right', 'bottom']} style={styles.safeArea}>
       {!isBusinessReview && (
@@ -1210,7 +1359,9 @@ export default function WriteReviewScreen() {
         options={{
           headerShown: true,
           headerShadowVisible: false,
-          header: (props) => <StackPageHeader {...props} onPressBack={handleBack} />,
+          header: (props) => (
+            <StackPageHeader {...props} onPressBack={handleBack} rightActions={headerRightActions} />
+          ),
           headerStyle: { backgroundColor: C.coral },
           headerTintColor: '#FFFFFF',
         }}

@@ -18,6 +18,7 @@ const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   comment_reply: 'chatbubble',
   milestone_achievement: 'trophy',
   message: 'mail',
+  dm: 'chatbubble',
 };
 
 const DELETE_REVEAL = 72;
@@ -38,6 +39,10 @@ type Props = {
 
 export function NotificationItem({ notification, onPress, onDismiss }: Props) {
   const icon = TYPE_ICONS[notification.type] ?? 'notifications';
+  const isRead =
+    typeof notification.read === 'boolean'
+      ? notification.read
+      : Boolean((notification as NotificationDto & { read_at?: string | null }).read_at);
   const translateX = useSharedValue(0);
   const isRevealed = useRef(false);
 
@@ -104,7 +109,7 @@ export function NotificationItem({ notification, onPress, onDismiss }: Props) {
   };
 
   // Solid background required so the sliding content covers the delete area.
-  const itemBg = notification.read ? '#ffffff' : 'rgba(255,255,255,0.60)';
+  const itemBg = isRead ? '#ffffff' : 'rgba(255,255,255,0.60)';
 
   return (
     <View style={styles.wrapper}>
@@ -126,14 +131,19 @@ export function NotificationItem({ notification, onPress, onDismiss }: Props) {
       >
         <Pressable style={styles.pressable} onPress={handlePress}>
           <View style={styles.iconWrap}>
-            <Ionicons name={icon} size={20} color={businessDetailColors.charcoal} />
+            <Ionicons
+              testID={`icon-${notification.type}`}
+              name={icon}
+              size={20}
+              color={businessDetailColors.charcoal}
+            />
           </View>
           <View style={styles.content}>
             <Text style={styles.title} numberOfLines={1}>{notification.title}</Text>
             <Text style={styles.message} numberOfLines={2}>{notification.message}</Text>
             <Text style={styles.time}>{timeAgo(notification.created_at)}</Text>
           </View>
-          {!notification.read && <View style={styles.dot} />}
+          {!isRead && <View testID="unread-dot" style={styles.dot} />}
         </Pressable>
       </Animated.View>
     </View>

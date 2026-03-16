@@ -1,20 +1,20 @@
 import type { EventSpecialListItemDto } from '@sayso/contracts';
 
-function toGoogleDate(value?: string) {
-  if (!value) return null;
+export function toGoogleDate(value?: string) {
+  if (!value) return '';
   const parsed = new Date(value);
   if (!Number.isFinite(parsed.getTime())) {
-    return null;
+    return '';
   }
 
   return parsed.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
-function buildFallbackEnd(startISO?: string) {
-  if (!startISO) return null;
+export function buildFallbackEnd(startISO?: string) {
+  if (!startISO) return '';
   const parsed = new Date(startISO);
   if (!Number.isFinite(parsed.getTime())) {
-    return null;
+    return '';
   }
 
   return new Date(parsed.getTime() + 2 * 60 * 60 * 1000).toISOString();
@@ -22,7 +22,7 @@ function buildFallbackEnd(startISO?: string) {
 
 export function buildGoogleCalendarUrl(item: EventSpecialListItemDto) {
   const start = toGoogleDate(item.startDateISO);
-  const end = toGoogleDate(item.endDateISO) ?? toGoogleDate(buildFallbackEnd(item.startDateISO) ?? undefined);
+  const end = toGoogleDate(item.endDateISO) || toGoogleDate(buildFallbackEnd(item.startDateISO) || undefined);
 
   const params = new URLSearchParams({
     action: 'TEMPLATE',

@@ -103,6 +103,7 @@ function Stars({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <Ionicons
           key={i}
+          testID={i <= rating ? 'star-filled' : 'star-empty'}
           name="star"
           size={20}
           color={i <= rating ? '#FFFFFF' : 'rgba(255,255,255,0.22)'}
@@ -153,7 +154,12 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
                     <Text style={styles.anonText}>Anonymous</Text>
                   </View>
                 ) : (
-                  <Ionicons name="checkmark-circle-outline" size={14} color={C.sage} />
+                  <Ionicons
+                    testID="verified-checkmark"
+                    name="checkmark-circle-outline"
+                    size={14}
+                    color={C.sage}
+                  />
                 )}
               </View>
             </View>

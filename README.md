@@ -1,75 +1,99 @@
 # Sayso Mobile
 
-Expo React Native app for the Sayso mobile client.
+Expo Router + React Native app for the Sayso consumer mobile experience.
 
-## What is implemented
+## Current State
 
-- Expo Router tab navigation: Home, Search, Saved, Notifications, Profile
-- Supabase auth session handling with SecureStore-backed persistence
-- Email/password and Google OAuth sign-in
-- Authenticated API helper (`Authorization: Bearer <token>`)
-- Push token registration to backend
-- Realtime notifications unread count refresh
+- Core user flows are implemented for auth, onboarding, feed/discovery, saved items, profile, notifications, DMs, reviews, and event/special detail screens.
+- Role gating is active. `business_owner` and `admin` accounts are redirected to `/role-unsupported`.
+- Release readiness work is tracked in `docs/release/ship-readiness-plan-2026-03-16.md`.
 
-## Current product scope
+## Product Scope
 
-- Mobile is currently focused on end-user flows.
-- Business-owner and admin flows are intentionally web-only in this version (`/role-unsupported` screen).
-- Home, Search, and Saved tabs are scaffolded placeholders for API integration.
+- This app targets end-user (consumer) journeys.
+- Business-owner and admin management workflows remain web-only for this release.
 
-## Tech stack
+## Route Surface (Expo Router)
 
-- Expo 52
-- React Native 0.76
-- React 18
+- Tabs:
+  - `/home`
+  - `/leaderboard`
+  - `/saved`
+  - `/profile`
+- Stack routes include:
+  - `/trending`, `/for-you`, `/events`, `/events-specials`
+  - `/business/[id]`, `/event/[id]`, `/special/[id]`
+  - `/reviewer/[id]`, `/profile/[username]`
+  - `/notifications`, `/dm`, `/dm/[threadId]`
+  - Static pages: `/about`, `/contact`, `/privacy`, `/terms`
+- Modal/auth routes include:
+  - `/onboarding`, `/onboarding/select-account-type`, `/complete`
+  - `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`
+  - `/auth/callback`, `/auth/auth-code-error`
+  - `/write-review/[type]/[id]`
+
+## Tech Stack
+
+- Expo SDK 54
+- React Native 0.81
+- React 19
+- TypeScript (strict mode)
 - Expo Router
 - Supabase JS v2
-- TanStack Query
+- TanStack Query v5
+- Expo Notifications
+- MapLibre React Native (native runtime)
 
 ## Prerequisites
 
-- Node.js 18+ (Node.js 20 LTS recommended)
+- Node.js 20 LTS recommended
 - npm 9+
-- Expo Go or iOS/Android simulator
-- A Supabase project (URL + anon key)
+- Expo Go, emulator, or device
+- Supabase project credentials
 - Sayso backend API base URL
+- Local `@sayso/contracts` package path available (configured as `file:../../sayso_web/packages/contracts`)
 
-## Environment variables
+## Environment Variables
 
-Copy `.env.example` to `.env` and set values:
+Copy `.env.example` to `.env` and set values.
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `EXPO_PUBLIC_API_BASE_URL` | Yes | Base URL for backend API requests (for example `https://www.sayso.co.za`). |
-| `EXPO_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL. |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key. |
-| `EXPO_PUBLIC_EAS_PROJECT_ID` | Recommended | Used for Expo push token registration. |
+Required:
 
-If Supabase env values are missing, the app logs a warning at startup.
+- `EXPO_PUBLIC_API_BASE_URL`
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
-For Expo web, use the canonical `www` host for production API requests to avoid browser preflight redirects.
+Recommended:
+
+- `EXPO_PUBLIC_EAS_PROJECT_ID` (push token registration)
+
+Optional (feature dependent):
+
+- `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN` (map rendering features)
+- `EXPO_PUBLIC_MAPBOX_WEB_PIN_URL` (web map marker asset)
+- `EXPO_PUBLIC_ALGOLIA_APP_ID` and `EXPO_PUBLIC_ALGOLIA_SEARCH_KEY` (Algolia-first search path)
+
+Security hardening flags:
+
+- `EXPO_PUBLIC_API_PINNED_KEY_HASHES`
+- `EXPO_PUBLIC_SECURITY_ENFORCE_PINNING`
+- `EXPO_PUBLIC_SECURITY_ENFORCE_INTEGRITY`
+- `EXPO_PUBLIC_SECURITY_ALLOW_EMULATOR`
+
+Notes:
+
+- In non-dev builds, `EXPO_PUBLIC_API_BASE_URL` must be HTTPS.
+- If Supabase env vars are missing, the app logs warnings and auth cannot function correctly.
+- API base URL is normalized to `https://www.sayso.co.za` when `https://sayso.co.za` is provided.
 
 ## Setup
 
-From this folder (`sayso-mobile/`):
-
 ```bash
 npm install
-```
-
-Create local env file:
-
-```bash
 cp .env.example .env
 ```
 
-PowerShell alternative:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Run the Expo dev server:
+Start dev server:
 
 ```bash
 npm run start
@@ -77,46 +101,71 @@ npm run start
 
 ## Scripts
 
-- `npm run start`: start Expo
-- `npm run android`: run Android native build
-- `npm run ios`: run iOS native build
-- `npm run web`: run Expo for web
-- `npm run type-check`: TypeScript check without emit
+- `npm run start`: Start Expo (with dependency validation disabled)
+- `npm run start:offline`: Start Expo offline
+- `npm run android`: Run Android native build
+- `npm run ios`: Run iOS native build
+- `npm run web`: Run Expo for web
+- `npm run type-check`: Run TypeScript checks without emit
 
-## Git Tracking Policy
+## Auth, Deep Linking, and Role Guarding
 
-- Commit repo-wide config and dependency lock files: `app.json`, `babel.config.js`, `tsconfig.json`, `package-lock.json`.
-- Do not commit local machine/runtime files: `.env` variants (except `.env.example`), `.claude/settings.local.json`, `.claude/worktrees/`, `*.pid`, `*.pid.lock`, `*.log`, and `*.local.{json,yaml,yml,toml}`.
-- If a local-only file was already tracked, untrack it without deleting your local copy:
+- App scheme is `sayso`.
+- OAuth callback route is `/auth/callback`.
+- Universal/App Links are configured in `app.config.ts` for:
+  - `https://sayso.co.za`
+  - `https://www.sayso.co.za`
+- Root guard behavior:
+  - Unauthenticated users are funneled to onboarding/auth routes.
+  - Onboarding progression is step-gated.
+  - Unsupported roles are redirected to `/role-unsupported`.
 
-```bash
-git rm --cached <path>
-```
+## Notifications
 
-## Auth and OAuth setup notes
+- Unread count is provided globally via `NotificationsProvider`.
+- Push token registration posts to `/api/user/push-tokens`.
+- Realtime notification updates are subscribed via Supabase channels.
+- DM notification quick-reply action is wired when native notifications are available.
 
-- App scheme is `sayso` (`app.json`), and OAuth callback is built from `/auth/callback`.
-- For Google OAuth via Supabase, add a redirect URL compatible with this scheme (for example `sayso://auth/callback`) in Supabase Auth settings.
-- Ensure Google provider is enabled in your Supabase project.
+## Security and Hardening
 
-## Backend endpoints expected by mobile app
+- Mobile API requests use centralized error handling and retry behavior (`src/lib/api.ts`).
+- Runtime hardening scaffold exists in `src/security/*`.
+- See:
+  - `docs/security/native-hardening-scaffold.md`
+  - `docs/security/backend-handoff-checklist.md`
 
-- `POST /api/user/push-tokens`
-- `GET /api/notifications/user`
-- Planned integrations referenced in UI:
-  - `GET /api/user/saved`
-  - `GET /api/businesses/search`
+## CI
 
-## Project structure
+GitHub Actions currently run:
+
+- TypeScript check
+- Production dependency audit (`npm audit --omit=dev --audit-level=high`)
+- Secret scan (Gitleaks)
+
+Workflow file: `.github/workflows/security.yml`
+
+## Project Structure
 
 ```txt
 app/
   (tabs)/
+  (stack)/
+  (modals)/
   _layout.tsx
-  login.tsx
+  index.tsx
+  auth/callback.tsx
   role-unsupported.tsx
 src/
+  components/
   hooks/
   lib/
+  navigation/
   providers/
+  screens/
+  security/
+  styles/
+docs/
+  release/
+  security/
 ```

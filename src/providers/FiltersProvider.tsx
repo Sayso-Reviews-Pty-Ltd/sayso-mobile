@@ -1,4 +1,7 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+
+const STORAGE_KEY = 'user_filters';
 
 type FiltersState = {
   minRating: number | null;
@@ -19,6 +22,36 @@ const FiltersContext = createContext<FiltersState>({
 export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const [minRating, setMinRating] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const hydratedRef = useRef(false);
+
+  // Restore persisted filters after first render — does not block UI
+  useEffect(() => {
+    const restore = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed: { minRating?: number | null; distanceKm?: number | null } = JSON.parse(raw);
+          // Merge with defaults — only apply keys that have a real value
+          if (parsed.minRating != null) setMinRating(parsed.minRating);
+          if (parsed.distanceKm != null) setDistanceKm(parsed.distanceKm);
+        }
+      } catch {}
+      hydratedRef.current = true;
+    };
+    void restore();
+  }, []);
+
+  // Persist on every filter change — guarded by hydratedRef so the initial
+  // null render does not overwrite a previously saved value
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const save = async () => {
+      try {
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ minRating, distanceKm }));
+      } catch {}
+    };
+    void save();
+  }, [minRating, distanceKm]);
 
   const clearFilters = useCallback(() => {
     setMinRating(null);

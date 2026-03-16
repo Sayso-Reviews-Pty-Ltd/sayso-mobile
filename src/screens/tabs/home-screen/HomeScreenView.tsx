@@ -243,7 +243,6 @@ function HomeScreenViewComponent({
               title="For You"
               actionLabel={user ? 'See More' : undefined}
               onPress={user ? onNavigateForYou : undefined}
-              delay={0}
             />
 
             {!user ? (
@@ -316,7 +315,6 @@ function HomeScreenViewComponent({
               title="Trending Now"
               actionLabel="See More"
               onPress={onNavigateTrending}
-              delay={100}
             />
             <HomeBusinessRow
               items={trending.data?.businesses ?? []}
@@ -334,7 +332,6 @@ function HomeScreenViewComponent({
               title="Events & Specials"
               actionLabel="See More"
               onPress={onNavigateEvents}
-              delay={200}
             />
             <HomeEventsSpecialsRow
               items={events.items}

@@ -1,24 +1,17 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { routes } from '../../navigation/routes';
 import { Text } from '../../components/Typography';
+import { ONBOARDING_TOKENS } from '../../components/onboarding/onboardingTheme';
 
 const GRID = 8;
 const MAX_RAIL_WIDTH = 420;
 
-const C = {
-  page: '#E5E0E5',
-  card: '#9DAB9B',
-  charcoal: '#2D2D2D',
-  charcoal70: 'rgba(45,45,45,0.7)',
-  white: '#FFFFFF',
-  wine: '#722F37',
-  sage: '#7D9B76',
-};
 
 type ButtonDef = {
   label: string;
@@ -31,14 +24,14 @@ const BUTTONS: ButtonDef[] = [
   {
     label: 'Log in',
     route: routes.login(),
-    bg: C.card,
-    textColor: C.white,
+    bg: ONBOARDING_TOKENS.cardBg,
+    textColor: ONBOARDING_TOKENS.white,
   },
   {
     label: 'Create account',
     route: routes.register(),
-    bg: C.charcoal,
-    textColor: C.white,
+    bg: ONBOARDING_TOKENS.charcoal,
+    textColor: ONBOARDING_TOKENS.white,
   },
 ];
 
@@ -46,33 +39,36 @@ export default function SelectAccountTypeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const titleOpacity = useRef(new Animated.Value(0)).current;
-  const titleY = useRef(new Animated.Value(GRID * 2)).current;
-  const cardOpacity = useRef(new Animated.Value(0)).current;
-  const cardY = useRef(new Animated.Value(GRID * 2.5)).current;
+  const titleOpacity = useSharedValue(0);
+  const titleY = useSharedValue(GRID * 2);
+  const cardOpacity = useSharedValue(0);
+  const cardY = useSharedValue(GRID * 2.5);
 
   useEffect(() => {
     const ease = Easing.out(Easing.cubic);
-    Animated.parallel([
-      Animated.timing(titleOpacity, { toValue: 1, duration: 260, easing: ease, useNativeDriver: true }),
-      Animated.timing(titleY, { toValue: 0, duration: 260, easing: ease, useNativeDriver: true }),
-    ]).start();
-    Animated.sequence([
-      Animated.delay(70),
-      Animated.parallel([
-        Animated.timing(cardOpacity, { toValue: 1, duration: 280, easing: ease, useNativeDriver: true }),
-        Animated.timing(cardY, { toValue: 0, duration: 280, easing: ease, useNativeDriver: true }),
-      ]),
-    ]).start();
-  }, [cardOpacity, cardY, titleOpacity, titleY]);
+    titleOpacity.value = withTiming(1, { duration: 260, easing: ease });
+    titleY.value = withTiming(0, { duration: 260, easing: ease });
+    cardOpacity.value = withDelay(70, withTiming(1, { duration: 280, easing: ease }));
+    cardY.value = withDelay(70, withTiming(0, { duration: 280, easing: ease }));
+  }, []);
+
+  const titleAnimStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{ translateY: titleY.value }],
+  }), []);
+
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ translateY: cardY.value }],
+  }), []);
 
   return (
-    <View style={[styles.root, { backgroundColor: C.page }]}>
+    <View style={[styles.root, { backgroundColor: ONBOARDING_TOKENS.offWhite }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
         <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
+          <Ionicons name="chevron-back-outline" size={22} color={ONBOARDING_TOKENS.charcoal} />
         </Pressable>
       </View>
 
@@ -83,16 +79,16 @@ export default function SelectAccountTypeScreen() {
         ]}
       >
         <View style={styles.rail}>
-          <Animated.View style={{ opacity: titleOpacity, transform: [{ translateY: titleY }] }}>
+          <Animated.View style={titleAnimStyle}>
             <View style={styles.titleBlock}>
               <Text style={styles.title}>Welcome!</Text>
               <Text style={styles.subtitle}>Please choose an option to get started.</Text>
             </View>
           </Animated.View>
 
-          <Animated.View style={[styles.cardWrap, { opacity: cardOpacity, transform: [{ translateY: cardY }] }]}>
+          <Animated.View style={[styles.cardWrap, cardAnimStyle]}>
             <LinearGradient
-              colors={[C.card, C.card, 'rgba(157,171,155,0.95)']}
+              colors={[ONBOARDING_TOKENS.cardBg, ONBOARDING_TOKENS.cardBg, 'rgba(157,171,155,0.95)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.card}
@@ -163,14 +159,14 @@ const styles = StyleSheet.create({
     fontSize: 34,
     lineHeight: 40,
     fontWeight: '700',
-    color: C.charcoal,
+    color: ONBOARDING_TOKENS.charcoal,
     textAlign: 'center',
     letterSpacing: -0.4,
   },
   subtitle: {
     fontSize: 16,
     lineHeight: 24,
-    color: C.charcoal70,
+    color: ONBOARDING_TOKENS.charcoal70,
     textAlign: 'center',
     fontWeight: '400',
   },

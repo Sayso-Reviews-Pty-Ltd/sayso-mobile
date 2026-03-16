@@ -6,13 +6,13 @@
     "baseUrl": ".",
     "paths": {
       "@sayso/contracts": [
-        "../sayso_web/packages/contracts/src/index.ts"
+        "../sayso-web/packages/contracts/src/index.ts"
       ]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "../sayso_web/packages/contracts/src/**/*.ts"
+    "../sayso-web/packages/contracts/src/**/*.ts"
   ]
 }

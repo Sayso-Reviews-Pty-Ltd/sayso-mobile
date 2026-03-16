@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import { supabase } from '../../../lib/supabase';
 import { routes } from '../../../navigation/routes';
 import { SkeletonBlock } from '../../../components/SkeletonBlock';
 import { Text } from '../../../components/Typography';
+import { EmptyState } from '../../../components/EmptyState';
 import { StackPageHeader } from '../../../components/StackPageHeader';
 
 const GRID = 8;
@@ -143,7 +145,7 @@ export default function DMInboxScreen() {
   const { user } = useAuthSession();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: () => apiFetch<ConversationsApiResponse>('/api/conversations'),
     enabled: Boolean(user),
@@ -177,7 +179,10 @@ export default function DMInboxScreen() {
   }, [user?.id, refetch]);
 
   const handleConversationPress = useCallback(
-    (id: string) => { router.push(routes.dmThread(id) as never); },
+    (id: string) => {
+      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+      router.push(routes.dmThread(id) as never);
+    },
     [router]
   );
 
@@ -226,7 +231,7 @@ export default function DMInboxScreen() {
             autoCorrect={false}
           />
           {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
+            <Pressable onPress={() => { try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {} setSearchQuery(''); }} hitSlop={8}>
               <Ionicons name="close-circle-outline" size={16} color={C.charcoal50} />
             </Pressable>
           )}
@@ -238,14 +243,14 @@ export default function DMInboxScreen() {
         <View style={styles.skeletonList}>
           {[0, 1, 2, 3, 4].map((i) => <ConversationSkeleton key={i} />)}
         </View>
-      ) : error ? (
-        <View style={styles.errorState}>
-          <Ionicons name="alert-circle-outline" size={40} color={C.charcoal50} />
-          <Text style={styles.errorText}>Could not load messages.</Text>
-          <Pressable style={styles.retryBtn} onPress={() => refetch()}>
-            <Text style={styles.retryText}>Try again</Text>
-          </Pressable>
-        </View>
+      ) : isError ? (
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="Couldn't load conversations"
+          message="Check your connection and try again."
+          actionLabel="Retry"
+          onAction={() => { void refetch(); }}
+        />
       ) : filteredConversations.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="chatbubbles-outline" size={48} color={C.charcoal50} />

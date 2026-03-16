@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withSpring,
+  withDelay, withSequence, Easing, makeMutable, type SharedValue,
+} from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -30,15 +35,72 @@ type InterestId = typeof INTERESTS[number]['id'];
 type InterestPreferenceDto = { id: string };
 type PreferencesResponseDto = { interests?: InterestPreferenceDto[] };
 
-type ItemAnim = {
-  opacity: Animated.Value;
-  y: Animated.Value;
-  x: Animated.Value;
-  entryScale: Animated.Value;
-  selectedScale: Animated.Value;
-  bounceScale: Animated.Value;
-  checkScale: Animated.Value;
+type ItemMutables = {
+  opacity: SharedValue<number>;
+  y: SharedValue<number>;
+  x: SharedValue<number>;
+  entryScale: SharedValue<number>;
+  selectedScale: SharedValue<number>;
+  bounceScale: SharedValue<number>;
+  checkScale: SharedValue<number>;
 };
+
+type InterestItemProps = {
+  item: typeof INTERESTS[number];
+  mutables: ItemMutables;
+  isSelected: boolean;
+  isDisabled: boolean;
+  onPress: () => void;
+};
+
+const InterestItem = memo(function InterestItem({ item, mutables, isSelected, isDisabled, onPress }: InterestItemProps) {
+  const wrapStyle = useAnimatedStyle(() => ({
+    width: '48.2%',
+    opacity: mutables.opacity.value,
+    transform: [
+      { translateY: mutables.y.value },
+      { translateX: mutables.x.value },
+      { scale: mutables.entryScale.value },
+      { scale: mutables.selectedScale.value },
+      { scale: mutables.bounceScale.value },
+    ],
+  }), []);
+
+  const checkStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: mutables.checkScale.value }],
+    opacity: mutables.checkScale.value,
+  }), []);
+
+  return (
+    <Animated.View style={wrapStyle}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.circle,
+          isDisabled && styles.circleDisabled,
+          pressed && !isDisabled && styles.circlePressed,
+        ]}
+        onPress={onPress}
+        disabled={isDisabled}
+      >
+        <LinearGradient
+          colors={isSelected ? ONBOARDING_GRADIENTS.cardPrimary : ONBOARDING_GRADIENTS.cardSecondary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.circleFill, isSelected && styles.circleFillSelected]}
+        >
+          <Text style={[styles.circleLabel, isSelected && styles.circleLabelSelected]}>
+            {item.label}
+          </Text>
+        </LinearGradient>
+      </Pressable>
+      {isSelected ? (
+        <Animated.View style={[styles.checkBadge, checkStyle]}>
+          <Ionicons name="checkmark-circle-outline" size={22} color={ONBOARDING_TOKENS.sage} />
+        </Animated.View>
+      ) : null}
+    </Animated.View>
+  );
+});
 
 export default function InterestsScreen() {
   const router = useRouter();
@@ -47,18 +109,18 @@ export default function InterestsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const badgeOpacity = useRef(new Animated.Value(0)).current;
-  const badgeY = useRef(new Animated.Value(12)).current;
+  const badgeOpacity = useSharedValue(0);
+  const badgeY = useSharedValue(12);
   const prevSelectedRef = useRef<Set<InterestId>>(new Set());
-  const itemAnims = useRef<ItemAnim[]>(
+  const itemMutables = useRef<ItemMutables[]>(
     INTERESTS.map(() => ({
-      opacity: new Animated.Value(0),
-      y: new Animated.Value(20),
-      x: new Animated.Value(0),
-      entryScale: new Animated.Value(0.9),
-      selectedScale: new Animated.Value(1),
-      bounceScale: new Animated.Value(1),
-      checkScale: new Animated.Value(0),
+      opacity: makeMutable(0),
+      y: makeMutable(20),
+      x: makeMutable(0),
+      entryScale: makeMutable(0.9),
+      selectedScale: makeMutable(1),
+      bounceScale: makeMutable(1),
+      checkScale: makeMutable(0),
     }))
   ).current;
 
@@ -100,112 +162,80 @@ export default function InterestsScreen() {
 
   useEffect(() => {
     if (reducedMotion) {
-      badgeOpacity.setValue(1);
-      badgeY.setValue(0);
-      itemAnims.forEach((anim) => {
-        anim.opacity.setValue(1);
-        anim.y.setValue(0);
-        anim.entryScale.setValue(1);
+      badgeOpacity.value = 1;
+      badgeY.value = 0;
+      itemMutables.forEach((m) => {
+        m.opacity.value = 1;
+        m.y.value = 0;
+        m.entryScale.value = 1;
       });
       return;
     }
 
     const ease = Easing.bezier(0.25, 0.8, 0.25, 1);
-
-    Animated.parallel([
-      Animated.timing(badgeOpacity, { toValue: 1, delay: 120, duration: 300, useNativeDriver: true }),
-      Animated.timing(badgeY, { toValue: 0, delay: 120, duration: 300, easing: ease, useNativeDriver: true }),
-    ]).start();
+    badgeOpacity.value = withDelay(120, withTiming(1, { duration: 300, easing: ease }));
+    badgeY.value = withDelay(120, withTiming(0, { duration: 300, easing: ease }));
 
     INTERESTS.forEach((_, i) => {
       const delay = Math.min(i, 8) * 30 + 100;
-      const anim = itemAnims[i];
-      Animated.parallel([
-        Animated.timing(anim.opacity, { toValue: 1, delay, duration: 400, easing: ease, useNativeDriver: true }),
-        Animated.timing(anim.y, { toValue: 0, delay, duration: 400, easing: ease, useNativeDriver: true }),
-        Animated.timing(anim.entryScale, { toValue: 1, delay, duration: 400, easing: ease, useNativeDriver: true }),
-      ]).start();
+      const m = itemMutables[i];
+      m.opacity.value = withDelay(delay, withTiming(1, { duration: 400, easing: ease }));
+      m.y.value = withDelay(delay, withTiming(0, { duration: 400, easing: ease }));
+      m.entryScale.value = withDelay(delay, withTiming(1, { duration: 400, easing: ease }));
     });
-  }, [badgeOpacity, badgeY, itemAnims, reducedMotion]);
+  }, [badgeOpacity, badgeY, itemMutables, reducedMotion]);
 
   useEffect(() => {
     const prevSelected = prevSelectedRef.current;
     INTERESTS.forEach((item, index) => {
-      const anim = itemAnims[index];
+      const m = itemMutables[index];
       const wasSelected = prevSelected.has(item.id);
       const isSelected = selected.has(item.id);
       if (wasSelected === isSelected) return;
 
       if (reducedMotion) {
-        anim.selectedScale.setValue(isSelected ? 1.05 : 1);
-        anim.checkScale.setValue(isSelected ? 1 : 0);
+        m.selectedScale.value = isSelected ? 1.05 : 1;
+        m.checkScale.value = isSelected ? 1 : 0;
         return;
       }
 
-      Animated.spring(anim.selectedScale, {
-        toValue: isSelected ? 1.05 : 1,
-        stiffness: 400,
-        damping: 17,
-        mass: 1,
-        useNativeDriver: true,
-      }).start();
+      m.selectedScale.value = withSpring(isSelected ? 1.05 : 1, { stiffness: 400, damping: 17, mass: 1 });
 
       if (isSelected) {
-        anim.checkScale.setValue(0);
-        Animated.spring(anim.checkScale, {
-          toValue: 1,
-          stiffness: 500,
-          damping: 25,
-          mass: 1,
-          useNativeDriver: true,
-        }).start();
+        m.checkScale.value = 0;
+        m.checkScale.value = withSpring(1, { stiffness: 500, damping: 25, mass: 1 });
       } else {
-        Animated.timing(anim.checkScale, {
-          toValue: 0,
-          duration: 120,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }).start();
+        m.checkScale.value = withTiming(0, { duration: 120, easing: Easing.out(Easing.ease) });
       }
     });
     prevSelectedRef.current = new Set(selected);
-  }, [itemAnims, reducedMotion, selected]);
+  }, [itemMutables, reducedMotion, selected]);
 
   const triggerShake = useCallback((id: InterestId) => {
     if (reducedMotion) return;
-
     const index = INTERESTS.findIndex((interest) => interest.id === id);
     if (index < 0) return;
-    const x = itemAnims[index].x;
-    x.setValue(0);
-    Animated.sequence([
-      Animated.timing(x, { toValue: -4, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(x, { toValue: 4, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(x, { toValue: -3, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(x, { toValue: 2, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(x, { toValue: 0, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-    ]).start();
-  }, [itemAnims, reducedMotion]);
+    const m = itemMutables[index];
+    m.x.value = 0;
+    m.x.value = withSequence(
+      withTiming(-4, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+      withTiming(4, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+      withTiming(-3, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+      withTiming(2, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+      withTiming(0, { duration: 70, easing: Easing.inOut(Easing.ease) })
+    );
+  }, [itemMutables, reducedMotion]);
 
   const toggle = useCallback((id: InterestId) => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     const index = INTERESTS.findIndex((interest) => interest.id === id);
     if (index >= 0 && !reducedMotion) {
-      const bounceScale = itemAnims[index].bounceScale;
-      bounceScale.setValue(1);
-      Animated.sequence([
-        Animated.timing(bounceScale, {
-          toValue: 1.08,
-          duration: 140,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(bounceScale, {
-          toValue: 1,
-          duration: 210,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      const m = itemMutables[index];
+      m.bounceScale.value = 1;
+      m.bounceScale.value = withSequence(
+        withTiming(1.08, { duration: 140, easing: Easing.out(Easing.ease) }),
+        withTiming(1, { duration: 210, easing: Easing.out(Easing.ease) })
+      );
     }
 
     setSelected((prev) => {
@@ -219,13 +249,14 @@ export default function InterestsScreen() {
       }
       return next;
     });
-  }, [itemAnims, reducedMotion, triggerShake]);
+  }, [itemMutables, reducedMotion, triggerShake]);
 
   const canContinue = selected.size >= MIN && selected.size <= MAX;
   const atMax = selected.size >= MAX;
 
   const handleContinue = useCallback(async () => {
     if (!canContinue || isLoading) return;
+    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
     setIsLoading(true);
     setError('');
     try {
@@ -252,6 +283,11 @@ export default function InterestsScreen() {
         ? "Perfect! You've selected the maximum"
         : 'Great! You can continue or select more';
 
+  const badgeAnimStyle = useAnimatedStyle(() => ({
+    opacity: badgeOpacity.value,
+    transform: [{ translateY: badgeY.value }],
+  }), []);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -272,7 +308,7 @@ export default function InterestsScreen() {
             </View>
           ) : null}
 
-          <Animated.View style={[styles.selectionWrap, { opacity: badgeOpacity, transform: [{ translateY: badgeY }] }]}>
+          <Animated.View style={[styles.selectionWrap, badgeAnimStyle]}>
             <View style={[styles.selectionPill, selected.size >= MIN && styles.selectionPillReady]}>
               <Text style={styles.selectionPillText}>
                 {selected.size} of {MIN}-{MAX} selected
@@ -284,55 +320,22 @@ export default function InterestsScreen() {
             <Text style={styles.selectionHint}>{helperText}</Text>
           </Animated.View>
 
-          <Animated.View style={styles.grid}>
+          <View style={styles.grid}>
             {INTERESTS.map((item, index) => {
               const isSelected = selected.has(item.id);
               const isDisabled = atMax && !isSelected;
-              const anim = itemAnims[index];
               return (
-                <Animated.View
+                <InterestItem
                   key={item.id}
-                  style={{
-                    width: '48.2%',
-                    opacity: anim.opacity,
-                    transform: [
-                      { translateY: anim.y },
-                      { translateX: anim.x },
-                      { scale: anim.entryScale },
-                      { scale: anim.selectedScale },
-                      { scale: anim.bounceScale },
-                    ],
-                  }}
-                >
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.circle,
-                      isDisabled && styles.circleDisabled,
-                      pressed && !isDisabled && styles.circlePressed,
-                    ]}
-                    onPress={() => toggle(item.id)}
-                    disabled={isDisabled}
-                  >
-                    <LinearGradient
-                      colors={isSelected ? ONBOARDING_GRADIENTS.cardPrimary : ONBOARDING_GRADIENTS.cardSecondary}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={[styles.circleFill, isSelected && styles.circleFillSelected]}
-                    >
-                      <Text style={[styles.circleLabel, isSelected && styles.circleLabelSelected]}>
-                        {item.label}
-                      </Text>
-                    </LinearGradient>
-                  </Pressable>
-                  {isSelected ? (
-                    <Animated.View style={[styles.checkBadge, { transform: [{ scale: anim.checkScale }] }]}>
-                      <Ionicons name="checkmark-circle-outline" size={22} color={ONBOARDING_TOKENS.sage} />
-                    </Animated.View>
-                  ) : null}
-                </Animated.View>
+                  item={item}
+                  mutables={itemMutables[index]}
+                  isSelected={isSelected}
+                  isDisabled={isDisabled}
+                  onPress={() => toggle(item.id)}
+                />
               );
             })}
-          </Animated.View>
+          </View>
         </View>
       </OnboardingLayout>
     </>

@@ -9,7 +9,9 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { BusinessListItemDto } from '@sayso/contracts';
@@ -54,6 +56,7 @@ export default function TrendingScreen() {
   // Filters
   const [filters, setFilters] = useState<FilterState>({ minRating: null, radiusKm: null });
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const hydratedRef = useRef(false);
 
   // View mode
   const [isMapMode, setIsMapMode] = useState(false);
@@ -119,6 +122,39 @@ export default function TrendingScreen() {
 
   useRealtimeQueryInvalidation(realtimeTargets);
 
+  // Restore persisted filters on mount — shares the same 'user_filters' key as
+  // FiltersProvider; distanceKm in storage maps to radiusKm in local state
+  useEffect(() => {
+    const restore = async () => {
+      try {
+        const raw = await AsyncStorage.getItem('user_filters');
+        if (raw) {
+          const parsed: { minRating?: number | null; distanceKm?: number | null } = JSON.parse(raw);
+          setFilters((prev) => ({
+            minRating: parsed.minRating != null ? parsed.minRating : prev.minRating,
+            radiusKm: parsed.distanceKm != null ? parsed.distanceKm : prev.radiusKm,
+          }));
+        }
+      } catch {}
+      hydratedRef.current = true;
+    };
+    void restore();
+  }, []);
+
+  // Persist on every filter change — guarded by hydratedRef
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const save = async () => {
+      try {
+        await AsyncStorage.setItem(
+          'user_filters',
+          JSON.stringify({ minRating: filters.minRating, distanceKm: filters.radiusKm })
+        );
+      } catch {}
+    };
+    void save();
+  }, [filters]);
+
   // Reset visible count when mode/query changes
   useEffect(() => {
     setVisibleCount(VISIBLE_CHUNK);
@@ -152,6 +188,7 @@ export default function TrendingScreen() {
 
   const handleDistanceSelect = useCallback(
     (km: number) => {
+      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
       const next = filters.radiusKm === km ? null : km;
       setFilters((prev) => ({ ...prev, radiusKm: next }));
       if (next !== null && !userLocation) {
@@ -167,6 +204,7 @@ export default function TrendingScreen() {
   );
 
   const handleRatingSelect = useCallback((rating: number) => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     setFilters((prev) => ({ ...prev, minRating: prev.minRating === rating ? null : rating }));
   }, []);
 

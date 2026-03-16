@@ -78,7 +78,7 @@ export function CardSurface({
         pressed ? styles.pressed : null,
       ]}
     >
-      {({ hovered }) => renderCardLayers(radius, effectiveMaterial, hovered, contentStyle, children)}
+      {(state) => renderCardLayers(radius, effectiveMaterial, (state as { hovered?: boolean }).hovered ?? false, contentStyle, children)}
     </Pressable>
   );
 }

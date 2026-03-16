@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, cancelAnimation, Easing, interpolate } from 'react-native-reanimated';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import type { ReactNode } from 'react';
 
@@ -23,71 +24,51 @@ export function SkeletonBlock({
 }: Props) {
   const reducedMotionEnabled = useReducedMotion();
   const shouldAnimate = animated && !(reducedMotionOverride ?? reducedMotionEnabled);
-  const pulse = useRef(new Animated.Value(0)).current;
-  const shimmer = useRef(new Animated.Value(0)).current;
+  const pulse = useSharedValue(0);
+  const shimmer = useSharedValue(0);
 
   useEffect(() => {
     if (!shouldAnimate) {
-      pulse.setValue(0.45);
-      shimmer.setValue(0);
+      pulse.value = 0.45;
+      shimmer.value = 0;
       return;
     }
 
-    const pulseLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 980,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-          isInteraction: false,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0,
-          duration: 980,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-          isInteraction: false,
-        }),
-      ])
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 980, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 980, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
     );
 
-    const shimmerLoop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(160),
-        Animated.timing(shimmer, {
-          toValue: 1,
-          duration: 1400,
-          easing: Easing.linear,
-          useNativeDriver: true,
-          isInteraction: false,
-        }),
-      ])
+    shimmer.value = withRepeat(
+      withSequence(
+        withDelay(160, withTiming(1, { duration: 1400, easing: Easing.linear })),
+        withTiming(0, { duration: 0 })
+      ),
+      -1,
+      false
     );
-
-    pulseLoop.start();
-    shimmerLoop.start();
 
     return () => {
-      pulseLoop.stop();
-      shimmerLoop.stop();
+      cancelAnimation(pulse);
+      cancelAnimation(shimmer);
     };
   }, [pulse, shimmer, shouldAnimate]);
 
-  const pulseOpacity = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [PULSE_MIN, PULSE_MAX],
-  });
+  const fillStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(pulse.value, [0, 1], [PULSE_MIN, PULSE_MAX]),
+  }), []);
 
-  const shimmerTranslate = shimmer.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-140, 260],
-  });
-
-  const shimmerOpacity = shimmer.interpolate({
-    inputRange: [0, 0.3, 0.7, 1],
-    outputRange: [0, 0.28, 0.28, 0],
-  });
+  const shimmerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(shimmer.value, [0, 0.3, 0.7, 1], [0, 0.28, 0.28, 0]),
+    transform: [
+      { translateX: interpolate(shimmer.value, [0, 1], [-140, 260]) },
+      { rotate: '18deg' },
+    ],
+  }), []);
 
   const variantStyle =
     variant === 'soft'
@@ -98,18 +79,9 @@ export function SkeletonBlock({
 
   return (
     <View style={[styles.base, variantStyle, style]}>
-      <Animated.View style={[StyleSheet.absoluteFillObject, styles.fill, { opacity: pulseOpacity }]} />
+      <Animated.View style={[StyleSheet.absoluteFillObject, styles.fill, fillStyle]} />
       {shouldAnimate ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.shimmer,
-            {
-              opacity: shimmerOpacity,
-              transform: [{ translateX: shimmerTranslate }, { rotate: '18deg' }],
-            },
-          ]}
-        />
+        <Animated.View pointerEvents="none" style={[styles.shimmer, shimmerStyle]} />
       ) : null}
       {children}
     </View>

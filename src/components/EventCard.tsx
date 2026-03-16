@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import type { EventSpecialListItemDto } from '@sayso/contracts';
 import { getCardDepthShadowStyle, getOverlayShadowStyle } from '../styles/overlayShadow';
 import { CARD_CTA_RADIUS, CARD_RADIUS } from '../styles/radii';
@@ -26,6 +27,7 @@ import {
   resolveEventMediaImage,
   type EventCountdownState,
 } from './event-card/eventCardUtils';
+import { CARD_BG_COLOR, CARD_BG_RGB, NAVBAR_BG_COLOR, NAVBAR_BG_90 } from '../styles/colors';
 
 type Props = {
   item: EventSpecialListItemDto;
@@ -33,8 +35,8 @@ type Props = {
 };
 
 const ctaShadowStyle = getOverlayShadowStyle(CARD_CTA_RADIUS);
-const CARD_GRADIENT = ['#9DAB9B', '#9DAB9B', 'rgba(157,171,155,0.95)'] as const;
-const CTA_GRADIENT = ['#722F37', 'rgba(114,47,55,0.90)'] as const;
+const CARD_GRADIENT = [CARD_BG_COLOR, CARD_BG_COLOR, `rgba(${CARD_BG_RGB},0.95)`] as const;
+const CTA_GRADIENT = [NAVBAR_BG_COLOR, NAVBAR_BG_90] as const;
 const cardShadowStyle = getCardDepthShadowStyle(CARD_RADIUS);
 
 function EventCardComponent({ item, style }: Props) {
@@ -71,6 +73,7 @@ function EventCardComponent({ item, style }: Props) {
   }, [href, item.id, router]);
 
   const handleNavigate = useCallback(() => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     markRouteTransitionStart(`event-special:${item.id}`);
     router.push(href as never);
   }, [href, item.id, router]);

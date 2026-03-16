@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { Text } from '../Typography';
 import { useAuth } from '../../providers/AuthProvider';
 import { useReviewHelpful } from '../../hooks/useReviewHelpful';
@@ -88,19 +89,26 @@ function Avatar({ src, name }: { src?: string | null; name: string }) {
   );
 }
 
-// ─── Stars (gold gradient matching web)
+// ─── Stars
+const STAR_GRADIENT = ['#FDE68A', '#FBBF24', '#D97706'] as const;
+
 function Stars({ rating }: { rating: number }) {
   return (
-    <View style={styles.starsRow}>
+    <LinearGradient
+      colors={STAR_GRADIENT}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.starsRow}
+    >
       {[1, 2, 3, 4, 5].map((i) => (
         <Ionicons
           key={i}
-          name={i <= rating ? 'star' : 'star-outline'}
-          size={16}
-          color={i <= rating ? C.amber : '#D1D5DB'}
+          name="star"
+          size={20}
+          color={i <= rating ? '#FFFFFF' : 'rgba(255,255,255,0.22)'}
         />
       ))}
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -113,6 +121,11 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
   );
 
   const isAnonymous = !review.userId;
+
+  const handleToggleHelpful = () => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    toggle();
+  };
 
   return (
     <LinearGradient
@@ -192,7 +205,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
           <View style={styles.actionsRow}>
             <Pressable
               style={[styles.helpfulBtn, isHelpful && styles.helpfulBtnActive]}
-              onPress={toggle}
+              onPress={handleToggleHelpful}
               disabled={!user || loading}
               accessibilityLabel="Mark review as helpful"
             >
@@ -246,7 +259,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(125,155,118,0.20)',
+    backgroundColor: C.offWhite,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -274,7 +287,7 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
     flexWrap: 'wrap',
   },
   name: {
@@ -287,7 +300,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(45,45,45,0.12)',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
   anonText: {
     fontSize: 11,
@@ -296,12 +309,16 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     alignItems: 'flex-end',
-    gap: 3,
+    gap: 4,
     flexShrink: 0,
   },
   starsRow: {
     flexDirection: 'row',
-    gap: 2,
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
   },
   date: {
     fontSize: 12,
@@ -359,7 +376,7 @@ const styles = StyleSheet.create({
   helpfulBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,

@@ -3,17 +3,27 @@ import {
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
-import { useNotificationsList, useMarkAllRead } from '../../hooks/useNotificationsList';
+import * as Haptics from 'expo-haptics';
+import type { NotificationDto } from '@sayso/contracts';
+import {
+  useNotificationsList,
+  useMarkAllRead,
+  useMarkOneRead,
+  useDismissNotification,
+} from '../../hooks/useNotificationsList';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useAuthSession } from '../../hooks/useSession';
 import { routes } from '../../navigation/routes';
+import { NAVBAR_BG_COLOR } from '../../styles/colors';
 import { NotificationItem } from '../../components/NotificationItem';
 import { EmptyState } from '../../components/EmptyState';
 import { SkeletonCard } from '../../components/SkeletonCard';
@@ -21,14 +31,78 @@ import { Text } from '../../components/Typography';
 import { TransitionItem } from '../../components/motion/TransitionItem';
 import { APP_PAGE_GUTTER } from '../../styles/layout';
 
+// The server response includes entity_id and entity_type though the DTO
+// hasn't been updated to reflect them yet.
+type NotificationWithEntity = NotificationDto & {
+  entity_id?: string;
+  entity_type?: string;
+};
+
+type NotificationFilter = 'all' | 'review' | 'badge_earned' | 'dm' | 'business';
+
+const FILTER_CHIPS: Array<{ id: NotificationFilter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'review', label: 'Reviews' },
+  { id: 'badge_earned', label: 'Badges' },
+  { id: 'dm', label: 'Messages' },
+  { id: 'business', label: 'Businesses' },
+];
+
+function matchesFilter(type: string, filter: NotificationFilter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'review') return ['review', 'review_helpful', 'comment_reply'].includes(type);
+  if (filter === 'badge_earned') return ['badge_earned', 'milestone_achievement'].includes(type);
+  if (filter === 'dm') return ['message', 'dm'].includes(type);
+  if (filter === 'business') return ['business', 'claim_approved', 'business_approved'].includes(type);
+  return false;
+}
+
+function resolveRoute(notification: NotificationWithEntity): string | null {
+  // Use the server-provided deep link when available — it already encodes the
+  // correct path and avoids needing entity_id/entity_type client-side.
+  if (notification.link) return notification.link;
+
+  const eid = notification.entity_id;
+
+  switch (notification.type) {
+    case 'review':
+    case 'review_helpful':
+    case 'comment_reply':
+      if (!eid) return null;
+      if (notification.entity_type === 'event') return routes.eventDetail(eid);
+      if (notification.entity_type === 'special') return routes.specialDetail(eid);
+      return routes.businessDetail(eid);
+    case 'business':
+    case 'claim_approved':
+    case 'business_approved':
+      return eid ? routes.businessDetail(eid) : null;
+    case 'badge_earned':
+      return routes.badges();
+    case 'achievement':
+    case 'milestone_achievement':
+      return routes.achievements();
+    case 'dm':
+    case 'message':
+      return eid ? routes.dmThread(eid) : null;
+    case 'follow':
+    case 'reviewer':
+      return eid ? routes.publicProfile(eid) : null;
+    default:
+      return null;
+  }
+}
+
 export default function NotificationsScreen() {
   const { user } = useAuthSession();
   const router = useRouter();
-  const { data, isLoading, refetch, isRefetching } = useNotificationsList();
+  const { data, isLoading, isError, refetch, isRefetching } = useNotificationsList();
   const markAllRead = useMarkAllRead();
-  const listRef = useRef<FlatList<any> | null>(null);
+  const markOneRead = useMarkOneRead();
+  const dismissNotification = useDismissNotification();
+  const listRef = useRef<FlatList<NotificationDto> | null>(null);
   const scrollTopVisibleRef = useRef(false);
   const [showScrollTopButton, setShowScrollTopButton] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<NotificationFilter>('all');
 
   const setScrollTopVisible = useCallback((visible: boolean) => {
     if (scrollTopVisibleRef.current === visible) return;
@@ -47,9 +121,12 @@ export default function NotificationsScreen() {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, []);
 
-  const notifications = data?.notifications ?? [];
+  const allNotifications = data?.notifications ?? [];
   const unreadCount = data?.unreadCount ?? 0;
-  const showNotificationList = notifications.length > 0 && !isLoading;
+  const filteredNotifications = allNotifications.filter((n) =>
+    matchesFilter(n.type, activeFilter)
+  );
+  const showNotificationList = allNotifications.length > 0 && !isLoading;
 
   useGlobalScrollToTop({
     visible: showScrollTopButton,
@@ -62,6 +139,51 @@ export default function NotificationsScreen() {
       setScrollTopVisible(false);
     }
   }, [setScrollTopVisible, showNotificationList, user]);
+
+  const handleNotificationPress = useCallback(
+    (notification: NotificationWithEntity) => {
+      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+      // Mark as read only if not already read.
+      if (!notification.read_at) {
+        markOneRead.mutate(notification.id);
+      }
+      const route = resolveRoute(notification);
+      if (route) {
+        router.push(route as never);
+      }
+    },
+    [markOneRead, router]
+  );
+
+  const handleDismiss = useCallback(
+    (id: string) => async () => {
+      await dismissNotification.mutateAsync(id);
+    },
+    [dismissNotification]
+  );
+
+  const filterBar = (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.filterRow}
+      style={styles.filterScroll}
+    >
+      {FILTER_CHIPS.map((chip) => (
+        <Pressable
+          key={chip.id}
+          style={[styles.chip, activeFilter === chip.id && styles.chipActive]}
+          onPress={() => { try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {} setActiveFilter(chip.id); }}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activeFilter === chip.id }}
+        >
+          <Text style={[styles.chipText, activeFilter === chip.id && styles.chipTextActive]}>
+            {chip.label}
+          </Text>
+        </Pressable>
+      ))}
+    </ScrollView>
+  );
 
   if (!user) {
     return (
@@ -86,7 +208,7 @@ export default function NotificationsScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Notifications</Text>
           {unreadCount > 0 ? (
-            <TouchableOpacity onPress={() => markAllRead.mutate()} disabled={markAllRead.isPending}>
+            <TouchableOpacity onPress={() => { try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {} markAllRead.mutate(); }} disabled={markAllRead.isPending}>
               <Text style={styles.markRead}>Mark all read</Text>
             </TouchableOpacity>
           ) : null}
@@ -101,7 +223,17 @@ export default function NotificationsScreen() {
             </TransitionItem>
           ))}
         </View>
-      ) : notifications.length === 0 ? (
+      ) : isError ? (
+        <TransitionItem variant="card" index={1}>
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Couldn't load notifications"
+            message="Pull down to try again."
+            actionLabel="Retry"
+            onAction={() => { void refetch(); }}
+          />
+        </TransitionItem>
+      ) : allNotifications.length === 0 ? (
         <TransitionItem variant="card" index={1}>
           <EmptyState
             icon="notifications-outline"
@@ -112,13 +244,23 @@ export default function NotificationsScreen() {
       ) : (
         <FlatList
           ref={listRef}
-          data={notifications}
+          data={filteredNotifications}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
             <TransitionItem variant="listItem" index={index + 1} animate={index < 10}>
-              <NotificationItem notification={item} />
+              <NotificationItem
+                notification={item}
+                onPress={() => handleNotificationPress(item as NotificationWithEntity)}
+                onDismiss={handleDismiss(item.id)}
+              />
             </TransitionItem>
           )}
+          ListHeaderComponent={filterBar}
+          ListEmptyComponent={
+            <View style={styles.emptyFilter}>
+              <Text style={styles.emptyFilterText}>No {FILTER_CHIPS.find((c) => c.id === activeFilter)?.label.toLowerCase()} notifications.</Text>
+            </View>
+          }
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
@@ -153,5 +295,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#2563EB',
     fontWeight: '500',
+  },
+  filterScroll: {
+    paddingVertical: 12,
+  },
+  filterRow: {
+    gap: 8,
+    paddingHorizontal: APP_PAGE_GUTTER,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.80)',
+    borderWidth: 1,
+    borderColor: 'rgba(45,45,45,0.20)',
+  },
+  chipActive: {
+    backgroundColor: NAVBAR_BG_COLOR,
+    borderColor: NAVBAR_BG_COLOR,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2D2D2D',
+  },
+  chipTextActive: {
+    color: '#fff',
+  },
+  emptyFilter: {
+    paddingHorizontal: APP_PAGE_GUTTER,
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  emptyFilterText: {
+    fontSize: 14,
+    color: '#6B7280',
   },
 });

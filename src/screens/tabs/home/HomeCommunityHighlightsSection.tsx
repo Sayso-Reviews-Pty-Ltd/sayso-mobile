@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  Animated,
-  Easing,
   Platform,
   ScrollView,
   StyleSheet,
@@ -9,6 +7,16 @@ import {
   View,
   type LayoutChangeEvent,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
+  Easing,
+  cancelAnimation,
+} from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { FeaturedBusinessDto, RecentReviewDto, TopReviewerDto } from '@sayso/contracts';
@@ -39,9 +47,8 @@ type Props = {
 };
 
 function CommunityBadgeMarquee() {
-  const translateX = useRef(new Animated.Value(0)).current;
+  const translateX = useSharedValue(0);
   const [trackWidth, setTrackWidth] = useState(0);
-  const loopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   const handleTrackLayout = useCallback((event: LayoutChangeEvent) => {
     const nextWidth = event.nativeEvent.layout.width / 2;
@@ -56,42 +63,29 @@ function CommunityBadgeMarquee() {
       return;
     }
 
-    loopRef.current?.stop();
-    translateX.stopAnimation(() => {
-      translateX.setValue(0);
-      const duration = 8_000;
-      const useNativeDriver = Platform.OS !== 'web';
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(translateX, {
-            toValue: -trackWidth,
-            duration,
-            easing: Easing.linear,
-            useNativeDriver,
-            isInteraction: false,
-          }),
-          Animated.timing(translateX, {
-            toValue: 0,
-            duration: 0,
-            useNativeDriver,
-            isInteraction: false,
-          }),
-        ])
-      );
-
-      loopRef.current = loop;
-      loop.start();
-    });
+    cancelAnimation(translateX);
+    translateX.value = 0;
+    translateX.value = withRepeat(
+      withSequence(
+        withTiming(-trackWidth, { duration: 8_000, easing: Easing.linear }),
+        withTiming(0, { duration: 0 }),
+      ),
+      -1
+    );
 
     return () => {
-      loopRef.current?.stop();
+      cancelAnimation(translateX);
     };
   }, [trackWidth, translateX]);
+
+  const marqueeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }), []);
 
   return (
     <View style={styles.badgeMarqueeContainer}>
       <View style={styles.badgeMarqueeViewport} accessibilityLabel="Badge previews" pointerEvents="none">
-        <Animated.View style={[styles.badgeTrack, { transform: [{ translateX }] }]} onLayout={handleTrackLayout}>
+        <Animated.View style={[styles.badgeTrack, marqueeStyle]} onLayout={handleTrackLayout}>
           <View style={styles.badgeTrackGroup}>
             {COMMUNITY_BADGE_MARQUEE_ASSETS.map((badge) => (
               <View key={badge.id} style={styles.badgeChip}>
@@ -131,41 +125,25 @@ export function HomeCommunityHighlightsSection({
 }: Props) {
   const contributorsHeading = reviewersMode === 'normal' ? 'Top Contributors' : 'Early Voices';
   const showContributorsAction = reviewers.length > 0 && !reviewersLoading;
-  
-  const badgesAnimValue = useRef(new Animated.Value(0)).current;
+
+  const badgesAnim = useSharedValue(0);
 
   useEffect(() => {
-    const animateBadgesEntrance = () => {
-      Animated.sequence([
-        Animated.delay(200),
-        Animated.parallel([
-          Animated.timing(badgesAnimValue, {
-            toValue: 1,
-            duration: 600,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-        ]),
-      ]).start();
-    };
-
-    // Only animate if we're showing the empty state (no reviewers)
     if (reviewers.length === 0 && !reviewersLoading && !reviewersError) {
-      animateBadgesEntrance();
+      badgesAnim.value = withDelay(
+        200,
+        withTiming(1, {
+          duration: 600,
+          easing: Easing.out(Easing.cubic),
+        })
+      );
     }
-  }, [reviewers.length, reviewersLoading, reviewersError, badgesAnimValue]);
+  }, [reviewers.length, reviewersLoading, reviewersError, badgesAnim]);
 
-  const badgesAnimatedStyle = {
-    opacity: badgesAnimValue,
-    transform: [
-      {
-        translateY: badgesAnimValue.interpolate({
-          inputRange: [0, 1],
-          outputRange: [10, 0],
-        }),
-      },
-    ],
-  };
+  const badgesAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: badgesAnim.value,
+    transform: [{ translateY: 10 * (1 - badgesAnim.value) }],
+  }), []);
 
   return (
     <View style={styles.section}>

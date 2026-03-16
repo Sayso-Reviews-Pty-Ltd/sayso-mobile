@@ -28,8 +28,8 @@ export function getMapLibreModule() {
 
   try {
     // Dev builds may include this native module; Expo Go is filtered above.
-    const resolved = runtimeRequire('@maplibre/maplibre-react-native');
-    cachedMapLibre = (resolved?.default ?? resolved) as MapLibreModule;
+    const resolved = runtimeRequire('@maplibre/maplibre-react-native') as { default?: MapLibreModule } | MapLibreModule;
+    cachedMapLibre = ((resolved as { default?: MapLibreModule }).default ?? resolved) as MapLibreModule;
   } catch {
     cachedMapLibre = null;
   }

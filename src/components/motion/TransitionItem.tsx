@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect } from 'react';
+import { Platform, View, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing, cancelAnimation } from 'react-native-reanimated';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { MOTION_VARIANTS, REDUCED_MOTION_DURATION, STAGGER_MAX_DELAY, STAGGER_STEP, type MotionVariant } from './motionTokens';
 import { usePageTransitionScope } from './TransitionScope';
@@ -22,7 +23,7 @@ export function TransitionItem({
   disableOnVirtualized = false,
 }: Props) {
   const reducedMotionEnabled = useReducedMotion();
-  const progress = useRef(new Animated.Value(0)).current;
+  const progress = useSharedValue(0);
   const spec = MOTION_VARIANTS[variant];
   const scope = usePageTransitionScope();
   const scopeTick = scope?.scopeTick ?? 0;
@@ -40,39 +41,36 @@ export function TransitionItem({
 
   useEffect(() => {
     if (!shouldAnimate) {
-      progress.setValue(1);
+      cancelAnimation(progress);
+      progress.value = 1;
       return;
     }
 
     const delay = reducedMotionEnabled ? 0 : Math.min(spec.baseDelay + index * STAGGER_STEP, STAGGER_MAX_DELAY);
 
-    progress.setValue(0);
-    Animated.timing(progress, {
-      toValue: 1,
+    cancelAnimation(progress);
+    progress.value = 0;
+    progress.value = withDelay(
       delay,
-      duration: reducedMotionEnabled ? REDUCED_MOTION_DURATION : spec.duration,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
+      withTiming(1, {
+        duration: reducedMotionEnabled ? REDUCED_MOTION_DURATION : spec.duration,
+        easing: Easing.out(Easing.cubic),
+      })
+    );
   }, [index, progress, reducedMotionEnabled, scopeTick, shouldAnimate, spec.baseDelay, spec.duration]);
 
+  const translateYFrom = reducedMotionEnabled ? 0 : spec.translateY;
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ translateY: translateYFrom * (1 - progress.value) }],
+  }), [translateYFrom]);
+
+  if (Platform.OS === 'web') {
+    return <View style={style}>{children}</View>;
+  }
+
   return (
-    <Animated.View
-      style={[
-        style,
-        {
-          opacity: progress,
-          transform: [
-            {
-              translateY: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [reducedMotionEnabled ? 0 : spec.translateY, 0],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
+    <Animated.View style={[style, animatedStyle]}>
       {children}
     </Animated.View>
   );

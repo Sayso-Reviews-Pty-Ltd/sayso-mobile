@@ -22,3 +22,27 @@ export function useMarkAllRead() {
     },
   });
 }
+
+export function useMarkOneRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/notifications/user/${id}/mark-read`, { method: 'POST' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications-list'] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useDismissNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/notifications/user/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications-list'] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}

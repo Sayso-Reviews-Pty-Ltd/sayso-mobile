@@ -2,8 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
 import type { MobileSessionProfileDto } from '@sayso/contracts';
 
-export interface EnhancedProfileDto extends MobileSessionProfileDto {
-  id?: string;
+export interface EnhancedProfileDto extends Omit<MobileSessionProfileDto, 'username' | 'display_name' | 'avatar_url'> {
   username?: string | null;
   display_name?: string | null;
   avatar_url?: string | null;

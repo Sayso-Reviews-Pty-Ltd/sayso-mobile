@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -53,7 +54,7 @@ export function EditProfileModal({
 
   const mergedError = useMemo(() => error ?? localError, [error, localError]);
 
-  const handlePickImage = async () => {
+  const handlePickFromLibrary = async () => {
     setLocalError(null);
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -87,7 +88,51 @@ export function EditProfileModal({
     setRemoveAvatar(false);
   };
 
+  const handleTakePhoto = async () => {
+    setLocalError(null);
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      setLocalError('Camera permission is required to take a photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.9,
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const picked = result.assets[0];
+    if (picked.mimeType && !picked.mimeType.startsWith('image/')) {
+      setLocalError('Please choose a valid image file.');
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if ((picked.fileSize ?? 0) > maxSize) {
+      setLocalError('Image file is too large. Maximum size is 5MB.');
+      return;
+    }
+
+    setAvatarAsset(picked);
+    setAvatarPreview(picked.uri);
+    setRemoveAvatar(false);
+  };
+
+  const handleAddPhoto = () => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    Alert.alert('Add Photo', 'Choose an option', [
+      { text: 'Take Photo', onPress: handleTakePhoto },
+      { text: 'Choose from Library', onPress: handlePickFromLibrary },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
   const handleRemoveAvatar = () => {
+    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch {}
     setAvatarAsset(null);
     setAvatarPreview(null);
     setRemoveAvatar(true);
@@ -107,6 +152,7 @@ export function EditProfileModal({
     }
 
     setLocalError(null);
+    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
     await onSave({
       username: normalizedUsername,
       displayName: displayName.trim(),
@@ -145,7 +191,7 @@ export function EditProfileModal({
             )}
 
             <View style={styles.avatarActions}>
-              <Pressable onPress={handlePickImage} style={styles.avatarActionButton} disabled={saving}>
+              <Pressable onPress={handleAddPhoto} style={styles.avatarActionButton} disabled={saving}>
                 <Ionicons name="cloud-upload-outline" size={14} color="#2D2D2D" />
                 <Text style={styles.avatarActionText}>Upload</Text>
               </Pressable>

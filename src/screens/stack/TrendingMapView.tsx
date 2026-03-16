@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { BusinessListItemDto } from '@sayso/contracts';
@@ -71,35 +72,24 @@ type CalloutProps = {
 };
 
 function BusinessCallout({ business, onClose, onView }: CalloutProps) {
-  const slideAnim = useRef(new Animated.Value(80)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useSharedValue(80);
+  const opacityAnim = useSharedValue(0);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 65,
-        friction: 11,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    slideAnim.value = withSpring(0, { stiffness: 260, damping: 22 });
+    opacityAnim.value = withTiming(1, { duration: 180 });
   }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideAnim.value }],
+    opacity: opacityAnim.value,
+  }), []);
 
   const rating = business.rating ?? 0;
   const reviews = business.reviews ?? 0;
 
   return (
-    <Animated.View
-      style={[
-        calloutStyles.card,
-        { transform: [{ translateY: slideAnim }], opacity: opacityAnim },
-      ]}
-    >
+    <Animated.View style={[calloutStyles.card, animatedStyle]}>
       {/* Dismiss tap zone behind the card */}
       <Pressable style={calloutStyles.dismissZone} onPress={onClose} />
 
@@ -234,8 +224,6 @@ export function TrendingMapView({ businesses, userLocation }: Props) {
           animationDuration={0}
         />
 
-        <MapLibre.UserLocation visible />
-
         {clusters.map((cluster) => {
           if (cluster.members.length <= 1) {
             const business = cluster.members[0];
@@ -305,6 +293,19 @@ export function TrendingMapView({ businesses, userLocation }: Props) {
             );
           });
         })}
+
+        {/* User location marker — rendered last so it paints above business pins */}
+        {userLocation ? (
+          <MapLibre.MarkerView
+            key="user-location"
+            id="user-location"
+            coordinate={[userLocation.lng, userLocation.lat]}
+          >
+            <View style={styles.userLocationMarker}>
+              <View style={styles.userLocationDot} />
+            </View>
+          </MapLibre.MarkerView>
+        ) : null}
       </MapLibre.MapView>
 
       {/* Business Callout */}
@@ -446,6 +447,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  userLocationMarker: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userLocationDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: businessDetailColors.coral,
+    borderWidth: 2.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
 });
 

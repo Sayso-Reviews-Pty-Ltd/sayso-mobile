@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Text } from '../Typography';
 import { businessDetailColors, businessDetailSpacing } from '../business-detail/styles';
 
@@ -32,7 +33,13 @@ export function EventSpecialDescriptionCard({ description, title = 'About This L
       </View>
 
       {isCollapsible ? (
-        <Pressable onPress={() => setExpanded((current) => !current)} style={styles.toggleButton}>
+        <Pressable
+          onPress={() => {
+            try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+            setExpanded((current) => !current);
+          }}
+          style={styles.toggleButton}
+        >
           <Text style={styles.toggleText}>{expanded ? 'Read less' : 'Read more'}</Text>
         </Pressable>
       ) : null}

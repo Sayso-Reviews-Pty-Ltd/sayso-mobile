@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { BusinessCard } from '../../components/BusinessCard';
 import { SkeletonBlock } from '../../components/SkeletonBlock';
 import { Text } from '../../components/Typography';
@@ -131,7 +132,7 @@ function SavedFilterPillGroup({
         return (
           <Pressable
             key={`${option.label}-${String(option.value)}`}
-            onPress={() => onChange(isActive ? null : option.value)}
+            onPress={() => { try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {} onChange(isActive ? null : option.value); }}
             style={({ pressed }) => [
               styles.pill,
               { paddingHorizontal: pillHorizontalPadding },
@@ -473,6 +474,7 @@ export default function SavedScreen() {
   const handlePageChange = useCallback(
     (nextPage: number) => {
       if (nextPage === currentPage || nextPage < 1 || nextPage > totalPages) return;
+      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
 
       if (pageChangeTimeoutRef.current) {
         clearTimeout(pageChangeTimeoutRef.current);

@@ -13,7 +13,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SkeletonBlock } from '../../components/SkeletonBlock';
 import { Text } from '../../components/Typography';
 import { BusinessPageHeader } from '../../components/business-detail/BusinessPageHeader';
-import { businessDetailSpacing } from '../../components/business-detail/styles';
+import { businessDetailSpacing, businessDetailColors } from '../../components/business-detail/styles';
+import { CARD_BG_COLOR } from '../../styles/colors';
 import {
   ContributorPodium,
   ContributorRow,
@@ -28,13 +29,6 @@ import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
 import { routes } from '../../navigation/routes';
 import { TransitionItem } from '../../components/motion/TransitionItem';
-
-const PAGE_BG = '#E5E0E5';
-const CARD_BG = '#9DAB9B';
-const CHARCOAL = '#2D2D2D';
-const CHARCOAL_70 = 'rgba(45,45,45,0.70)';
-const SAGE = '#9DAB9B';
-const CORAL = '#722F37';
 
 const INITIAL_VISIBLE = 5;
 
@@ -154,7 +148,7 @@ export default function LeaderboardScreen() {
         style={[
           s.stickyHeader,
           {
-            backgroundColor: CORAL,
+            backgroundColor: businessDetailColors.coral,
             elevation: 8,
             shadowOpacity: 0.12,
           },
@@ -244,7 +238,7 @@ export default function LeaderboardScreen() {
                 ) : reviewers.length === 0 ? (
                   <View style={s.emptyWrap}>
                     <View style={s.emptyIcon}>
-                      <Ionicons name="trophy-outline" size={36} color={CHARCOAL_70} />
+                      <Ionicons name="trophy-outline" size={36} color={businessDetailColors.textMuted} />
                     </View>
                     <Text style={s.emptyText}>No contributors yet. Be the first to write a review!</Text>
                   </View>
@@ -303,7 +297,7 @@ export default function LeaderboardScreen() {
                 ) : sortedBusinesses.length === 0 ? (
                   <View style={s.emptyWrap}>
                     <View style={s.emptyIcon}>
-                      <Ionicons name="storefront-outline" size={36} color={CHARCOAL_70} />
+                      <Ionicons name="storefront-outline" size={36} color={businessDetailColors.textMuted} />
                     </View>
                     <Text style={s.emptyText}>No businesses yet.</Text>
                   </View>
@@ -344,7 +338,7 @@ export default function LeaderboardScreen() {
                 style={s.badgePrimaryBtn}
                 onPress={() => router.push(routes.badges() as never)}
               >
-                <Ionicons name="ribbon-outline" size={14} color={CORAL} />
+                <Ionicons name="ribbon-outline" size={14} color={businessDetailColors.coral} />
                 <Text style={s.badgePrimaryText}>View badge guide</Text>
               </Pressable>
               <Pressable
@@ -366,7 +360,7 @@ export default function LeaderboardScreen() {
 const s = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PAGE_BG,
+    backgroundColor: businessDetailColors.page,
   },
   stickyHeader: {
     paddingHorizontal: 20,
@@ -394,7 +388,7 @@ const s = StyleSheet.create({
   heroTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: CHARCOAL,
+    color: businessDetailColors.charcoal,
     textAlign: 'center',
     letterSpacing: -0.5,
     marginBottom: 8,
@@ -402,7 +396,7 @@ const s = StyleSheet.create({
   heroSub: {
     fontSize: 14,
     lineHeight: 20,
-    color: CHARCOAL_70,
+    color: businessDetailColors.textMuted,
     textAlign: 'center',
     maxWidth: 320,
   },
@@ -428,7 +422,7 @@ const s = StyleSheet.create({
     borderRadius: 999,
   },
   tabActive: {
-    backgroundColor: SAGE,
+    backgroundColor: CARD_BG_COLOR,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
@@ -438,7 +432,7 @@ const s = StyleSheet.create({
   tabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: CHARCOAL_70,
+    color: businessDetailColors.textMuted,
   },
   tabTextActive: {
     color: '#fff',
@@ -447,7 +441,7 @@ const s = StyleSheet.create({
   // Main card — sage card-bg with white/20 border (mirrors web card wrapper)
   card: {
     marginHorizontal: businessDetailSpacing.pageGutter,
-    backgroundColor: CARD_BG,
+    backgroundColor: CARD_BG_COLOR,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.20)',
@@ -473,12 +467,12 @@ const s = StyleSheet.create({
     gap: 6,
     marginTop: 16,
     alignSelf: 'center',
-    backgroundColor: SAGE,
+    backgroundColor: CARD_BG_COLOR,
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: SAGE,
+    borderColor: CARD_BG_COLOR,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
@@ -506,12 +500,12 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
+    gap: 8,
   },
   skeletonLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     flex: 1,
     minWidth: 0,
   },
@@ -564,19 +558,19 @@ const s = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 12,
-    backgroundColor: PAGE_BG,
+    backgroundColor: businessDetailColors.page,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyText: {
     fontSize: 14,
-    color: CHARCOAL_70,
+    color: businessDetailColors.textMuted,
     textAlign: 'center',
     maxWidth: 260,
     lineHeight: 20,
   },
   retryBtn: {
-    backgroundColor: CARD_BG,
+    backgroundColor: CARD_BG_COLOR,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
@@ -592,7 +586,7 @@ const s = StyleSheet.create({
   badgeSection: {
     marginTop: 20,
     marginHorizontal: businessDetailSpacing.pageGutter,
-    backgroundColor: CORAL,
+    backgroundColor: businessDetailColors.coral,
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
@@ -633,7 +627,7 @@ const s = StyleSheet.create({
   badgePrimaryText: {
     fontSize: 13,
     fontWeight: '600',
-    color: CORAL,
+    color: businessDetailColors.coral,
   },
   badgeSecondaryBtn: {
     flexDirection: 'row',

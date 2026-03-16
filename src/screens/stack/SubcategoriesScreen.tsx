@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withSpring,
+  withDelay, withSequence, Easing, makeMutable, type SharedValue,
+} from 'react-native-reanimated';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { ONBOARDING_GRADIENTS, ONBOARDING_TOKENS } from '../../components/onboarding/onboardingTheme';
 import { Text } from '../../components/Typography';
@@ -112,23 +117,123 @@ type PreferencesResponseDto = {
   subcategories?: PreferenceDto[];
 };
 
-type GroupAnim = {
-  opacity: Animated.Value;
-  y: Animated.Value;
-  titleX: Animated.Value;
+type GroupMutables = {
+  opacity: SharedValue<number>;
+  y: SharedValue<number>;
+  titleX: SharedValue<number>;
 };
 
-type PillAnim = {
-  opacity: Animated.Value;
-  entryScale: Animated.Value;
-  selectedScale: Animated.Value;
-  x: Animated.Value;
-  y: Animated.Value;
-  tapScale: Animated.Value;
-  checkScale: Animated.Value;
+type PillMutables = {
+  opacity: SharedValue<number>;
+  entryScale: SharedValue<number>;
+  selectedScale: SharedValue<number>;
+  x: SharedValue<number>;
+  y: SharedValue<number>;
+  tapScale: SharedValue<number>;
+  checkScale: SharedValue<number>;
 };
 
-const AnimatedText = Animated.createAnimatedComponent(Text);
+type PillItemProps = {
+  item: { id: string; label: string };
+  mutables: PillMutables;
+  isSelected: boolean;
+  isDisabled: boolean;
+  onPress: () => void;
+};
+
+const PillItem = memo(function PillItem({ item, mutables, isSelected, isDisabled, onPress }: PillItemProps) {
+  const wrapStyle = useAnimatedStyle(() => ({
+    opacity: mutables.opacity.value,
+    transform: [
+      { translateX: mutables.x.value },
+      { translateY: mutables.y.value },
+      { scale: mutables.entryScale.value },
+      { scale: mutables.selectedScale.value },
+      { scale: mutables.tapScale.value },
+    ],
+  }), []);
+
+  const checkStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: mutables.checkScale.value }],
+    opacity: mutables.checkScale.value,
+  }), []);
+
+  return (
+    <Animated.View style={wrapStyle}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.pill,
+          isDisabled && styles.pillDisabled,
+          pressed && !isDisabled && styles.pillPressed,
+        ]}
+        onPress={onPress}
+        disabled={isDisabled}
+      >
+        <LinearGradient
+          colors={
+            isSelected
+              ? ONBOARDING_GRADIENTS.cardPrimary
+              : ['rgba(157,171,155,0.10)', 'rgba(157,171,155,0.05)']
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.pillFill, isSelected && styles.pillSelected]}
+        >
+          <Text style={[styles.pillText, isSelected && styles.pillTextSelected]}>{item.label}</Text>
+          {isSelected ? (
+            <Animated.View style={checkStyle}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={ONBOARDING_TOKENS.white} />
+            </Animated.View>
+          ) : null}
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
+  );
+});
+
+type GroupSectionProps = {
+  group: { interestId: string; groupLabel: string; items: { id: string; label: string }[] };
+  mutables: GroupMutables;
+  getPillMutables: (id: string) => PillMutables;
+  selected: Set<string>;
+  atMax: boolean;
+  onToggle: (id: string) => void;
+};
+
+const GroupSection = memo(function GroupSection({ group, mutables, getPillMutables, selected, atMax, onToggle }: GroupSectionProps) {
+  const groupStyle = useAnimatedStyle(() => ({
+    opacity: mutables.opacity.value,
+    transform: [{ translateY: mutables.y.value }],
+  }), []);
+
+  const labelStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: mutables.titleX.value }],
+  }), []);
+
+  return (
+    <Animated.View style={[styles.group, groupStyle]}>
+      <Animated.Text style={[styles.groupLabel, labelStyle]}>
+        {group.groupLabel}
+      </Animated.Text>
+      <View style={styles.pillsRow}>
+        {group.items.map((item) => {
+          const isSelected = selected.has(item.id);
+          const isDisabled = atMax && !isSelected;
+          return (
+            <PillItem
+              key={item.id}
+              item={item}
+              mutables={getPillMutables(item.id)}
+              isSelected={isSelected}
+              isDisabled={isDisabled}
+              onPress={() => onToggle(item.id)}
+            />
+          );
+        })}
+      </View>
+    </Animated.View>
+  );
+});
 
 export default function SubcategoriesScreen() {
   const router = useRouter();
@@ -138,31 +243,31 @@ export default function SubcategoriesScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const counterOpacity = useRef(new Animated.Value(0)).current;
-  const counterY = useRef(new Animated.Value(14)).current;
+  const counterOpacity = useSharedValue(0);
+  const counterY = useSharedValue(14);
   const prevSelectedRef = useRef<Set<string>>(new Set());
-  const groupAnims = useRef<GroupAnim[]>(
+  const groupMutables = useRef<GroupMutables[]>(
     Array.from({ length: MAX_GROUPS }, () => ({
-      opacity: new Animated.Value(0),
-      y: new Animated.Value(20),
-      titleX: new Animated.Value(-10),
+      opacity: makeMutable(0),
+      y: makeMutable(20),
+      titleX: makeMutable(-10),
     }))
   ).current;
-  const pillAnimMap = useRef(new Map<string, PillAnim>());
+  const pillMutableMap = useRef(new Map<string, PillMutables>());
 
-  const getPillAnim = useCallback((id: string): PillAnim => {
-    const existing = pillAnimMap.current.get(id);
+  const getPillMutables = useCallback((id: string): PillMutables => {
+    const existing = pillMutableMap.current.get(id);
     if (existing) return existing;
-    const created: PillAnim = {
-      opacity: new Animated.Value(0),
-      entryScale: new Animated.Value(0.8),
-      selectedScale: new Animated.Value(1),
-      x: new Animated.Value(0),
-      y: new Animated.Value(0),
-      tapScale: new Animated.Value(1),
-      checkScale: new Animated.Value(0),
+    const created: PillMutables = {
+      opacity: makeMutable(0),
+      entryScale: makeMutable(0.8),
+      selectedScale: makeMutable(1),
+      x: makeMutable(0),
+      y: makeMutable(0),
+      tapScale: makeMutable(1),
+      checkScale: makeMutable(0),
     };
-    pillAnimMap.current.set(id, created);
+    pillMutableMap.current.set(id, created);
     return created;
   }, []);
 
@@ -219,17 +324,13 @@ export default function SubcategoriesScreen() {
 
   useEffect(() => {
     if (reducedMotion) {
-      counterOpacity.setValue(1);
-      counterY.setValue(0);
+      counterOpacity.value = 1;
+      counterY.value = 0;
       return;
     }
-
     const ease = Easing.bezier(0.25, 0.8, 0.25, 1);
-
-    Animated.parallel([
-      Animated.timing(counterOpacity, { toValue: 1, delay: 130, duration: 320, useNativeDriver: true }),
-      Animated.timing(counterY, { toValue: 0, delay: 130, duration: 320, easing: ease, useNativeDriver: true }),
-    ]).start();
+    counterOpacity.value = withDelay(130, withTiming(1, { duration: 320, easing: ease }));
+    counterY.value = withDelay(130, withTiming(0, { duration: 320, easing: ease }));
   }, [counterOpacity, counterY, reducedMotion]);
 
   const visibleGroups = useMemo(
@@ -243,179 +344,122 @@ export default function SubcategoriesScreen() {
   useEffect(() => {
     if (reducedMotion) {
       visibleGroups.forEach((_, groupIndex) => {
-        const anim = groupAnims[groupIndex];
-        if (!anim) return;
-        anim.opacity.setValue(1);
-        anim.y.setValue(0);
-        anim.titleX.setValue(0);
+        const m = groupMutables[groupIndex];
+        if (!m) return;
+        m.opacity.value = 1;
+        m.y.value = 0;
+        m.titleX.value = 0;
       });
       return;
     }
 
     const ease = Easing.bezier(0.25, 0.8, 0.25, 1);
     visibleGroups.forEach((_, groupIndex) => {
-      const anim = groupAnims[groupIndex];
-      if (!anim) return;
-      anim.opacity.setValue(0);
-      anim.y.setValue(20);
-      anim.titleX.setValue(-10);
-      Animated.parallel([
-        Animated.timing(anim.opacity, {
-          toValue: 1,
-          delay: groupIndex * 80,
-          duration: 400,
-          easing: ease,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim.y, {
-          toValue: 0,
-          delay: groupIndex * 80,
-          duration: 400,
-          easing: ease,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim.titleX, {
-          toValue: 0,
-          delay: groupIndex * 80,
-          duration: 300,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      const m = groupMutables[groupIndex];
+      if (!m) return;
+      m.opacity.value = 0;
+      m.y.value = 20;
+      m.titleX.value = -10;
+      m.opacity.value = withDelay(groupIndex * 80, withTiming(1, { duration: 400, easing: ease }));
+      m.y.value = withDelay(groupIndex * 80, withTiming(0, { duration: 400, easing: ease }));
+      m.titleX.value = withDelay(groupIndex * 80, withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) }));
     });
-  }, [groupAnims, reducedMotion, visibleGroups]);
+  }, [groupMutables, reducedMotion, visibleGroups]);
 
   useEffect(() => {
     visibleGroups.forEach((group, groupIndex) => {
       group.items.forEach((item, itemIndex) => {
-        const anim = getPillAnim(item.id);
+        const m = getPillMutables(item.id);
 
         if (reducedMotion) {
-          anim.opacity.setValue(1);
-          anim.entryScale.setValue(1);
+          m.opacity.value = 1;
+          m.entryScale.value = 1;
           return;
         }
 
         const ease = Easing.bezier(0.25, 0.8, 0.25, 1);
-        anim.opacity.setValue(0);
-        anim.entryScale.setValue(0.8);
-        Animated.parallel([
-          Animated.timing(anim.opacity, {
-            toValue: 1,
-            delay: groupIndex * 80 + 50 + itemIndex * 30,
-            duration: 300,
-            easing: ease,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim.entryScale, {
-            toValue: 1,
-            delay: groupIndex * 80 + 50 + itemIndex * 30,
-            duration: 300,
-            easing: ease,
-            useNativeDriver: true,
-          }),
-        ]).start();
+        m.opacity.value = 0;
+        m.entryScale.value = 0.8;
+        m.opacity.value = withDelay(
+          groupIndex * 80 + 50 + itemIndex * 30,
+          withTiming(1, { duration: 300, easing: ease })
+        );
+        m.entryScale.value = withDelay(
+          groupIndex * 80 + 50 + itemIndex * 30,
+          withTiming(1, { duration: 300, easing: ease })
+        );
       });
     });
-  }, [getPillAnim, reducedMotion, visibleGroups]);
+  }, [getPillMutables, reducedMotion, visibleGroups]);
 
   useEffect(() => {
     const prevSelected = prevSelectedRef.current;
     const visibleIds = new Set(visibleGroups.flatMap((group) => group.items.map((item) => item.id)));
     visibleIds.forEach((id) => {
-      const anim = getPillAnim(id);
+      const m = getPillMutables(id);
       const wasSelected = prevSelected.has(id);
       const isSelected = selected.has(id);
       if (wasSelected === isSelected) return;
 
       if (reducedMotion) {
-        anim.selectedScale.setValue(isSelected ? 1.05 : 1);
-        anim.checkScale.setValue(isSelected ? 1 : 0);
+        m.selectedScale.value = isSelected ? 1.05 : 1;
+        m.checkScale.value = isSelected ? 1 : 0;
         return;
       }
 
-      Animated.spring(anim.selectedScale, {
-        toValue: isSelected ? 1.05 : 1,
-        stiffness: 400,
-        damping: 17,
-        mass: 1,
-        useNativeDriver: true,
-      }).start();
+      m.selectedScale.value = withSpring(isSelected ? 1.05 : 1, { stiffness: 400, damping: 17, mass: 1 });
       if (isSelected) {
-        anim.checkScale.setValue(0);
-        Animated.spring(anim.checkScale, {
-          toValue: 1,
-          stiffness: 500,
-          damping: 25,
-          mass: 1,
-          useNativeDriver: true,
-        }).start();
+        m.checkScale.value = 0;
+        m.checkScale.value = withSpring(1, { stiffness: 500, damping: 25, mass: 1 });
       } else {
-        Animated.timing(anim.checkScale, {
-          toValue: 0,
-          duration: 120,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }).start();
+        m.checkScale.value = withTiming(0, { duration: 120, easing: Easing.out(Easing.ease) });
       }
     });
     prevSelectedRef.current = new Set(selected);
-  }, [getPillAnim, reducedMotion, selected, visibleGroups]);
+  }, [getPillMutables, reducedMotion, selected, visibleGroups]);
 
   const triggerShake = useCallback((id: string) => {
     if (reducedMotion) return;
-
-    const anim = getPillAnim(id);
-    anim.x.setValue(0);
-    Animated.sequence([
-      Animated.timing(anim.x, { toValue: -4, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(anim.x, { toValue: 4, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(anim.x, { toValue: -3, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(anim.x, { toValue: 2, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(anim.x, { toValue: 0, duration: 70, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-    ]).start();
-  }, [getPillAnim, reducedMotion]);
+    const m = getPillMutables(id);
+    m.x.value = 0;
+    m.x.value = withSequence(
+      withTiming(-4, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+      withTiming(4, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+      withTiming(-3, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+      withTiming(2, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+      withTiming(0, { duration: 70, easing: Easing.inOut(Easing.ease) })
+    );
+  }, [getPillMutables, reducedMotion]);
 
   const triggerExcite = useCallback((id: string) => {
     if (reducedMotion) return;
-
-    const anim = getPillAnim(id);
-    anim.tapScale.setValue(1);
-    anim.y.setValue(0);
-    Animated.parallel([
-      Animated.timing(anim.tapScale, {
-        toValue: 1.06,
-        duration: 110,
-        easing: Easing.bezier(0.2, 0.9, 0.2, 1),
-        useNativeDriver: true,
-      }),
-      Animated.timing(anim.y, {
-        toValue: -2,
-        duration: 110,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      Animated.parallel([
-        Animated.spring(anim.tapScale, {
-          toValue: 1,
-          stiffness: 420,
-          damping: 18,
-          mass: 0.65,
-          useNativeDriver: true,
-        }),
-        Animated.spring(anim.y, {
-          toValue: 0,
-          stiffness: 360,
-          damping: 22,
-          mass: 0.75,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
-  }, [getPillAnim, reducedMotion]);
+    const m = getPillMutables(id);
+    m.tapScale.value = 1;
+    m.y.value = 0;
+    m.tapScale.value = withTiming(
+      1.06,
+      { duration: 110, easing: Easing.bezier(0.2, 0.9, 0.2, 1) },
+      (finished) => {
+        'worklet';
+        if (finished) {
+          m.tapScale.value = withSpring(1, { stiffness: 420, damping: 18, mass: 0.65 });
+        }
+      }
+    );
+    m.y.value = withTiming(
+      -2,
+      { duration: 110, easing: Easing.out(Easing.cubic) },
+      (finished) => {
+        'worklet';
+        if (finished) {
+          m.y.value = withSpring(0, { stiffness: 360, damping: 22, mass: 0.75 });
+        }
+      }
+    );
+  }, [getPillMutables, reducedMotion]);
 
   const toggle = useCallback((id: string) => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     triggerExcite(id);
     setSelected((prev) => {
       const next = new Set(prev);
@@ -435,6 +479,7 @@ export default function SubcategoriesScreen() {
 
   const handleContinue = useCallback(async () => {
     if (!canContinue || isLoading) return;
+    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
     setIsLoading(true);
     setError('');
     try {
@@ -461,6 +506,11 @@ export default function SubcategoriesScreen() {
         ? "Perfect! You've selected the maximum"
         : 'Great! Select more or continue';
 
+  const counterAnimStyle = useAnimatedStyle(() => ({
+    opacity: counterOpacity.value,
+    transform: [{ translateY: counterY.value }],
+  }), []);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -483,7 +533,7 @@ export default function SubcategoriesScreen() {
           </View>
         ) : null}
 
-        <Animated.View style={[styles.counterWrap, { opacity: counterOpacity, transform: [{ translateY: counterY }] }]}>
+        <Animated.View style={[styles.counterWrap, counterAnimStyle]}>
           <View style={[styles.counterPill, selected.size > 0 && styles.counterPillReady]}>
             <Text style={styles.counterText}>{selected.size} of {MAX} selected</Text>
             {selected.size > 0 ? <Ionicons name="checkmark-circle-outline" size={15} color={ONBOARDING_TOKENS.sage} /> : null}
@@ -497,68 +547,17 @@ export default function SubcategoriesScreen() {
           </View>
         ) : (
           visibleGroups.map((group, index) => {
-            const anim = groupAnims[index] ?? groupAnims[0];
+            const m = groupMutables[index] ?? groupMutables[0];
             return (
-              <Animated.View
+              <GroupSection
                 key={group.interestId}
-                style={[styles.group, { opacity: anim.opacity, transform: [{ translateY: anim.y }] }]}
-              >
-                <AnimatedText style={[styles.groupLabel, { transform: [{ translateX: anim.titleX }] }]}>
-                  {group.groupLabel}
-                </AnimatedText>
-                <View style={styles.pillsRow}>
-                  {group.items.map((item) => {
-                    const isSelected = selected.has(item.id);
-                    const isDisabled = atMax && !isSelected;
-                    const pillAnim = getPillAnim(item.id);
-                    return (
-                      <Animated.View
-                        key={item.id}
-                        style={{
-                          opacity: pillAnim.opacity,
-                          transform: [
-                            { translateX: pillAnim.x },
-                            { translateY: pillAnim.y },
-                            { scale: pillAnim.entryScale },
-                            { scale: pillAnim.selectedScale },
-                            { scale: pillAnim.tapScale },
-                          ],
-                        }}
-                      >
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.pill,
-                            isDisabled && styles.pillDisabled,
-                            pressed && !isDisabled && styles.pillPressed,
-                          ]}
-                          onPress={() => toggle(item.id)}
-                          disabled={isDisabled}
-                        >
-                          <LinearGradient
-                            colors={
-                              isSelected
-                                ? ONBOARDING_GRADIENTS.cardPrimary
-                                : ['rgba(157,171,155,0.10)', 'rgba(157,171,155,0.05)']
-                            }
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={[styles.pillFill, isSelected && styles.pillSelected]}
-                          >
-                            <Text style={[styles.pillText, isSelected && styles.pillTextSelected]}>{item.label}</Text>
-                            {isSelected ? (
-                              <Animated.View
-                                style={{ transform: [{ scale: pillAnim.checkScale }], opacity: pillAnim.checkScale }}
-                              >
-                                <Ionicons name="checkmark-circle-outline" size={14} color={ONBOARDING_TOKENS.white} />
-                              </Animated.View>
-                            ) : null}
-                          </LinearGradient>
-                        </Pressable>
-                      </Animated.View>
-                    );
-                  })}
-                </View>
-              </Animated.View>
+                group={group}
+                mutables={m}
+                getPillMutables={getPillMutables}
+                selected={selected}
+                atMax={atMax}
+                onToggle={toggle}
+              />
             );
           })
         )}

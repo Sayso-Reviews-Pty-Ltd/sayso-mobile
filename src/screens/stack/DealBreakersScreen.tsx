@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withDelay,
+  Easing, interpolate, makeMutable, type SharedValue,
+} from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -42,11 +47,11 @@ type DealbreakerIconName = 'shield-checkmark-outline' | 'time-outline' | 'happy-
 type PreferenceDto = { id: string };
 type PreferencesResponseDto = { dealbreakers?: PreferenceDto[] };
 
-type CardAnim = {
-  opacity: Animated.Value;
-  y: Animated.Value;
-  selectedScale: Animated.Value;
-  flip: Animated.Value;
+type CardMutables = {
+  opacity: SharedValue<number>;
+  y: SharedValue<number>;
+  selectedScale: SharedValue<number>;
+  flip: SharedValue<number>;
 };
 
 const DEALBREAKER_ICONS: Record<DealbreakerId, DealbreakerIconName> = {
@@ -56,6 +61,102 @@ const DEALBREAKER_ICONS: Record<DealbreakerId, DealbreakerIconName> = {
   'value-for-money': 'pricetag-outline',
 };
 
+type DealBreakerCardProps = {
+  item: typeof DEALBREAKERS[number];
+  mutables: CardMutables;
+  isSelected: boolean;
+  isDisabled: boolean;
+  onPress: () => void;
+};
+
+const DealBreakerCard = memo(function DealBreakerCard({
+  item,
+  mutables,
+  isSelected,
+  isDisabled,
+  onPress,
+}: DealBreakerCardProps) {
+  const wrapStyle = useAnimatedStyle(() => ({
+    width: '48.5%',
+    opacity: mutables.opacity.value,
+    transform: [
+      { translateY: mutables.y.value },
+      { scale: mutables.selectedScale.value },
+    ],
+  }), []);
+
+  const frontFaceStyle = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: 1000 },
+      { rotateY: `${interpolate(mutables.flip.value, [0, 180], [0, 180])}deg` },
+    ],
+  }), []);
+
+  const backFaceStyle = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: 1000 },
+      { rotateY: `${interpolate(mutables.flip.value, [0, 180], [180, 360])}deg` },
+    ],
+  }), []);
+
+  return (
+    <Animated.View style={wrapStyle}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.card,
+          isDisabled && styles.cardDisabled,
+          pressed && !isDisabled && styles.cardPressed,
+        ]}
+        onPress={onPress}
+        disabled={isDisabled}
+      >
+        <View style={styles.flipCard}>
+          <Animated.View style={[styles.cardFace, frontFaceStyle]}>
+            <LinearGradient
+              colors={
+                isDisabled
+                  ? ['rgba(45,45,45,0.05)', 'rgba(45,45,45,0.03)']
+                  : ['rgba(157,171,155,0.10)', 'rgba(157,171,155,0.05)']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.cardFaceFill, isDisabled && styles.cardFaceFillDisabled]}
+            >
+              <View style={[styles.cardIconWrap, isDisabled && styles.cardIconWrapDisabled]}>
+                <Ionicons
+                  name={DEALBREAKER_ICONS[item.id]}
+                  size={24}
+                  color={isDisabled ? 'rgba(45,45,45,0.45)' : ONBOARDING_TOKENS.sage}
+                />
+              </View>
+              <Text style={styles.cardLabel}>{item.label}</Text>
+              <Text numberOfLines={2} style={styles.cardDescription}>
+                {item.description}
+              </Text>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.cardFace, backFaceStyle]}>
+            <LinearGradient
+              colors={ONBOARDING_GRADIENTS.cardPrimary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.cardFaceFill}
+            >
+              <View style={styles.selectedIconWrap}>
+                <Ionicons name={DEALBREAKER_ICONS[item.id]} size={28} color={ONBOARDING_TOKENS.white} />
+              </View>
+              <View style={styles.selectedCheck}>
+                <Ionicons name="checkmark-circle-outline" size={15} color={ONBOARDING_TOKENS.coral} />
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+});
+
 export default function DealBreakersScreen() {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
@@ -63,15 +164,15 @@ export default function DealBreakersScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const badgeOpacity = useRef(new Animated.Value(0)).current;
-  const badgeY = useRef(new Animated.Value(12)).current;
+  const badgeOpacity = useSharedValue(0);
+  const badgeY = useSharedValue(12);
   const prevSelectedRef = useRef<Set<DealbreakerId>>(new Set());
-  const cardAnims = useRef<CardAnim[]>(
+  const cardMutables = useRef<CardMutables[]>(
     DEALBREAKERS.map(() => ({
-      opacity: new Animated.Value(0),
-      y: new Animated.Value(20),
-      selectedScale: new Animated.Value(1),
-      flip: new Animated.Value(0),
+      opacity: makeMutable(0),
+      y: makeMutable(20),
+      selectedScale: makeMutable(1),
+      flip: makeMutable(0),
     }))
   ).current;
 
@@ -113,63 +214,55 @@ export default function DealBreakersScreen() {
 
   useEffect(() => {
     if (reducedMotion) {
-      badgeOpacity.setValue(1);
-      badgeY.setValue(0);
-      cardAnims.forEach((anim) => {
-        anim.opacity.setValue(1);
-        anim.y.setValue(0);
+      badgeOpacity.value = 1;
+      badgeY.value = 0;
+      cardMutables.forEach((m) => {
+        m.opacity.value = 1;
+        m.y.value = 0;
       });
       return;
     }
 
     const ease = Easing.out(Easing.ease);
-
-    Animated.parallel([
-      Animated.timing(badgeOpacity, { toValue: 1, delay: 120, duration: 300, useNativeDriver: true }),
-      Animated.timing(badgeY, { toValue: 0, delay: 120, duration: 300, easing: ease, useNativeDriver: true }),
-    ]).start();
+    badgeOpacity.value = withDelay(120, withTiming(1, { duration: 300, easing: ease }));
+    badgeY.value = withDelay(120, withTiming(0, { duration: 300, easing: ease }));
 
     DEALBREAKERS.forEach((_, index) => {
       const delay = index * 100;
-      const anim = cardAnims[index];
-      Animated.parallel([
-        Animated.timing(anim.opacity, { toValue: 1, delay, duration: 420, easing: ease, useNativeDriver: true }),
-        Animated.timing(anim.y, { toValue: 0, delay, duration: 420, easing: ease, useNativeDriver: true }),
-      ]).start();
+      const m = cardMutables[index];
+      m.opacity.value = withDelay(delay, withTiming(1, { duration: 420, easing: ease }));
+      m.y.value = withDelay(delay, withTiming(0, { duration: 420, easing: ease }));
     });
-  }, [badgeOpacity, badgeY, cardAnims, reducedMotion]);
+  }, [badgeOpacity, badgeY, cardMutables, reducedMotion]);
 
   useEffect(() => {
     const prevSelected = prevSelectedRef.current;
     DEALBREAKERS.forEach((item, index) => {
-      const anim = cardAnims[index];
+      const m = cardMutables[index];
       const wasSelected = prevSelected.has(item.id);
       const isSelected = selected.has(item.id);
       if (wasSelected === isSelected) return;
 
       if (reducedMotion) {
-        anim.selectedScale.setValue(isSelected ? 1.05 : 1);
-        anim.flip.setValue(isSelected ? 180 : 0);
+        m.selectedScale.value = isSelected ? 1.05 : 1;
+        m.flip.value = isSelected ? 180 : 0;
         return;
       }
 
-      Animated.timing(anim.selectedScale, {
-        toValue: isSelected ? 1.05 : 1,
+      m.selectedScale.value = withTiming(isSelected ? 1.05 : 1, {
         duration: 300,
         easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }).start();
-      Animated.timing(anim.flip, {
-        toValue: isSelected ? 180 : 0,
+      });
+      m.flip.value = withTiming(isSelected ? 180 : 0, {
         duration: 600,
         easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }).start();
+      });
     });
     prevSelectedRef.current = new Set(selected);
-  }, [cardAnims, reducedMotion, selected]);
+  }, [cardMutables, reducedMotion, selected]);
 
   const toggle = useCallback((id: DealbreakerId) => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -186,6 +279,7 @@ export default function DealBreakersScreen() {
 
   const handleContinue = useCallback(async () => {
     if (!canContinue || isLoading) return;
+    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
     setIsLoading(true);
     setError('');
     try {
@@ -212,6 +306,11 @@ export default function DealBreakersScreen() {
         ? "Perfect! You've selected the maximum"
         : 'Great! Select more or complete setup';
 
+  const badgeAnimStyle = useAnimatedStyle(() => ({
+    opacity: badgeOpacity.value,
+    transform: [{ translateY: badgeY.value }],
+  }), []);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -236,7 +335,7 @@ export default function DealBreakersScreen() {
           </View>
         ) : null}
 
-        <Animated.View style={[styles.counterWrap, { opacity: badgeOpacity, transform: [{ translateY: badgeY }] }]}>
+        <Animated.View style={[styles.counterWrap, badgeAnimStyle]}>
           <View style={[styles.counterPill, selected.size > 0 && styles.counterPillReady]}>
             <Text style={styles.counterText}>
               {selected.size} of {MAX} selected
@@ -250,91 +349,15 @@ export default function DealBreakersScreen() {
           {DEALBREAKERS.map((item, index) => {
             const isSelected = selected.has(item.id);
             const isDisabled = atMax && !isSelected;
-            const anim = cardAnims[index];
-            const frontRotate = anim.flip.interpolate({
-              inputRange: [0, 180],
-              outputRange: ['0deg', '180deg'],
-            });
-            const backRotate = anim.flip.interpolate({
-              inputRange: [0, 180],
-              outputRange: ['180deg', '360deg'],
-            });
             return (
-              <Animated.View
+              <DealBreakerCard
                 key={item.id}
-                style={{
-                  width: '48.5%',
-                  opacity: anim.opacity,
-                  transform: [{ translateY: anim.y }, { scale: anim.selectedScale }],
-                }}
-              >
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.card,
-                    isDisabled && styles.cardDisabled,
-                    pressed && !isDisabled && styles.cardPressed,
-                  ]}
-                  onPress={() => toggle(item.id)}
-                  disabled={isDisabled}
-                >
-                  <View style={styles.flipCard}>
-                    <Animated.View
-                      style={[
-                        styles.cardFace,
-                        {
-                          transform: [{ perspective: 1000 }, { rotateY: frontRotate }],
-                        },
-                      ]}
-                    >
-                      <LinearGradient
-                        colors={
-                          isDisabled
-                            ? ['rgba(45,45,45,0.05)', 'rgba(45,45,45,0.03)']
-                            : ['rgba(157,171,155,0.10)', 'rgba(157,171,155,0.05)']
-                        }
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={[styles.cardFaceFill, isDisabled && styles.cardFaceFillDisabled]}
-                      >
-                        <View style={[styles.cardIconWrap, isDisabled && styles.cardIconWrapDisabled]}>
-                          <Ionicons
-                            name={DEALBREAKER_ICONS[item.id]}
-                            size={24}
-                            color={isDisabled ? 'rgba(45,45,45,0.45)' : ONBOARDING_TOKENS.sage}
-                          />
-                        </View>
-                        <Text style={styles.cardLabel}>{item.label}</Text>
-                        <Text numberOfLines={2} style={styles.cardDescription}>
-                          {item.description}
-                        </Text>
-                      </LinearGradient>
-                    </Animated.View>
-
-                    <Animated.View
-                      style={[
-                        styles.cardFace,
-                        {
-                          transform: [{ perspective: 1000 }, { rotateY: backRotate }],
-                        },
-                      ]}
-                    >
-                      <LinearGradient
-                        colors={ONBOARDING_GRADIENTS.cardPrimary}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.cardFaceFill}
-                      >
-                        <View style={styles.selectedIconWrap}>
-                          <Ionicons name={DEALBREAKER_ICONS[item.id]} size={28} color={ONBOARDING_TOKENS.white} />
-                        </View>
-                        <View style={styles.selectedCheck}>
-                          <Ionicons name="checkmark-circle-outline" size={15} color={ONBOARDING_TOKENS.coral} />
-                        </View>
-                      </LinearGradient>
-                    </Animated.View>
-                  </View>
-                </Pressable>
-              </Animated.View>
+                item={item}
+                mutables={cardMutables[index]}
+                isSelected={isSelected}
+                isDisabled={isDisabled}
+                onPress={() => toggle(item.id)}
+              />
             );
           })}
         </View>
@@ -349,9 +372,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(114,47,55,0.35)',
     borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 16,
   },
   errorText: {
     color: ONBOARDING_TOKENS.coral,
@@ -368,12 +391,12 @@ const styles = StyleSheet.create({
   counterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     borderWidth: 1,
     borderColor: 'rgba(157,171,155,0.2)',
     backgroundColor: 'rgba(157,171,155,0.10)',
     borderRadius: 999,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   counterPillReady: {
@@ -386,7 +409,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   counterHint: {
-    marginTop: 7,
+    marginTop: 8,
     fontSize: 13,
     lineHeight: 18,
     color: ONBOARDING_TOKENS.charcoal60,
@@ -401,8 +424,8 @@ const styles = StyleSheet.create({
     rowGap: 12,
   },
   card: {
-    height: 164,
-    borderRadius: 14,
+    height: 160,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   flipCard: {
@@ -412,7 +435,7 @@ const styles = StyleSheet.create({
   },
   cardFace: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: 'hidden',
     backfaceVisibility: 'hidden',
     borderWidth: 2,
@@ -420,8 +443,8 @@ const styles = StyleSheet.create({
   },
   cardFaceFill: {
     flex: 1,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -434,7 +457,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(157,171,155,0.28)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   cardIconWrapDisabled: {
     backgroundColor: 'rgba(45,45,45,0.08)',
@@ -467,7 +490,7 @@ const styles = StyleSheet.create({
   selectedIconWrap: {
     width: 62,
     height: 62,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',

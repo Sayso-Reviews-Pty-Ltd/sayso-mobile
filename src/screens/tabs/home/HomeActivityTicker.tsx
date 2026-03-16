@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  Easing,
+  cancelAnimation,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../../components/Typography';
@@ -19,30 +28,36 @@ type Props = {
 };
 
 function PulseDot() {
-  const scale = useRef(new Animated.Value(1)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
 
   useEffect(() => {
-    const useNativeDriver = Platform.OS !== 'web';
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(scale, { toValue: 1.5, duration: 700, easing: Easing.out(Easing.ease), useNativeDriver, isInteraction: false }),
-          Animated.timing(opacity, { toValue: 0.3, duration: 700, useNativeDriver, isInteraction: false }),
-        ]),
-        Animated.parallel([
-          Animated.timing(scale, { toValue: 1, duration: 700, easing: Easing.in(Easing.ease), useNativeDriver, isInteraction: false }),
-          Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver, isInteraction: false }),
-        ]),
-      ])
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.5, { duration: 700, easing: Easing.out(Easing.ease) }),
+        withTiming(1, { duration: 700, easing: Easing.in(Easing.ease) }),
+      ),
+      -1
     );
-    pulse.start();
-    return () => pulse.stop();
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.3, { duration: 700 }),
+        withTiming(1, { duration: 700 }),
+      ),
+      -1
+    );
+    return () => {
+      cancelAnimation(scale);
+      cancelAnimation(opacity);
+    };
   }, [scale, opacity]);
 
-  return (
-    <Animated.View style={[styles.liveDot, { transform: [{ scale }], opacity }]} />
-  );
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }), []);
+
+  return <Animated.View style={[styles.liveDot, animatedStyle]} />;
 }
 
 function StarRow({ rating }: { rating: number }) {
@@ -62,9 +77,8 @@ function StarRow({ rating }: { rating: number }) {
 }
 
 export function HomeActivityTicker({ reviews, loading }: Props) {
-  const translateX = useRef(new Animated.Value(0)).current;
+  const translateX = useSharedValue(0);
   const [trackWidth, setTrackWidth] = useState(0);
-  const loopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   const handleTrackLayout = useCallback((e: LayoutChangeEvent) => {
     const next = e.nativeEvent.layout.width / 2;
@@ -74,32 +88,21 @@ export function HomeActivityTicker({ reviews, loading }: Props) {
 
   useEffect(() => {
     if (trackWidth <= 0) return;
-    loopRef.current?.stop();
-    translateX.stopAnimation(() => {
-      translateX.setValue(0);
-      const useNativeDriver = Platform.OS !== 'web';
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(translateX, {
-            toValue: -trackWidth,
-            duration: 18_000,
-            easing: Easing.linear,
-            useNativeDriver,
-            isInteraction: false,
-          }),
-          Animated.timing(translateX, {
-            toValue: 0,
-            duration: 0,
-            useNativeDriver,
-            isInteraction: false,
-          }),
-        ])
-      );
-      loopRef.current = loop;
-      loop.start();
-    });
-    return () => { loopRef.current?.stop(); };
+    cancelAnimation(translateX);
+    translateX.value = 0;
+    translateX.value = withRepeat(
+      withSequence(
+        withTiming(-trackWidth, { duration: 18_000, easing: Easing.linear }),
+        withTiming(0, { duration: 0 }),
+      ),
+      -1
+    );
+    return () => { cancelAnimation(translateX); };
   }, [trackWidth, translateX]);
+
+  const tickerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }), []);
 
   if (loading || reviews.length === 0) return null;
 
@@ -122,7 +125,7 @@ export function HomeActivityTicker({ reviews, loading }: Props) {
       {/* Scrolling ticker */}
       <View style={styles.tickerArea} pointerEvents="none">
         <Animated.View
-          style={[styles.track, { transform: [{ translateX }] }]}
+          style={[styles.track, tickerStyle]}
           onLayout={handleTrackLayout}
         >
           {[items, items].map((group, gi) => (

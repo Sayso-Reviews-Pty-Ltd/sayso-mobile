@@ -2,6 +2,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { routes } from '../navigation/routes';
 import { fetchBusinessDetail, getBusinessDetailQueryKey } from '../hooks/useBusinessDetail';
@@ -81,6 +82,7 @@ function BusinessCardComponent({ business, style }: Props) {
   }, [businessIdentifier, href, router]);
 
   const handleNavigate = useCallback(() => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     markRouteTransitionStart(`business:${businessIdentifier}`);
     router.push(href as never);
   }, [businessIdentifier, href, router]);

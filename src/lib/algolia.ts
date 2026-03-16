@@ -109,12 +109,12 @@ export async function fetchAlgoliaSuggestions(query: string): Promise<FacetSugge
     client.searchForFacetValues({
       indexName: BUSINESSES_INDEX,
       facetName: 'category_label',
-      searchForFacetValuesParams: { facetQuery: query, maxFacetHits: 5 },
+      searchForFacetValuesRequest: { facetQuery: query, maxFacetHits: 5 },
     }),
     client.searchForFacetValues({
       indexName: BUSINESSES_INDEX,
       facetName: 'location',
-      searchForFacetValuesParams: { facetQuery: query, maxFacetHits: 3 },
+      searchForFacetValuesRequest: { facetQuery: query, maxFacetHits: 3 },
     }),
   ]);
 

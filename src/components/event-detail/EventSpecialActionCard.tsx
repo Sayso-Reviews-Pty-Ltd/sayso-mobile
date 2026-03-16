@@ -1,6 +1,7 @@
 import { Alert, Linking, Pressable, Share, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import type { EventSpecialDetail } from '../../hooks/useEventSpecialDetail';
 import type { EventReminderOption } from '../../hooks/useEventReminder';
 import { apiFetch } from '../../lib/api';
@@ -82,6 +83,7 @@ export function EventSpecialActionCard({
   };
 
   const handleShare = async () => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     const origin = ENV.apiBaseUrl || 'https://www.sayso.co.za';
     const targetPath = getRoutePath(routeType, item.id);
 
@@ -96,6 +98,7 @@ export function EventSpecialActionCard({
   };
 
   const handleCalendar = async () => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     const calendarUrl = buildGoogleCalendarUrl(item);
     try {
       await Linking.openURL(calendarUrl);
@@ -105,6 +108,7 @@ export function EventSpecialActionCard({
   };
 
   const handleReminderChoice = () => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     Alert.alert('Set reminder', 'When should we remind you?', [
       {
         text: '1 day before',
@@ -119,6 +123,12 @@ export function EventSpecialActionCard({
         style: 'cancel',
       },
     ]);
+  };
+
+  const handleGoing = () => {
+    if (rsvpBusy) return;
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+    onPressGoing();
   };
 
   const ctaLabel = item.type === 'special' ? 'Claim This Special' : 'Reserve Your Spot';
@@ -141,7 +151,7 @@ export function EventSpecialActionCard({
         <Text style={styles.quickActionsLabel}>QUICK ACTIONS</Text>
 
         <View style={styles.actionsGrid}>
-          <Pressable style={[styles.quickAction, isGoing ? styles.quickActionActive : null]} onPress={onPressGoing}>
+          <Pressable style={[styles.quickAction, isGoing ? styles.quickActionActive : null]} onPress={handleGoing}>
             <Ionicons name="people-outline" size={17} color={businessDetailColors.charcoal} />
             <Text style={styles.quickActionText}>Going</Text>
             {rsvpBusy ? <Text style={styles.busyLabel}>...</Text> : null}

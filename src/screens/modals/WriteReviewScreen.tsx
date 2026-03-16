@@ -1053,7 +1053,16 @@ export default function WriteReviewScreen() {
     onScrollToTop: handleScrollToTop,
   });
 
-  const handlePickImage = async () => {
+  const processPickedAsset = async (asset: ImagePicker.ImagePickerAsset) => {
+    const compressed = await compressImageForUpload(asset.uri);
+    const filename = asset.fileName ?? `photo_${Date.now()}.jpg`;
+    setSelectedImages((prev) => [
+      ...prev,
+      { uri: compressed.uri, name: filename, mimeType: compressed.mimeType },
+    ]);
+  };
+
+  const handlePickFromLibrary = async () => {
     if (selectedImages.length >= MAX_PHOTOS) return;
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -1070,17 +1079,43 @@ export default function WriteReviewScreen() {
 
     if (result.canceled || !result.assets?.[0]) return;
 
-    const asset = result.assets[0];
     try {
-      const compressed = await compressImageForUpload(asset.uri);
-      const filename = asset.fileName ?? `photo_${Date.now()}.jpg`;
-      setSelectedImages((prev) => [
-        ...prev,
-        { uri: compressed.uri, name: filename, mimeType: compressed.mimeType },
-      ]);
+      await processPickedAsset(result.assets[0]);
     } catch {
       Alert.alert('Unable to process image', 'Please try a different photo.');
     }
+  };
+
+  const handleTakePhoto = async () => {
+    if (selectedImages.length >= MAX_PHOTOS) return;
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Camera access is needed to take a photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    try {
+      await processPickedAsset(result.assets[0]);
+    } catch {
+      Alert.alert('Unable to process image', 'Please try a different photo.');
+    }
+  };
+
+  const handleAddPhoto = () => {
+    Alert.alert('Add Photo', 'Choose an option', [
+      { text: 'Take Photo', onPress: handleTakePhoto },
+      { text: 'Choose from Library', onPress: handlePickFromLibrary },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const handleRemoveImage = (index: number) => {
@@ -1568,7 +1603,7 @@ export default function WriteReviewScreen() {
               </View>
             ) : null}
             {selectedImages.length < MAX_PHOTOS ? (
-              <Pressable style={styles.photoPickerZone} onPress={handlePickImage} disabled={controlsDisabled}>
+              <Pressable style={styles.photoPickerZone} onPress={handleAddPhoto} disabled={controlsDisabled}>
                 <View style={styles.photoPickerIcon}>
                   <Ionicons name="image-outline" size={22} color={C.charcoal60} />
                 </View>

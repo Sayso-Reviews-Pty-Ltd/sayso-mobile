@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   Alert,
   InteractionManager,
@@ -149,6 +150,7 @@ export default function BusinessScreen({ initialTab }: Props) {
     }
     if (saveBusy) return;
 
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
     setSaveBusy(true);
     try {
       if (savedBusinessIds.has(business.id)) {

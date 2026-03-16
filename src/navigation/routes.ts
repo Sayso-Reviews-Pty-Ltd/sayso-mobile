@@ -2,7 +2,6 @@ import type { ReviewTargetType } from './types';
 
 export const routes = {
   home: () => '/home',
-  exploreHub: () => '/explore',
   saved: () => '/saved',
   profile: () => '/profile',
   login: () => '/login',
@@ -18,7 +17,6 @@ export const routes = {
   notifications: () => '/notifications',
   forYou: () => '/for-you',
   trending: () => '/trending',
-  discoverReviews: () => '/discover/reviews',
   leaderboard: (tab?: 'contributors' | 'businesses') =>
     tab ? `/leaderboard?tab=${tab}` : '/leaderboard',
   events: () => '/events',
@@ -34,18 +32,9 @@ export const routes = {
   badges: () => '/badges',
   dmInbox: () => '/dm',
   dmThread: (threadId: string) => `/dm/${threadId}`,
-  city: (slug: string) => `/${slug}`,
   businessDetail: (id: string) => `/business/${id}`,
-eventDetail: (id: string) => `/event/${id}`,
+  eventDetail: (id: string) => `/event/${id}`,
   specialDetail: (id: string) => `/special/${id}`,
-  category: (category: string) => `/categories/${category}`,
-  categorySubcategory: (category: string, subcategory: string) =>
-    `/categories/${category}/${subcategory}`,
-  categorySlug: (slug: string) => `/category/${slug}`,
-  exploreArea: (id: string) => `/explore/area/${id}`,
-  exploreCategory: (id: string) => `/explore/category/${id}`,
-  exploreCollection: (id: string) => `/explore/collection/${id}`,
-  exploreIntent: (id: string) => `/explore/intent/${id}`,
   publicProfile: (username: string) => `/profile/${username}`,
   reviewer: (id: string) => `/reviewer/${id}`,
   writeReview: (type: ReviewTargetType, id: string, reviewId?: string) =>

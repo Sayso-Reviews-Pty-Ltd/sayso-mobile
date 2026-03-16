@@ -1,4 +1,8 @@
+import { enableScreens } from 'react-native-screens';
 import { Stack, usePathname } from 'expo-router';
+import { View } from 'react-native';
+
+enableScreens(true);
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -29,6 +33,7 @@ export default function RootLayout() {
   if (!urbanistLoaded || !brandFontsLoaded) return null;
 
   return (
+    <View style={{ flex: 1, backgroundColor: NAVBAR_BG_COLOR }}>
     <Providers>
       <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
       <TransitionScopeProvider routeKey={pathname}>
@@ -43,5 +48,6 @@ export default function RootLayout() {
         </RootGuard>
       </TransitionScopeProvider>
     </Providers>
+    </View>
   );
 }

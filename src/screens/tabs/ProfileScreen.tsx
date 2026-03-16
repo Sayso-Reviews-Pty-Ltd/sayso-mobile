@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { BusinessCard } from '../../components/BusinessCard';
 import { SkeletonBlock } from '../../components/SkeletonBlock';
@@ -429,6 +430,7 @@ export default function ProfileScreen() {
     }
 
     try {
+      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
       await signOut();
     } catch {
       Alert.alert('Error', 'Failed to sign out.');
@@ -442,6 +444,7 @@ export default function ProfileScreen() {
       return;
     }
 
+    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch {}
     setDeleteAccountError(null);
 
     try {
@@ -537,7 +540,7 @@ export default function ProfileScreen() {
 
                   <Text style={styles.heroReviewCount}>{reviewsCount} reviews</Text>
 
-                  <Pressable style={styles.editProfileButton} onPress={() => setIsEditOpen(true)}>
+                  <Pressable style={styles.editProfileButton} onPress={() => { try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {} setIsEditOpen(true); }}>
                     <Ionicons name="create-outline" size={14} color="#FFFFFF" />
                     <Text style={styles.editProfileButtonText}>Edit Profile</Text>
                   </Pressable>

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import { useAuthSession } from '../../../hooks/useSession';
 import { supabase } from '../../../lib/supabase';
 import { SkeletonBlock } from '../../../components/SkeletonBlock';
 import { Text } from '../../../components/Typography';
+import { EmptyState } from '../../../components/EmptyState';
 
 const GRID = 8;
 
@@ -161,7 +163,7 @@ export default function DMThreadScreen() {
   const [localMessages, setLocalMessages] = useState<MessageDto[]>([]);
   const listRef = useRef<FlatList<MessageDto>>(null);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['messages', threadId],
     queryFn: () => apiFetch<MessagesApiResponse>(`/api/conversations/${threadId}/messages`),
     enabled: Boolean(threadId) && Boolean(user),
@@ -220,6 +222,7 @@ export default function DMThreadScreen() {
     const body = inputText.trim();
     if (!body) return;
 
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
     setInputText('');
 
     const localId = `local-${Date.now()}`;
@@ -245,6 +248,7 @@ export default function DMThreadScreen() {
   }, [inputText, sendMutation, user?.id]);
 
   const handleRetry = useCallback((msg: MessageDto) => {
+    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     const body = msg.body;
     setLocalMessages((prev) => prev.filter((m) => m.id !== msg.id));
     setInputText(body);
@@ -317,10 +321,14 @@ export default function DMThreadScreen() {
               />
             ))}
           </View>
-        ) : error ? (
-          <View style={styles.errorState}>
-            <Text style={styles.errorText}>Could not load messages.</Text>
-          </View>
+        ) : error && serverMessages.length === 0 ? (
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Couldn't load messages"
+            message="Pull down to try again."
+            actionLabel="Retry"
+            onAction={() => { void refetch(); }}
+          />
         ) : (
           <FlatList
             ref={listRef}
@@ -584,7 +592,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    marginBottom: 1,
   },
   sendBtnDisabled: {
     backgroundColor: C.charcoal12,

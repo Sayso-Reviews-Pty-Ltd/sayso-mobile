@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 type Props = {
   visible: boolean;
@@ -8,31 +10,31 @@ type Props = {
 };
 
 export function ScrollToTopFab({ visible, onPress }: Props) {
-  const anim = useRef(new Animated.Value(visible ? 1 : 0)).current;
+  const anim = useSharedValue(visible ? 1 : 0);
 
   useEffect(() => {
-    Animated.spring(anim, {
-      toValue: visible ? 1 : 0,
+    anim.value = withSpring(visible ? 1 : 0, {
       damping: 18,
       stiffness: 260,
-      useNativeDriver: true,
-    }).start();
+    });
   }, [visible, anim]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: anim.value,
+    transform: [{ scale: 0.7 + 0.3 * anim.value }],
+  }), []);
 
   return (
     <Animated.View
-      style={[
-        styles.fab,
-        {
-          opacity: anim,
-          transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
-        },
-      ]}
+      style={[styles.fab, animatedStyle]}
       pointerEvents={visible ? 'box-none' : 'none'}
     >
       <Pressable
         style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
-        onPress={onPress}
+        onPress={() => {
+          try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+          onPress();
+        }}
         accessibilityRole="button"
         accessibilityLabel="Scroll to top"
       >

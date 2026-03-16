@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence,
+  withRepeat, cancelAnimation, Easing, interpolate, makeMutable, type SharedValue,
+} from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { ONBOARDING_TOKENS } from '../../components/onboarding/onboardingTheme';
@@ -35,76 +40,85 @@ function Particle({
   shape: ParticleShape;
   spinMultiplier: number;
 }) {
-  const y = useRef(new Animated.Value(-size)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const rotation = useRef(new Animated.Value(0)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
+  const y = useSharedValue(-size);
+  const opacity = useSharedValue(0);
+  const rotation = useSharedValue(0);
+  const translateX = useSharedValue(0);
 
   useEffect(() => {
-    const anim = Animated.sequence([
-      Animated.delay(delay),
-      Animated.parallel([
-        Animated.timing(opacity, { toValue: 1, duration: 120, useNativeDriver: true }),
-        Animated.timing(y, {
-          toValue: FALL_DISTANCE,
-          duration: fallDuration,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotation, {
-          toValue: spinMultiplier,
-          duration: fallDuration,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.sequence([
-          Animated.timing(translateX, {
-            toValue: drift,
-            duration: fallDuration * 0.5,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(translateX, {
-            toValue: -drift * 0.6,
-            duration: fallDuration * 0.5,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ]),
-      ]),
-      Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }),
-    ]);
-    anim.start();
-  }, [delay, drift, fallDuration, opacity, rotation, spinMultiplier, translateX, y]);
+    opacity.value = withDelay(delay, withTiming(1, { duration: 120 }));
 
-  const spin = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', `${360 * spinMultiplier}deg`],
-  });
+    y.value = withDelay(
+      delay,
+      withTiming(FALL_DISTANCE, { duration: fallDuration, easing: Easing.linear }, (finished) => {
+        'worklet';
+        if (finished) {
+          opacity.value = withTiming(0, { duration: 180 });
+        }
+      })
+    );
+
+    rotation.value = withDelay(
+      delay,
+      withTiming(360 * spinMultiplier, { duration: fallDuration, easing: Easing.linear })
+    );
+
+    translateX.value = withDelay(
+      delay,
+      withSequence(
+        withTiming(drift, { duration: fallDuration * 0.5, easing: Easing.inOut(Easing.sin) }),
+        withTiming(-drift * 0.6, { duration: fallDuration * 0.5, easing: Easing.inOut(Easing.sin) })
+      )
+    );
+  }, [delay, drift, fallDuration, opacity, rotation, spinMultiplier, translateX, y]);
 
   const width = shape === 'rect' ? size * 0.4 : size;
   const height = shape === 'rect' ? size * 1.8 : size;
   const borderRadius = shape === 'circle' ? size / 2 : shape === 'rect' ? 2 : size / 5;
 
+  const particleStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateY: y.value },
+      { translateX: translateX.value },
+      { rotate: `${rotation.value}deg` },
+    ],
+  }), []);
+
   return (
     <Animated.View
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: x,
-        width,
-        height,
-        borderRadius,
-        backgroundColor: color,
-        opacity,
-        transform: [{ translateY: y }, { translateX }, { rotate: spin }],
-      }}
+      style={[
+        {
+          position: 'absolute',
+          top: 0,
+          left: x,
+          width,
+          height,
+          borderRadius,
+          backgroundColor: color,
+        },
+        particleStyle,
+      ]}
       pointerEvents="none"
     />
   );
 }
 
 type DealbreakerIconName = 'shield-checkmark-outline' | 'time-outline' | 'happy-outline' | 'pricetag-outline';
+
+function FloatingIcon({ icon, floatValue }: { icon: DealbreakerIconName; floatValue: SharedValue<number> }) {
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: interpolate(floatValue.value, [0, 1], [0, -8]) }],
+  }), []);
+
+  return (
+    <Animated.View style={style}>
+      <View style={styles.iconBubble}>
+        <Ionicons name={icon} size={22} color={ONBOARDING_TOKENS.sage} />
+      </View>
+    </Animated.View>
+  );
+}
 
 const DEALBREAKER_ICONS: Record<string, DealbreakerIconName> = {
   trustworthiness: 'shield-checkmark-outline',
@@ -140,11 +154,11 @@ export default function CompleteScreen() {
   const [isCompleting, setIsCompleting] = useState(false);
   const hasCompletedRef = useRef(false);
 
-  const contentOpacity = useRef(new Animated.Value(0)).current;
-  const contentY = useRef(new Animated.Value(16)).current;
-  const badgeOpacity = useRef(new Animated.Value(0)).current;
-  const badgeY = useRef(new Animated.Value(12)).current;
-  const iconFloat = useRef(Array.from({ length: 4 }, () => new Animated.Value(0))).current;
+  const contentOpacity = useSharedValue(0);
+  const contentY = useSharedValue(16);
+  const badgeOpacity = useSharedValue(0);
+  const badgeY = useSharedValue(12);
+  const iconFloat = useRef(Array.from({ length: 4 }, () => makeMutable(0))).current;
 
   const particles = useMemo(
     () =>
@@ -182,6 +196,8 @@ export default function CompleteScreen() {
   }, [router]);
 
   useEffect(() => {
+    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+
     AsyncStorage.getItem('onboarding_dealbreakers')
       .then((raw) => {
         if (!raw) return;
@@ -199,21 +215,15 @@ export default function CompleteScreen() {
       });
 
     if (reducedMotion) {
-      contentOpacity.setValue(1);
-      contentY.setValue(0);
-      badgeOpacity.setValue(1);
-      badgeY.setValue(0);
+      contentOpacity.value = 1;
+      contentY.value = 0;
+      badgeOpacity.value = 1;
+      badgeY.value = 0;
     } else {
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(contentOpacity, { toValue: 1, delay: 90, duration: 360, useNativeDriver: true }),
-          Animated.timing(contentY, { toValue: 0, delay: 90, duration: 360, useNativeDriver: true }),
-        ]),
-        Animated.parallel([
-          Animated.timing(badgeOpacity, { toValue: 1, delay: 120, duration: 300, useNativeDriver: true }),
-          Animated.timing(badgeY, { toValue: 0, delay: 120, duration: 300, useNativeDriver: true }),
-        ]),
-      ]).start();
+      contentOpacity.value = withDelay(90, withTiming(1, { duration: 360 }));
+      contentY.value = withDelay(90, withTiming(0, { duration: 360 }));
+      badgeOpacity.value = withDelay(120, withTiming(1, { duration: 300 }));
+      badgeY.value = withDelay(120, withTiming(0, { duration: 300 }));
     }
 
     const timer = setTimeout(() => {
@@ -221,40 +231,39 @@ export default function CompleteScreen() {
     }, 3500);
 
     return () => clearTimeout(timer);
-  }, [badgeOpacity, badgeY, contentOpacity, contentY, handleContinue, reducedMotion]);
+  }, [handleContinue, reducedMotion]);
 
   useEffect(() => {
     if (reducedMotion || selectedDealbreakers.length === 0) {
-      iconFloat.forEach((value) => value.setValue(0));
+      iconFloat.forEach((value) => { value.value = 0; });
       return;
     }
 
-    const loops = iconFloat.map((value, index) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(value, {
-            toValue: 1,
-            duration: 1300 + index * 150,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(value, {
-            toValue: 0,
-            duration: 1300 + index * 150,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ])
-      )
-    );
-
-    loops.forEach((loop) => loop.start());
+    iconFloat.forEach((value, index) => {
+      value.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1300 + index * 150, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0, { duration: 1300 + index * 150, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+    });
 
     return () => {
-      loops.forEach((loop) => loop.stop());
-      iconFloat.forEach((value) => value.setValue(0));
+      iconFloat.forEach((value) => { cancelAnimation(value); value.value = 0; });
     };
   }, [iconFloat, reducedMotion, selectedDealbreakers.length]);
+
+  const contentStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+    transform: [{ translateY: contentY.value }],
+  }), []);
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    opacity: badgeOpacity.value,
+    transform: [{ translateY: badgeY.value }],
+  }), []);
 
   return (
     <>
@@ -289,30 +298,24 @@ export default function CompleteScreen() {
           ) : undefined
         }
       >
-        <Animated.View style={[styles.content, { opacity: contentOpacity, transform: [{ translateY: contentY }] }]}>
+        <Animated.View style={[styles.content, contentStyle]}>
           {selectedDealbreakers.length > 0 ? (
             <View style={styles.iconRow}>
               {selectedDealbreakers.map((id, index) => {
                 const icon = DEALBREAKER_ICONS[id];
                 if (!icon) return null;
-
-                const floatY = iconFloat[index % iconFloat.length].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, -8],
-                });
-
                 return (
-                  <Animated.View key={id} style={{ transform: [{ translateY: floatY }] }}>
-                    <View style={styles.iconBubble}>
-                      <Ionicons name={icon} size={22} color={ONBOARDING_TOKENS.sage} />
-                    </View>
-                  </Animated.View>
+                  <FloatingIcon
+                    key={id}
+                    icon={icon}
+                    floatValue={iconFloat[index % iconFloat.length]}
+                  />
                 );
               })}
             </View>
           ) : null}
 
-          <Animated.View style={{ opacity: badgeOpacity, transform: [{ translateY: badgeY }] }}>
+          <Animated.View style={badgeStyle}>
             <View style={styles.badge}>
               <Ionicons name="checkmark-circle-outline" size={14} color={ONBOARDING_TOKENS.sage} />
               <Text style={styles.badgeText}>Setup Complete</Text>

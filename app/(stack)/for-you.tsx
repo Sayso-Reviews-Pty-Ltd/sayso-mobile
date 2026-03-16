@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleSheet, View, type ListRenderItem, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useNavigation } from 'expo-router';
@@ -17,6 +18,7 @@ import { homeTokens } from '../../src/screens/tabs/home/HomeTokens';
 import { TransitionItem } from '../../src/components/motion/TransitionItem';
 import { ForYouRouteView } from '../../src/screens/stack/for-you-screen/ForYouRouteView';
 import { HomeSearchBar } from '../../src/screens/tabs/home/HomeSearchBar';
+import { HomeMoodPicker, MOOD_QUERY_SET } from '../../src/screens/tabs/home/HomeMoodPicker';
 
 const REQUEST_LIMIT = 120;
 const VISIBLE_CHUNK_SIZE = 12;
@@ -35,6 +37,30 @@ export default function ForYouRoute() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSearching = debouncedQuery.trim().length >= 1;
+
+  // Restore last selected mood chip on mount (free-text searches are never persisted)
+  useEffect(() => {
+    const restore = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('home_mood');
+        if (saved && MOOD_QUERY_SET.has(saved)) {
+          setInputValue(saved);
+          setDebouncedQuery(saved);
+        }
+      } catch {}
+    };
+    void restore();
+  }, []);
+
+  // Persist mood chip selections; clear storage when picker is deselected.
+  // Free-text queries are intentionally ignored — storage is left unchanged.
+  useEffect(() => {
+    if (MOOD_QUERY_SET.has(inputValue)) {
+      AsyncStorage.setItem('home_mood', inputValue).catch(() => undefined);
+    } else if (inputValue === '') {
+      AsyncStorage.removeItem('home_mood').catch(() => undefined);
+    }
+  }, [inputValue]);
 
   const [showBackToTop, setShowBackToTop] = useState(false);
   const listRef = useRef<import('react-native').FlatList<BusinessListItemDto>>(null);
@@ -165,6 +191,12 @@ export default function ForYouRoute() {
               isFetching={isSearching && searchQuery.isFetching}
             />
           </View>
+        </TransitionItem>
+        <TransitionItem variant="card" index={2}>
+          <HomeMoodPicker
+            activeMoodQuery={inputValue}
+            onSelectMood={handleInputChange}
+          />
         </TransitionItem>
       </View>
     ),

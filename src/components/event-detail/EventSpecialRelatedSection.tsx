@@ -100,6 +100,9 @@ const styles = StyleSheet.create({
     fontSize: 23,
     fontWeight: '700',
     letterSpacing: -0.3,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(45,45,45,0.10)',
   },
   list: {
     gap: 12,

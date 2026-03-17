@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, useWindowDimensions } from 'react-native';
+import { FlatList, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { BusinessListItemDto, FeaturedBusinessDto } from '@sayso/contracts';
 import { BusinessCard } from '../../../components/BusinessCard';
 import { Text } from '../../../components/Typography';
@@ -6,6 +6,15 @@ import { SkeletonCard } from '../../../components/SkeletonCard';
 import { homeTokens } from './HomeTokens';
 import { CARD_RADIUS } from '../../../styles/radii';
 import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
+
+const GAP = 14;
+const SKELETONS = [0, 1, 2];
+const FLATLIST_PERF = {
+  initialNumToRender: 2,
+  maxToRenderPerBatch: 2,
+  windowSize: 5,
+  removeClippedSubviews: Platform.OS === 'android',
+} as const;
 
 type Props<T extends BusinessListItemDto | FeaturedBusinessDto> = {
   items: T[];
@@ -25,28 +34,36 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
   contentPaddingBottom = 18,
 }: Props<T>) {
   const { width: windowWidth } = useWindowDimensions();
-  const cardWidth = windowWidth - homeTokens.pageGutter - 14 - 40;
-  const snapInterval = cardWidth + 14;
-  const resolvedContentPaddingBottom = Math.max(contentPaddingBottom, 12);
+  const cardWidth = windowWidth - homeTokens.pageGutter - GAP - 40;
+  const snapInterval = cardWidth + GAP;
+  const resolvedPaddingBottom = Math.max(contentPaddingBottom, 12);
 
   if (loading) {
     return (
-      <ScrollView
+      <FlatList
         horizontal
+        data={SKELETONS}
+        keyExtractor={(i) => `business-skeleton-${i}`}
+        renderItem={() => (
+          <View style={{ width: cardWidth }}>
+            <SkeletonCard />
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+        getItemLayout={(_, index) => ({
+          length: cardWidth,
+          offset: (cardWidth + GAP) * index,
+          index,
+        })}
         showsHorizontalScrollIndicator={false}
         snapToInterval={snapInterval}
         snapToAlignment="start"
         decelerationRate="fast"
         disableIntervalMomentum
         style={styles.row}
-        contentContainerStyle={[styles.content, { paddingBottom: resolvedContentPaddingBottom }]}
-      >
-        {[1, 2, 3].map((item) => (
-          <View key={`business-skeleton-${item}`} style={[styles.cardWrap, { width: cardWidth }]}>
-            <SkeletonCard />
-          </View>
-        ))}
-      </ScrollView>
+        contentContainerStyle={[styles.content, { paddingBottom: resolvedPaddingBottom }]}
+        {...FLATLIST_PERF}
+      />
     );
   }
 
@@ -69,16 +86,28 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
   }
 
   return (
-    <ScrollView
+    <FlatList
       horizontal
+      data={items}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <BusinessCard business={item} style={{ width: cardWidth }} />
+      )}
+      ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+      getItemLayout={(_, index) => ({
+        length: cardWidth,
+        offset: (cardWidth + GAP) * index,
+        index,
+      })}
       showsHorizontalScrollIndicator={false}
+      snapToInterval={snapInterval}
+      snapToAlignment="start"
+      decelerationRate="fast"
+      disableIntervalMomentum
       style={styles.row}
-      contentContainerStyle={[styles.content, { paddingBottom: resolvedContentPaddingBottom }]}
-    >
-      {items.map((item) => (
-        <BusinessCard key={item.id} business={item} style={[styles.cardWrap, { width: cardWidth }]} />
-      ))}
-    </ScrollView>
+      contentContainerStyle={[styles.content, { paddingBottom: resolvedPaddingBottom }]}
+      {...FLATLIST_PERF}
+    />
   );
 }
 
@@ -90,11 +119,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: homeTokens.pageGutter,
     paddingTop: 4,
-    gap: 14,
     backgroundColor: homeTokens.offWhite,
-  },
-  cardWrap: {
-    width: 340,
   },
   messageCard: {
     marginHorizontal: homeTokens.pageGutter,

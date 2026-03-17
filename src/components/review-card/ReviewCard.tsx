@@ -94,22 +94,34 @@ const STAR_GRADIENT = ['#FDE68A', '#FBBF24', '#D97706'] as const;
 
 function Stars({ rating }: { rating: number }) {
   return (
-    <LinearGradient
-      colors={STAR_GRADIENT}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.starsRow}
-    >
+    <View style={styles.starsRow}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <Ionicons
-          key={i}
-          testID={i <= rating ? 'star-filled' : 'star-empty'}
-          name="star"
-          size={20}
-          color={i <= rating ? '#FFFFFF' : 'rgba(255,255,255,0.22)'}
-        />
+        i <= rating ? (
+          <LinearGradient
+            key={i}
+            colors={STAR_GRADIENT}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.starFilledWrap}
+          >
+            <Ionicons
+              testID="star-filled"
+              name="star"
+              size={16}
+              color={C.white}
+            />
+          </LinearGradient>
+        ) : (
+          <Ionicons
+            key={i}
+            testID="star-empty"
+            name="star"
+            size={20}
+            color={C.charcoal30}
+          />
+        )
       ))}
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -322,9 +334,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  },
+  starFilledWrap: {
+    width: 20,
+    height: 20,
     borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   date: {
     fontSize: 12,

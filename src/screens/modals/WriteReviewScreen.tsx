@@ -20,9 +20,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import { compressImageForUpload } from '../../lib/compressImage';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, apiFetch } from '../../lib/api';
+import { type UserBadgeDto } from '../../hooks/useUserBadges';
 import { Text, TextInput } from '../../components/Typography';
 import { StackPageHeader } from '../../components/StackPageHeader';
 import { useAuth } from '../../providers/AuthProvider';
@@ -41,6 +43,8 @@ import { BusinessHeroCarousel, type BusinessHeaderRightAction } from '../../comp
 import { normalizeBusinessRating } from '../../components/business-detail/utils';
 import { CARD_GRADIENT, cardShadowStyle } from '../../components/business-detail/styles';
 import { ENV } from '../../lib/env';
+import { useBusinessReviews } from '../../hooks/useBusinessReviews';
+import { useEventReviews } from '../../hooks/useEventReviews';
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -52,6 +56,8 @@ const MAX_PHOTOS = 2;
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HERO_WIDTH = SCREEN_WIDTH - 16; // matches page inline padding (px-2)
 const HERO_HEIGHT = Math.round(SCREEN_HEIGHT * 0.50); // matches web h-[50vh]
+const CONFETTI_PARTICLE_COUNT = 80;
+const CONFETTI_FALL_DISTANCE = Math.max(SCREEN_HEIGHT * 0.75, 420);
 
 const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
 
@@ -640,6 +646,23 @@ const tStyles = StyleSheet.create({
   removeHint: { fontSize: 13, color: C.charcoal60, textAlign: 'center', marginTop: 4 },
 });
 
+// ─── Relative date helper
+function relativeDate(iso: string): string {
+  if (!iso) return 'Recently';
+  const diff = Date.now() - new Date(iso).getTime();
+  if (isNaN(diff)) return 'Recently';
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
 // ─── Community review card
 type CommunityReview = {
   id: string;
@@ -697,13 +720,13 @@ function CommunityReviewCardSkeleton() {
 
 const crStyles = StyleSheet.create({
   card: {
-    width: 240, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 12,
-    padding: 14, borderWidth: 1, borderColor: 'rgba(125,155,118,0.12)', marginRight: 12,
+    backgroundColor: CARD_BG_COLOR, borderRadius: 12,
+    padding: 14, borderWidth: 1, borderColor: 'rgba(125,155,118,0.12)',
   },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   avatar: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(125,155,118,0.12)', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(229,224,229,0.90)', alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden', flexShrink: 0,
   },
   avatarImg: { width: 36, height: 36 },
@@ -715,43 +738,171 @@ const crStyles = StyleSheet.create({
   text: { fontSize: 13, color: 'rgba(45,45,45,0.85)', lineHeight: 19 },
 });
 
+type ConfettiPiece = {
+  key: number;
+  left: number;
+  delay: number;
+  duration: number;
+  drift: number;
+  size: number;
+  rotate: number;
+  color: string;
+  shape: 'square' | 'circle' | 'rect';
+};
+
+type FeedbackVariant = 'success' | 'error';
+
+type FeedbackNotice = {
+  id: number;
+  variant: FeedbackVariant;
+  title: string;
+  message: string;
+};
+
+const CONFETTI_COLORS = [
+  '#722F37',
+  '#9DAB9B',
+  '#FFD166',
+  '#FF8C69',
+  '#B5E48C',
+  '#E5E0E5',
+];
+
+function ConfettiPieceView({ piece }: { piece: ConfettiPiece }) {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.sequence([
+      Animated.delay(piece.delay),
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: piece.duration,
+        useNativeDriver: true,
+      }),
+    ]);
+    animation.start();
+
+    return () => {
+      animation.stop();
+      progress.stopAnimation();
+    };
+  }, [piece.delay, piece.duration, progress]);
+
+  const width = piece.shape === 'rect' ? Math.max(2, Math.round(piece.size * 0.42)) : piece.size;
+  const height = piece.shape === 'rect' ? Math.round(piece.size * 1.8) : piece.size;
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.confettiPiece,
+        {
+          left: piece.left,
+          width,
+          height,
+          borderRadius: piece.shape === 'circle' ? piece.size / 2 : 2,
+          backgroundColor: piece.color,
+          opacity: progress.interpolate({
+            inputRange: [0, 0.08, 0.9, 1],
+            outputRange: [0, 1, 1, 0],
+          }),
+          transform: [
+            {
+              translateY: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-24, CONFETTI_FALL_DISTANCE],
+              }),
+            },
+            {
+              translateX: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, piece.drift],
+              }),
+            },
+            {
+              rotate: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0deg', `${piece.rotate}deg`],
+              }),
+            },
+          ],
+        },
+      ]}
+    />
+  );
+}
+
+function ReviewConfettiOverlay({ visible }: { visible: boolean }) {
+  const pieces = useMemo<ConfettiPiece[]>(
+    () =>
+      Array.from({ length: CONFETTI_PARTICLE_COUNT }, (_, index) => ({
+        key: index,
+        left: Math.random() * SCREEN_WIDTH,
+        delay: Math.random() * 260,
+        duration: 900 + Math.random() * 650,
+        drift: (Math.random() - 0.5) * 120,
+        size: 5 + Math.round(Math.random() * 8),
+        rotate: 220 + Math.round(Math.random() * 360),
+        color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        shape: (['square', 'circle', 'rect'] as const)[Math.floor(Math.random() * 3)],
+      })),
+    [visible]
+  );
+
+  if (!visible) return null;
+
+  return (
+    <View style={styles.confettiOverlay} pointerEvents="none">
+      {pieces.map((piece) => (
+        <ConfettiPieceView key={piece.key} piece={piece} />
+      ))}
+    </View>
+  );
+}
+
 // ─── "What others are saying" section
 function CommunityReviewsSection({ reviews, isLoading }: { reviews: CommunityReview[]; isLoading: boolean }) {
   return (
     <View style={communityStyles.section}>
       <Text style={communityStyles.heading}>What others are saying</Text>
       {isLoading ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={communityStyles.list}>
+        <View style={communityStyles.list}>
           {[0, 1, 2].map((i) => <CommunityReviewCardSkeleton key={i} />)}
-        </ScrollView>
+        </View>
       ) : reviews.length === 0 ? (
         <View style={communityStyles.empty}>
-          <Ionicons name="chatbubble-outline" size={24} color={C.sage} style={{ opacity: 0.6 }} />
+          <View style={communityStyles.emptyIconWrap}>
+            <Ionicons name="chatbubble-outline" size={24} color={C.sage} style={{ opacity: 0.6 }} />
+          </View>
           <Text style={communityStyles.emptyTitle}>No reviews yet</Text>
           <Text style={communityStyles.emptyBody}>Be the first to review this business!</Text>
         </View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={communityStyles.list}>
+        <View style={communityStyles.list}>
           {reviews.map((r) => <CommunityReviewCard key={r.id} review={r} />)}
-        </ScrollView>
+        </View>
       )}
     </View>
   );
 }
 
 const communityStyles = StyleSheet.create({
-  section: { marginTop: 32, marginLeft: -20, marginRight: -20 },
+  section: { marginTop: 32 },
   heading: {
     fontSize: 28, fontWeight: '800', color: C.charcoal,
     textAlign: 'center',
-    paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12,
+    paddingTop: 8, paddingBottom: 12,
     borderBottomWidth: 1, borderBottomColor: 'rgba(45,45,45,0.10)', marginBottom: 12,
   },
-  list: { paddingHorizontal: 20, paddingBottom: 8 },
+  list: { paddingBottom: 8, gap: 12 },
   empty: {
-    marginHorizontal: 20, backgroundColor: 'rgba(255,255,255,0.70)',
+    backgroundColor: CARD_BG_COLOR,
     borderRadius: 12, borderWidth: 1, borderColor: 'rgba(125,155,118,0.12)',
-    padding: 24, alignItems: 'center', gap: 6,
+    paddingVertical: 40, paddingHorizontal: 24, alignItems: 'center', gap: 6,
+  },
+  emptyIconWrap: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: C.offWhite, alignItems: 'center', justifyContent: 'center',
   },
   emptyTitle: { fontSize: 14, fontWeight: '600', color: 'rgba(45,45,45,0.80)' },
   emptyBody: { fontSize: 12, color: C.charcoal60, textAlign: 'center', lineHeight: 18 },
@@ -789,8 +940,15 @@ export default function WriteReviewScreen() {
   const [promptIndex, setPromptIndex] = useState(0);
   const [textFocused, setTextFocused] = useState(false);
   const [titleFocused, setTitleFocused] = useState(false);
+  const [showSuccessConfetti, setShowSuccessConfetti] = useState(false);
+  const [notificationNotice, setNotificationNotice] = useState<FeedbackNotice | null>(null);
+  const [toastNotice, setToastNotice] = useState<FeedbackNotice | null>(null);
   const [nonCriticalReady, setNonCriticalReady] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
+  const successRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedbackSeqRef = useRef(0);
 
   // Form card entrance (matches web: opacity 0→1, y 20→0, duration 0.4s)
   const formOpacity = useRef(new Animated.Value(0)).current;
@@ -819,6 +977,41 @@ export default function WriteReviewScreen() {
   const { data: businessDetail, isLoading: bizLoading } = useBusinessDetail(isBusinessReview ? id : '');
   const { data: eventSpecial, isLoading: esLoading } = useEventSpecialDetail(!isBusinessReview ? id : null);
   const isLoading = isBusinessReview ? bizLoading : esLoading;
+
+  // Community reviews — deferred until after initial interactions
+  const businessReviewsQuery = useBusinessReviews(
+    isBusinessReview && nonCriticalReady ? id : ''
+  );
+  const eventReviewsResult = useEventReviews(
+    !isBusinessReview && nonCriticalReady ? id : null
+  );
+
+  const communityReviews: CommunityReview[] = useMemo(() => {
+    if (isBusinessReview) {
+      const firstPage = businessReviewsQuery.data?.pages?.[0]?.data ?? [];
+      return firstPage.map((r) => ({
+        id: r.id,
+        userName: r.display_name ?? r.username ?? 'Anonymous',
+        avatarUrl: r.avatar_url ?? null,
+        rating: r.rating,
+        text: r.body ?? '',
+        date: relativeDate(r.created_at),
+      }));
+    }
+    return eventReviewsResult.reviews.map((r) => ({
+      id: r.id,
+      userName: r.user.name,
+      avatarUrl: r.user.avatarUrl ?? null,
+      rating: r.rating,
+      text: r.content,
+      date: relativeDate(r.createdAt),
+    }));
+  }, [isBusinessReview, businessReviewsQuery.data, eventReviewsResult.reviews]);
+
+  const communityReviewsLoading = isBusinessReview
+    ? businessReviewsQuery.isLoading
+    : eventReviewsResult.isLoading;
+
   const reviewPrefilledRef = useRef(false);
 
   const reviewDetailQuery = useQuery({
@@ -968,6 +1161,23 @@ export default function WriteReviewScreen() {
     });
     return () => {
       task.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (successRedirectTimerRef.current) {
+        clearTimeout(successRedirectTimerRef.current);
+        successRedirectTimerRef.current = null;
+      }
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+        notificationTimerRef.current = null;
+      }
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -1122,10 +1332,43 @@ export default function WriteReviewScreen() {
     setSelectedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const showSubmissionFeedback = useCallback(
+    (variant: FeedbackVariant, title: string, message: string) => {
+      const id = feedbackSeqRef.current + 1;
+      feedbackSeqRef.current = id;
+      const payload: FeedbackNotice = { id, variant, title, message };
+
+      setNotificationNotice(payload);
+      setToastNotice(payload);
+
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+      notificationTimerRef.current = setTimeout(() => {
+        notificationTimerRef.current = null;
+        setNotificationNotice((prev) => (prev?.id === id ? null : prev));
+      }, 2600);
+
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+      toastTimerRef.current = setTimeout(() => {
+        toastTimerRef.current = null;
+        setToastNotice((prev) => (prev?.id === id ? null : prev));
+      }, 2200);
+    },
+    []
+  );
+
   const handleSubmit = async () => {
     if (!isFormValid) return;
     const gate = guardSensitiveAction('write_review');
-    if (!gate.allowed) { setFormError(gate.reason || 'This action is temporarily unavailable on this device.'); return; }
+    if (!gate.allowed) {
+      const message = gate.reason || 'This action is temporarily unavailable on this device.';
+      setFormError(message);
+      showSubmissionFeedback('error', 'Review submission failed', message);
+      return;
+    }
     setFormError(null);
     setSubmitting(true);
 
@@ -1144,7 +1387,12 @@ export default function WriteReviewScreen() {
             timeoutMs: 20_000,
           }
         );
-        if (result.success === false) { setFormError(getErrorMessage(result)); return; }
+        if (result.success === false) {
+          const message = getErrorMessage(result);
+          setFormError(message);
+          showSubmissionFeedback('error', 'Review update failed', message);
+          return;
+        }
       } else if (isBusinessReview) {
         const formData = new FormData();
         formData.append('business_id', businessDetail?.id ?? id);
@@ -1164,7 +1412,12 @@ export default function WriteReviewScreen() {
           '/api/reviews',
           { method: 'POST', body: formData, includeAnonymousIdOnMissingAuth: true, timeoutMs: 20_000 }
         );
-        if (result.success === false) { setFormError(getErrorMessage(result)); return; }
+        if (result.success === false) {
+          const message = getErrorMessage(result);
+          setFormError(message);
+          showSubmissionFeedback('error', 'Review submission failed', message);
+          return;
+        }
       } else {
         const formData = new FormData();
         formData.append('target_id', id);
@@ -1185,7 +1438,12 @@ export default function WriteReviewScreen() {
           '/api/reviews',
           { method: 'POST', body: formData, includeAnonymousIdOnMissingAuth: true, timeoutMs: 20_000 }
         );
-        if (result.success === false) { setFormError(getErrorMessage(result)); return; }
+        if (result.success === false) {
+          const message = getErrorMessage(result);
+          setFormError(message);
+          showSubmissionFeedback('error', 'Review submission failed', message);
+          return;
+        }
       }
 
       if (isBusinessReview) {
@@ -1201,13 +1459,92 @@ export default function WriteReviewScreen() {
       qc.invalidateQueries({ queryKey: ['user-reviews'] });
       qc.invalidateQueries({ queryKey: ['profile'] });
       qc.invalidateQueries({ queryKey: ['user-stats'] });
-      qc.invalidateQueries({ queryKey: ['user-badges'] });
 
-      Alert.alert(
-        isEditMode ? 'Review Updated' : 'Review Submitted!',
-        isEditMode ? 'Your review changes were saved.' : 'Thanks for sharing your experience.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      const prevBadges = qc.getQueryData<UserBadgeDto[]>(['user-badges', user?.id]) ?? [];
+      const prevEarnedIds = new Set(prevBadges.map((b) => b.id));
+
+      qc.invalidateQueries({ queryKey: ['user-badges'] });
+      qc.invalidateQueries({ queryKey: ['user-badges-all'] });
+
+      let newlyEarned: UserBadgeDto[] = [];
+      try {
+        await qc.refetchQueries({ queryKey: ['user-badges', user?.id] });
+        const freshBadges = qc.getQueryData<UserBadgeDto[]>(['user-badges', user?.id]) ?? [];
+        newlyEarned = freshBadges.filter((b) => !prevEarnedIds.has(b.id));
+      } catch {
+        // Badge refetch failures must never surface as a review submission error
+      }
+
+      const badgeMessage =
+        newlyEarned.length === 1
+          ? `\n\nYou earned the "${newlyEarned[0].name}" badge!`
+          : newlyEarned.length > 1
+            ? `\n\nYou earned ${newlyEarned.length} new badges!`
+            : '';
+      if (__DEV__ && badgeMessage) {
+        console.info('[WriteReview] badge unlock', badgeMessage.replace(/\n+/g, ' ').trim());
+      }
+
+      const successTitle = isEditMode ? 'Review updated' : 'Review submitted';
+      const successMessage = isEditMode
+        ? 'Your review changes were saved.'
+        : `Thanks for sharing your experience.${
+            newlyEarned.length === 1
+              ? ` Badge earned: ${newlyEarned[0].name}.`
+              : newlyEarned.length > 1
+                ? ` ${newlyEarned.length} new badges earned.`
+                : ''
+          }`;
+      showSubmissionFeedback('success', successTitle, successMessage);
+
+      try {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {
+        // Non-blocking celebratory haptic.
+      }
+
+      setShowSuccessConfetti(true);
+
+      const redirectBusinessId = (() => {
+        if (isBusinessReview) {
+          if (typeof businessDetail?.id === 'string' && businessDetail.id.trim().length > 0) {
+            return businessDetail.id;
+          }
+          return id;
+        }
+
+        const eventPayload = eventSpecial as Record<string, unknown> | null;
+        const camelBusinessId =
+          eventPayload && typeof eventPayload.businessId === 'string'
+            ? eventPayload.businessId.trim()
+            : '';
+        if (camelBusinessId) {
+          return camelBusinessId;
+        }
+
+        const snakeBusinessId =
+          eventPayload && typeof eventPayload.business_id === 'string'
+            ? eventPayload.business_id.trim()
+            : '';
+        if (snakeBusinessId) {
+          return snakeBusinessId;
+        }
+
+        return null;
+      })();
+
+      const redirectTarget = redirectBusinessId
+        ? routes.businessDetail(redirectBusinessId)
+        : routes.home();
+
+      if (successRedirectTimerRef.current) {
+        clearTimeout(successRedirectTimerRef.current);
+      }
+      successRedirectTimerRef.current = setTimeout(() => {
+        successRedirectTimerRef.current = null;
+        setShowSuccessConfetti(false);
+        router.replace(redirectTarget as never);
+      }, reducedMotion ? 0 : 1100);
     } catch (err) {
       if (err instanceof ApiError) {
         const details =
@@ -1228,16 +1565,20 @@ export default function WriteReviewScreen() {
           });
         }
 
+        const message = getErrorMessage({
+          message: detailsMessage || err.message,
+          code: err.code,
+          error: detailsError,
+        });
+        showSubmissionFeedback('error', isEditMode ? 'Review update failed' : 'Review submission failed', message);
         setFormError(
-          getErrorMessage({
-            message: detailsMessage || err.message,
-            code: err.code,
-            error: detailsError,
-          })
+          message
         );
         return;
       }
-      setFormError(err instanceof Error ? err.message : 'Failed to submit your review.');
+      const fallbackMessage = err instanceof Error ? err.message : 'Failed to submit your review.';
+      showSubmissionFeedback('error', isEditMode ? 'Review update failed' : 'Review submission failed', fallbackMessage);
+      setFormError(fallbackMessage);
     } finally {
       setSubmitting(false);
     }
@@ -1652,6 +1993,9 @@ export default function WriteReviewScreen() {
 
           </AnimatedLinearGradient>{/* end formCard */}
 
+          {/* ── What others are saying */}
+          <CommunityReviewsSection reviews={communityReviews} isLoading={communityReviewsLoading} />
+
           {/* ── Context card (mobile equivalent of web sidebar) */}
           {!isLoading && displayTitle && !isBusinessReview ? (
             <LinearGradient colors={CARD_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.contextCard}>
@@ -1680,19 +2024,138 @@ export default function WriteReviewScreen() {
 
         </ScrollView>
       </KeyboardAvoidingView>
+      <ReviewConfettiOverlay visible={showSuccessConfetti} />
+      {notificationNotice ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.reviewStatusNotice,
+            notificationNotice.variant === 'success' ? styles.reviewStatusNoticeSuccess : styles.reviewStatusNoticeError,
+          ]}
+        >
+          <Ionicons
+            name={notificationNotice.variant === 'success' ? 'checkmark-circle-outline' : 'alert-circle-outline'}
+            size={16}
+            color={notificationNotice.variant === 'success' ? '#1F5133' : '#722F37'}
+          />
+          <Text style={styles.reviewStatusNoticeTitle}>{notificationNotice.title}</Text>
+        </View>
+      ) : null}
+      {toastNotice ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.reviewStatusToast,
+            toastNotice.variant === 'success' ? styles.reviewStatusToastSuccess : styles.reviewStatusToastError,
+          ]}
+        >
+          <Text
+            style={[
+              styles.reviewStatusToastTitle,
+              toastNotice.variant === 'success' ? styles.reviewStatusToastTitleSuccess : styles.reviewStatusToastTitleError,
+            ]}
+          >
+            {toastNotice.title}
+          </Text>
+          <Text
+            style={[
+              styles.reviewStatusToastMessage,
+              toastNotice.variant === 'success' ? styles.reviewStatusToastMessageSuccess : styles.reviewStatusToastMessageError,
+            ]}
+          >
+            {toastNotice.message}
+          </Text>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: C.offWhite },
+  confettiOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 60,
+    overflow: 'hidden',
+  },
+  confettiPiece: {
+    position: 'absolute',
+    top: -20,
+  },
+  reviewStatusNotice: {
+    position: 'absolute',
+    top: 12,
+    left: 14,
+    right: 14,
+    zIndex: 70,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  reviewStatusNoticeSuccess: {
+    backgroundColor: 'rgba(157,171,155,0.96)',
+    borderColor: 'rgba(31,81,51,0.25)',
+  },
+  reviewStatusNoticeError: {
+    backgroundColor: 'rgba(229,224,229,0.98)',
+    borderColor: 'rgba(114,47,55,0.26)',
+  },
+  reviewStatusNoticeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2D2D2D',
+  },
+  reviewStatusToast: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    bottom: 18,
+    zIndex: 70,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 2,
+  },
+  reviewStatusToastSuccess: {
+    backgroundColor: 'rgba(157,171,155,0.98)',
+    borderColor: 'rgba(31,81,51,0.30)',
+  },
+  reviewStatusToastError: {
+    backgroundColor: 'rgba(114,47,55,0.95)',
+    borderColor: 'rgba(255,255,255,0.16)',
+  },
+  reviewStatusToastTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  reviewStatusToastTitleSuccess: {
+    color: '#1F5133',
+  },
+  reviewStatusToastTitleError: {
+    color: '#FFFFFF',
+  },
+  reviewStatusToastMessage: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  reviewStatusToastMessageSuccess: {
+    color: 'rgba(45,45,45,0.86)',
+  },
+  reviewStatusToastMessageError: {
+    color: 'rgba(255,255,255,0.92)',
+  },
   formCard: {
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingBottom: 16,
     ...cardShadowStyle,
   } as object,
-  content: { paddingHorizontal: 8, paddingTop: 20, paddingBottom: 48, gap: 16 },
+  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 48, gap: 16 },
 
   formHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 4, paddingTop: 16, marginBottom: 4 },
   formHeaderText: { flex: 1, gap: 2 },

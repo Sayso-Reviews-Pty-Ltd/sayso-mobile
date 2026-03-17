@@ -1,9 +1,19 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import { EventCard } from '../EventCard';
 import { EventCardSkeleton } from '../EventCardSkeleton';
 import { Text } from '../Typography';
 import { useBusinessEvents } from '../../hooks/useBusinessEvents';
 import { businessDetailColors, businessDetailSpacing } from './styles';
+
+const CARD_WIDTH = 320;
+const GAP = 12;
+const SKELETONS = [0, 1, 2];
+const FLATLIST_PERF = {
+  initialNumToRender: 2,
+  maxToRenderPerBatch: 2,
+  windowSize: 5,
+  removeClippedSubviews: Platform.OS === 'android',
+} as const;
 
 type Props = {
   businessId: string;
@@ -31,17 +41,53 @@ export function BusinessOwnedEventsSection({ businessId, businessName }: Props) 
         </View>
       ) : null}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowContent}>
-        {isLoading && !hasEvents
-          ? [1, 2, 3].map((item) => (
-              <View key={`event-skeleton-${item}`} style={styles.eventCardWrap}>
-                <EventCardSkeleton />
-              </View>
-            ))
-          : events.map((event) => (
-              <EventCard key={`${event.type}-${event.id}`} item={event} style={styles.eventCardWrap} />
-            ))}
-      </ScrollView>
+      {isLoading && !hasEvents ? (
+        <FlatList
+          horizontal
+          data={SKELETONS}
+          keyExtractor={(i) => `event-skeleton-${i}`}
+          renderItem={() => (
+            <View style={{ width: CARD_WIDTH }}>
+              <EventCardSkeleton />
+            </View>
+          )}
+          ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+          getItemLayout={(_, index) => ({
+            length: CARD_WIDTH,
+            offset: (CARD_WIDTH + GAP) * index,
+            index,
+          })}
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={CARD_WIDTH + GAP}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          disableIntervalMomentum
+          contentContainerStyle={styles.rowContent}
+          {...FLATLIST_PERF}
+        />
+      ) : (
+        <FlatList
+          horizontal
+          data={events}
+          keyExtractor={(item) => `${item.type}-${item.id}`}
+          renderItem={({ item }) => (
+            <EventCard item={item} style={{ width: CARD_WIDTH }} />
+          )}
+          ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+          getItemLayout={(_, index) => ({
+            length: CARD_WIDTH,
+            offset: (CARD_WIDTH + GAP) * index,
+            index,
+          })}
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={CARD_WIDTH + GAP}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          disableIntervalMomentum
+          contentContainerStyle={styles.rowContent}
+          {...FLATLIST_PERF}
+        />
+      )}
     </View>
   );
 }
@@ -84,9 +130,5 @@ const styles = StyleSheet.create({
   rowContent: {
     paddingHorizontal: businessDetailSpacing.pageGutter,
     paddingBottom: 4,
-    gap: 12,
-  },
-  eventCardWrap: {
-    width: 320,
   },
 });

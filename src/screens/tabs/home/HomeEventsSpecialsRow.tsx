@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, useWindowDimensions } from 'react-native';
+import { FlatList, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { EventSpecialListItemDto } from '@sayso/contracts';
 import { EventCard } from '../../../components/EventCard';
 import { EventCardSkeleton } from '../../../components/EventCardSkeleton';
@@ -6,6 +6,15 @@ import { Text } from '../../../components/Typography';
 import { homeTokens } from './HomeTokens';
 import { CARD_RADIUS } from '../../../styles/radii';
 import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
+
+const GAP = 14;
+const SKELETONS = [0, 1, 2];
+const FLATLIST_PERF = {
+  initialNumToRender: 2,
+  maxToRenderPerBatch: 2,
+  windowSize: 5,
+  removeClippedSubviews: Platform.OS === 'android',
+} as const;
 
 type Props = {
   items: EventSpecialListItemDto[];
@@ -15,13 +24,26 @@ type Props = {
 
 export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
   const { width: windowWidth } = useWindowDimensions();
-  const cardWidth = windowWidth - homeTokens.pageGutter - 14 - 40;
-  const snapInterval = cardWidth + 14;
+  const cardWidth = windowWidth - homeTokens.pageGutter - GAP - 40;
+  const snapInterval = cardWidth + GAP;
 
   if (loading) {
     return (
-      <ScrollView
+      <FlatList
         horizontal
+        data={SKELETONS}
+        keyExtractor={(i) => `event-skeleton-${i}`}
+        renderItem={() => (
+          <View style={{ width: cardWidth }}>
+            <EventCardSkeleton />
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+        getItemLayout={(_, index) => ({
+          length: cardWidth,
+          offset: (cardWidth + GAP) * index,
+          index,
+        })}
         showsHorizontalScrollIndicator={false}
         snapToInterval={snapInterval}
         snapToAlignment="start"
@@ -29,13 +51,8 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
         disableIntervalMomentum
         style={styles.row}
         contentContainerStyle={styles.content}
-      >
-        {[1, 2, 3].map((item) => (
-          <View key={`event-skeleton-${item}`} style={[styles.cardWrap, { width: cardWidth }]}>
-            <EventCardSkeleton />
-          </View>
-        ))}
-      </ScrollView>
+        {...FLATLIST_PERF}
+      />
     );
   }
 
@@ -51,16 +68,27 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
   }
 
   return (
-    <ScrollView
+    <FlatList
       horizontal
+      data={items}
+      keyExtractor={(item) => `${item.type}-${item.id}`}
+      renderItem={({ item }) => (
+        <EventCard item={item} style={{ width: cardWidth }} />
+      )}
+      ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+      getItemLayout={(_, index) => ({
+        length: cardWidth,
+        offset: (cardWidth + GAP) * index,
+        index,
+      })}
       showsHorizontalScrollIndicator={false}
+      snapToInterval={snapInterval}
+      snapToAlignment="start"
+      decelerationRate="fast"
+      disableIntervalMomentum
       style={styles.row}
       contentContainerStyle={styles.content}
-    >
-      {items.map((item) => (
-        <EventCard key={`${item.type}-${item.id}`} item={item} style={[styles.cardWrap, { width: cardWidth }]} />
-      ))}
-    </ScrollView>
+    />
   );
 }
 
@@ -73,11 +101,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: homeTokens.pageGutter,
     paddingTop: 4,
     paddingBottom: 18,
-    gap: 14,
     backgroundColor: homeTokens.offWhite,
-  },
-  cardWrap: {
-    width: 340,
   },
   messageCard: {
     marginHorizontal: homeTokens.pageGutter,

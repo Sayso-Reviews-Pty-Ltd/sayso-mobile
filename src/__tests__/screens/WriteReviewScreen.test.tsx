@@ -72,6 +72,10 @@ jest.mock('../../navigation/routes', () => ({
   routes: {
     onboarding: () => '/onboarding',
     forgotPassword: () => '/forgot-password',
+    businessDetail: (id: string) => `/business/${id}`,
+    eventDetail: (id: string) => `/event/${id}`,
+    specialDetail: (id: string) => `/special/${id}`,
+    home: () => '/home',
   },
 }));
 
@@ -112,6 +116,7 @@ const mockUseEventSpecialDetail = useEventSpecialDetail as jest.Mock;
 const mockApiFetch = apiFetch as unknown as jest.Mock;
 
 const mockRouterBack = jest.fn();
+const mockRouterReplace = jest.fn();
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -133,7 +138,7 @@ function renderScreen() {
 
 function setupDefaults() {
   mockUseLocalSearchParams.mockReturnValue({ id: 'biz-123', type: 'business' });
-  mockUseRouter.mockReturnValue({ back: mockRouterBack, push: jest.fn(), replace: jest.fn() });
+  mockUseRouter.mockReturnValue({ back: mockRouterBack, push: jest.fn(), replace: mockRouterReplace });
   mockUseAuth.mockReturnValue({ user: { id: 'user-1' }, session: null, isLoading: false });
   mockUseSecurity.mockReturnValue({
     guardSensitiveAction: jest.fn().mockReturnValue({ allowed: true }),
@@ -273,6 +278,7 @@ describe('WriteReviewScreen — text validation', () => {
 describe('WriteReviewScreen — form submission', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
     setupDefaults();
   });
 
@@ -327,7 +333,36 @@ describe('WriteReviewScreen — form submission', () => {
         ([path, opts]: [string, any]) => path === '/api/reviews' && opts?.method === 'POST'
       );
       expect(submitCall).toBeDefined();
+      expect(screen.getAllByText('Review submitted').length).toBeGreaterThan(0);
+      expect(screen.getByText('Thanks for sharing your experience.')).toBeTruthy();
     });
+  });
+
+  it('redirects to the business screen after successful submission', async () => {
+    jest.useFakeTimers();
+    mockApiFetch.mockResolvedValueOnce({ success: true }); // deal-breakers pre-call
+    mockApiFetch.mockResolvedValueOnce({ success: true }); // review submit
+
+    await fillValidForm();
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('submit-review-btn'));
+    });
+
+    await waitFor(() => {
+      const calls = mockApiFetch.mock.calls;
+      const submitCall = calls.find(
+        ([path, opts]: [string, any]) => path === '/api/reviews' && opts?.method === 'POST'
+      );
+      expect(submitCall).toBeDefined();
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    expect(mockRouterReplace).toHaveBeenCalledWith('/business/biz-123');
+    jest.useRealTimers();
   });
 
   it('shows form error when API returns success: false', async () => {
@@ -345,8 +380,8 @@ describe('WriteReviewScreen — form submission', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('You have already reviewed this business.')
-      ).toBeTruthy();
+        screen.getAllByText('You have already reviewed this business.').length
+      ).toBeGreaterThan(0);
     });
   });
 
@@ -388,7 +423,7 @@ describe('WriteReviewScreen — form submission', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Device integrity check failed.')).toBeTruthy();
+      expect(screen.getAllByText('Device integrity check failed.').length).toBeGreaterThan(0);
     });
   });
 });

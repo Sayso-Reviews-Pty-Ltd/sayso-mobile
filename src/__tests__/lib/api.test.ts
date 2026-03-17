@@ -1,4 +1,5 @@
 import { ApiError, apiFetch } from '../../lib/api';
+import { getOrCreateAnonymousId } from '../../lib/anonymousClient';
 import { supabase } from '../../lib/supabase';
 
 jest.mock('../../lib/env', () => ({
@@ -17,10 +18,16 @@ jest.mock('../../lib/anonymousClient', () => ({
 jest.mock('react-native-url-polyfill/auto', () => {});
 
 const mockGetSession = (supabase.auth.getSession as jest.Mock);
+const mockGetOrCreateAnonymousId = (getOrCreateAnonymousId as jest.Mock);
 const mockFetch = jest.fn();
+const originalWindow = (global as any).window;
 
 beforeAll(() => {
   (global as any).fetch = mockFetch;
+});
+
+afterAll(() => {
+  (global as any).window = originalWindow;
 });
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -98,6 +105,7 @@ describe('apiFetch — successful responses', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetSession.mockResolvedValue({ data: { session: null } });
+    (global as any).window = originalWindow;
   });
 
   it('resolves with parsed JSON body on 200', async () => {
@@ -143,6 +151,51 @@ describe('apiFetch — successful responses', () => {
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Headers }];
     expect(init.headers.get('Authorization')).toBeNull();
+  });
+
+  it('sets x-anonymous-id header when missing auth and includeAnonymousIdOnMissingAuth is true', async () => {
+    (global as any).window = undefined;
+    mockFetch.mockResolvedValueOnce(makeOkResponse({}));
+
+    await apiFetch('/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ rating: 5 }),
+      includeAnonymousIdOnMissingAuth: true,
+    });
+
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Headers }];
+    expect(init.headers.get('x-anonymous-id')).toBe('anon-id-123');
+    expect(mockGetOrCreateAnonymousId).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips x-anonymous-id on cross-origin web requests to avoid CORS preflight failure', async () => {
+    (global as any).window = { location: { origin: 'http://localhost:8081' } };
+    mockFetch.mockResolvedValueOnce(makeOkResponse({}));
+
+    await apiFetch('/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ rating: 5 }),
+      includeAnonymousIdOnMissingAuth: true,
+    });
+
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Headers }];
+    expect(init.headers.get('x-anonymous-id')).toBeNull();
+    expect(mockGetOrCreateAnonymousId).not.toHaveBeenCalled();
+  });
+
+  it('keeps x-anonymous-id on same-origin web requests', async () => {
+    (global as any).window = { location: { origin: 'https://api.test' } };
+    mockFetch.mockResolvedValueOnce(makeOkResponse({}));
+
+    await apiFetch('/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ rating: 5 }),
+      includeAnonymousIdOnMissingAuth: true,
+    });
+
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Headers }];
+    expect(init.headers.get('x-anonymous-id')).toBe('anon-id-123');
+    expect(mockGetOrCreateAnonymousId).toHaveBeenCalledTimes(1);
   });
 
   it('sets Content-Type: application/json for non-FormData string bodies', async () => {

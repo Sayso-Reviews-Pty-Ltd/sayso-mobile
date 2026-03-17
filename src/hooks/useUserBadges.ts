@@ -32,3 +32,18 @@ export function useUserBadges() {
     staleTime: 60_000,
   });
 }
+
+export function useAllUserBadges() {
+  const { user, isLoading } = useAuthSession();
+
+  return useQuery({
+    queryKey: ['user-badges-all', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [] as UserBadgeDto[];
+      const payload = await apiFetch<UserBadgesResponse>(`/api/badges/user?user_id=${user.id}`);
+      return payload?.badges ?? [];
+    },
+    enabled: Boolean(user?.id) && !isLoading,
+    staleTime: 60_000,
+  });
+}

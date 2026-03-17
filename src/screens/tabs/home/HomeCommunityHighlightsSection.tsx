@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  FlatList,
   Platform,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -30,6 +30,16 @@ import { homeTokens } from './HomeTokens';
 import { CARD_SHADOW_MD, getCardDepthShadowStyle } from '../../../styles/overlayShadow';
 import { CARD_RADIUS } from '../../../styles/radii';
 import { NAVBAR_BG_COLOR } from '../../../styles/colors';
+
+const REVIEWER_CARD_WIDTH = 240;
+const REVIEWER_GAP = 16;
+const REVIEWER_SKELETONS = [0, 1, 2];
+const FLATLIST_PERF = {
+  initialNumToRender: 2,
+  maxToRenderPerBatch: 2,
+  windowSize: 5,
+  removeClippedSubviews: Platform.OS === 'android',
+} as const;
 
 type Props = {
   reviewers: TopReviewerDto[];
@@ -162,18 +172,12 @@ export function HomeCommunityHighlightsSection({
         </View>
 
         {reviewersLoading ? (
-          <ScrollView
+          <FlatList
             horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={256}
-            snapToAlignment="start"
-            decelerationRate="fast"
-            disableIntervalMomentum
-            style={styles.row}
-            contentContainerStyle={styles.rowContent}
-          >
-            {[1, 2, 3].map((item) => (
-              <View key={`reviewer-skeleton-${item}`} style={styles.reviewerSkeletonCardShell}>
+            data={REVIEWER_SKELETONS}
+            keyExtractor={(i) => `reviewer-skeleton-${i}`}
+            renderItem={() => (
+              <View style={styles.reviewerSkeletonCardShell}>
                 <View style={styles.reviewerSkeletonTopAccent} />
                 <View style={styles.reviewerCardSkeleton}>
                   <SkeletonBlock style={styles.reviewerSkeletonAvatar} />
@@ -187,8 +191,22 @@ export function HomeCommunityHighlightsSection({
                   </View>
                 </View>
               </View>
-            ))}
-          </ScrollView>
+            )}
+            ItemSeparatorComponent={() => <View style={{ width: REVIEWER_GAP }} />}
+            getItemLayout={(_, index) => ({
+              length: REVIEWER_CARD_WIDTH,
+              offset: (REVIEWER_CARD_WIDTH + REVIEWER_GAP) * index,
+              index,
+            })}
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={REVIEWER_CARD_WIDTH + REVIEWER_GAP}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            disableIntervalMomentum
+            style={styles.row}
+            contentContainerStyle={styles.rowContent}
+            {...FLATLIST_PERF}
+          />
         ) : reviewersError ? (
           <View style={styles.messageCard}>
             <Text style={styles.messageTitle}>Top contributors are unavailable right now.</Text>
@@ -213,28 +231,35 @@ export function HomeCommunityHighlightsSection({
             <CommunityBadgeMarquee />
           </View>
         ) : (
-          <ScrollView
+          <FlatList
             horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={256}
-            snapToAlignment="start"
-            decelerationRate="fast"
-            disableIntervalMomentum
-            style={styles.row}
-            contentContainerStyle={styles.rowContent}
-          >
-            {reviewers.map((reviewer) => {
+            data={reviewers}
+            keyExtractor={(reviewer) => reviewer.id}
+            renderItem={({ item: reviewer }) => {
               const latestReview = recentReviews.find((item) => item.reviewer.id === reviewer.id);
               return (
                 <ReviewerCard
-                  key={reviewer.id}
                   variant="reviewer"
                   reviewer={reviewer}
                   latestReview={latestReview}
                 />
               );
+            }}
+            ItemSeparatorComponent={() => <View style={{ width: REVIEWER_GAP }} />}
+            getItemLayout={(_, index) => ({
+              length: REVIEWER_CARD_WIDTH,
+              offset: (REVIEWER_CARD_WIDTH + REVIEWER_GAP) * index,
+              index,
             })}
-          </ScrollView>
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={REVIEWER_CARD_WIDTH + REVIEWER_GAP}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            disableIntervalMomentum
+            style={styles.row}
+            contentContainerStyle={styles.rowContent}
+            {...FLATLIST_PERF}
+          />
         )}
       </View>
 
@@ -324,7 +349,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: homeTokens.pageGutter,
     paddingTop: 4,
     paddingBottom: 16,
-    gap: 16,
     backgroundColor: homeTokens.offWhite,
   },
   reviewerCardSkeleton: {

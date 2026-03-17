@@ -115,6 +115,27 @@ function isFormDataBody(value: unknown): value is FormData {
   return Object.prototype.toString.call(value) === '[object FormData]';
 }
 
+function getWindowOrigin(): string | null {
+  const candidate = (globalThis as { window?: { location?: { origin?: unknown } } }).window?.location?.origin;
+  return typeof candidate === 'string' && candidate.length > 0 ? candidate : null;
+}
+
+function shouldAttachAnonymousIdHeader(apiBaseUrl: string): boolean {
+  const windowOrigin = getWindowOrigin();
+  if (!windowOrigin) {
+    // Native/non-browser runtimes do not have browser CORS preflights.
+    return true;
+  }
+
+  try {
+    const apiOrigin = new URL(apiBaseUrl, windowOrigin).origin;
+    return apiOrigin === windowOrigin;
+  } catch {
+    // If URL parsing fails, keep existing behavior and attach the header.
+    return true;
+  }
+}
+
 async function buildAuthHeaders(
   headers: Headers,
   includeAnonymousIdOnMissingAuth?: boolean
@@ -128,6 +149,9 @@ async function buildAuthHeaders(
   }
 
   if (includeAnonymousIdOnMissingAuth) {
+    if (!shouldAttachAnonymousIdHeader(ENV.apiBaseUrl)) {
+      return;
+    }
     const anonId = await getOrCreateAnonymousId();
     headers.set('x-anonymous-id', anonId);
   }

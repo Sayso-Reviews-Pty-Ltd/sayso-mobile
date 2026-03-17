@@ -11,8 +11,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '../../lib/api';
+import { useAllUserBadges, type UserUserBadgeDto } from '../../hooks/useUserBadges';
 import { useAuthSession } from '../../hooks/useSession';
 import { getBadgeImage } from '../../lib/badgeImages';
 import { getBadgeById } from '../../lib/badgeMappings';
@@ -43,21 +42,6 @@ const GROUP_META: Record<string, { label: string; icon: keyof typeof Ionicons.gl
   milestone: { label: 'Milestone', icon: 'trophy-outline', color: '#FFD700' },
   community: { label: 'Community', icon: 'people-outline', color: '#F472B6' },
 };
-
-interface BadgeDto {
-  id: string;
-  name: string;
-  description?: string | null;
-  icon_path?: string | null;
-  badge_group?: string | null;
-  earned?: boolean;
-  awarded_at?: string | null;
-}
-
-interface BadgesApiResponse {
-  ok?: boolean;
-  badges?: BadgeDto[];
-}
 
 // SVG-free circular progress ring using an Animated arc approximation via rotation
 function ProgressRing({ percentage }: { percentage: number }) {
@@ -127,7 +111,7 @@ function ProgressRing({ percentage }: { percentage: number }) {
   );
 }
 
-function BadgeRow({ badge, earned }: { badge: BadgeDto; earned: boolean }) {
+function BadgeRow({ badge, earned }: { badge: UserBadgeDto; earned: boolean }) {
   const mapping = getBadgeById(badge.id);
   return (
     <View style={[styles.badgeRow, !earned ? styles.badgeRowLocked : null]}>
@@ -158,7 +142,7 @@ function BadgeRow({ badge, earned }: { badge: BadgeDto; earned: boolean }) {
   );
 }
 
-function GroupSection({ groupKey, badges }: { groupKey: string; badges: BadgeDto[] }) {
+function GroupSection({ groupKey, badges }: { groupKey: string; badges: UserBadgeDto[] }) {
   const meta = GROUP_META[groupKey];
   const [expanded, setExpanded] = useState(true);
   const earned = badges.filter((b) => b.earned);
@@ -205,22 +189,12 @@ export default function AchievementsScreen() {
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(GRID * 2)).current;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['user-badges-all', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return { badges: [] as BadgeDto[] };
-      return apiFetch<BadgesApiResponse>(`/api/badges/user?user_id=${user.id}`);
-    },
-    enabled: Boolean(user?.id),
-    staleTime: 60_000,
-  });
-
-  const allBadges = data?.badges ?? [];
+  const { data: allBadges = [], isLoading } = useAllUserBadges();
   const earnedCount = allBadges.filter((b) => b.earned).length;
   const totalCount = allBadges.length;
   const percentage = totalCount > 0 ? Math.round((earnedCount / totalCount) * 100) : 0;
 
-  const groupedBadges = allBadges.reduce<Record<string, BadgeDto[]>>((acc, badge) => {
+  const groupedBadges = allBadges.reduce<Record<string, UserBadgeDto[]>>((acc, badge) => {
     const group = badge.badge_group ?? 'explorer';
     if (!acc[group]) acc[group] = [];
     acc[group].push(badge);

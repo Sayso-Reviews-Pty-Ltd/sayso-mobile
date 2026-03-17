@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
+  Easing,
   Dimensions,
   Image,
   InteractionManager,
@@ -56,8 +57,8 @@ const MAX_PHOTOS = 2;
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HERO_WIDTH = SCREEN_WIDTH - 16; // matches page inline padding (px-2)
 const HERO_HEIGHT = Math.round(SCREEN_HEIGHT * 0.50); // matches web h-[50vh]
-const CONFETTI_PARTICLE_COUNT = 80;
-const CONFETTI_FALL_DISTANCE = Math.max(SCREEN_HEIGHT * 0.75, 420);
+const CONFETTI_PARTICLE_COUNT = 240;
+const CONFETTI_FALL_DISTANCE = Math.max(SCREEN_HEIGHT * 1.1, 700);
 
 const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
 
@@ -777,6 +778,7 @@ function ConfettiPieceView({ piece }: { piece: ConfettiPiece }) {
       Animated.timing(progress, {
         toValue: 1,
         duration: piece.duration,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]);
@@ -815,8 +817,8 @@ function ConfettiPieceView({ piece }: { piece: ConfettiPiece }) {
             },
             {
               translateX: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, piece.drift],
+                inputRange: [0, 0.3, 0.7, 1],
+                outputRange: [0, piece.drift * 0.4, piece.drift * 0.75, piece.drift],
               }),
             },
             {
@@ -838,10 +840,10 @@ function ReviewConfettiOverlay({ visible }: { visible: boolean }) {
       Array.from({ length: CONFETTI_PARTICLE_COUNT }, (_, index) => ({
         key: index,
         left: Math.random() * SCREEN_WIDTH,
-        delay: Math.random() * 260,
-        duration: 900 + Math.random() * 650,
-        drift: (Math.random() - 0.5) * 120,
-        size: 5 + Math.round(Math.random() * 8),
+        delay: Math.random() * 600,
+        duration: 1000 + Math.random() * 900,
+        drift: (Math.random() - 0.5) * 180,
+        size: 5 + Math.round(Math.random() * 10),
         rotate: 220 + Math.round(Math.random() * 360),
         color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
         shape: (['square', 'circle', 'rect'] as const)[Math.floor(Math.random() * 3)],

@@ -1,3 +1,12 @@
+import { notifyManager } from '@tanstack/react-query';
+import { act } from '@testing-library/react-native';
+
+// Wrap every React Query notification in act() so state updates are
+// tracked by React's test renderer, eliminating "not wrapped in act" warnings.
+notifyManager.setNotifyFunction((fn) => {
+  act(fn);
+});
+
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),
   notificationAsync: jest.fn(),

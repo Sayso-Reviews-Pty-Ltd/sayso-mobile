@@ -8,10 +8,10 @@ const config: Config = {
   ],
   modulePathIgnorePatterns: ['<rootDir>/.claude/worktrees'],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@maplibre|@sayso/contracts))',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@maplibre))',
   ],
   moduleNameMapper: {
-    '^@sayso/contracts$': '<rootDir>/../../sayso_web/packages/contracts/src/index.ts',
+    '^@sayso/contracts$': '<rootDir>/src/contracts/index.ts',
   },
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   collectCoverageFrom: [

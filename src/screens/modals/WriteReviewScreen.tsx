@@ -1625,7 +1625,7 @@ export default function WriteReviewScreen() {
 
           {/* ── Submit — stagger delay 300ms */}
           <Animated.View style={[styles.submitWrap, { opacity: sectionAnims[5].opacity, transform: [{ translateY: sectionAnims[5].translateX }] }]}>
-            <Pressable onPress={handleSubmit} disabled={!isFormValid} style={{ width: '100%' }}>
+            <Pressable testID="submit-review-btn" onPress={handleSubmit} disabled={!isFormValid} style={{ width: '100%' }}>
               {isFormValid ? (
                 <LinearGradient colors={[C.coral, 'rgba(114,47,55,0.90)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtn}>
                   <Text style={styles.submitText}>

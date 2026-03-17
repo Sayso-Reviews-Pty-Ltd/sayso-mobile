@@ -11,6 +11,7 @@
     "web": "set \"EXPO_NO_DEPENDENCY_VALIDATION=1\" && expo start --web",
     "type-check": "tsc --noEmit",
     "test": "jest",
+    "test:ci": "jest --ci --runInBand",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
@@ -21,7 +22,6 @@
     "@maplibre/maplibre-react-native": "^10.4.2",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/native": "^7.0.14",
-    "@sayso/contracts": "file:../../sayso_web/packages/contracts",
     "@supabase/supabase-js": "^2.75.0",
     "@tanstack/react-query": "^5.64.2",
     "@types/jest": "29.5.14",
@@ -46,6 +46,7 @@
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "expo-web-browser": "~15.0.10",
+    "jail-monkey": "^2.8.5",
     "jest": "~29.7.0",
     "jest-expo": "~54.0.17",
     "react": "^19.1.0",
@@ -55,6 +56,7 @@
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-ssl-public-key-pinning": "^1.2.6",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "^0.21.2"
   },

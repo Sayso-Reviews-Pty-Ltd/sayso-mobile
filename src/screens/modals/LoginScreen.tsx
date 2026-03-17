@@ -499,7 +499,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                   ) : null}
 
                   {isRegister ? (
-                    <Pressable style={styles.consentRow} onPress={() => setConsent((v) => !v)}>
+                    <Pressable testID="consent-toggle" style={styles.consentRow} onPress={() => setConsent((v) => !v)}>
                       <View style={[styles.checkbox, consent ? styles.checkboxChecked : null]}>
                         {consent ? <Ionicons name="checkmark-outline" size={12} color={C.white} /> : null}
                       </View>

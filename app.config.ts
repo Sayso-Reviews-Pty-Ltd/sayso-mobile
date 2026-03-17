@@ -80,7 +80,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   extra: {
     eas: {
-      projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? '',
+      projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? '55f9bff5-c737-4930-95c9-ed92a3c216d6',
     },
   },
 });

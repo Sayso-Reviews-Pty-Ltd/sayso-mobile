@@ -5,6 +5,8 @@ import { apiFetch } from '../../lib/api';
 import {
   useNotificationsList,
   useMarkAllRead,
+  useMarkOneRead,
+  useDismissNotification,
 } from '../../hooks/useNotificationsList';
 import {
   createTestQueryClient,
@@ -107,6 +109,98 @@ describe('useMarkAllRead', () => {
 
     await act(async () => {
       await result.current.mutateAsync();
+    });
+
+    expect(queryClient.getQueryState(['notifications-list', 30])?.isInvalidated).toBe(true);
+  });
+});
+
+describe('useMarkOneRead', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('calls POST /api/notifications/user/{id}/mark-read', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
+    const { result } = renderHook(() => useMarkOneRead(), { wrapper });
+
+    mockApiFetch.mockResolvedValueOnce({ ok: true });
+
+    await act(async () => {
+      await result.current.mutateAsync('notif-42');
+    });
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/api/notifications/user/notif-42/mark-read',
+      { method: 'POST' }
+    );
+  });
+
+  it('invalidates notifications-list query on success', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: Infinity },
+        mutations: { retry: false },
+      },
+    });
+    queryClient.setQueryData(['notifications-list', 30], { notifications: [] });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
+    const { result } = renderHook(() => useMarkOneRead(), { wrapper });
+
+    mockApiFetch.mockResolvedValueOnce({ ok: true });
+
+    await act(async () => {
+      await result.current.mutateAsync('notif-42');
+    });
+
+    expect(queryClient.getQueryState(['notifications-list', 30])?.isInvalidated).toBe(true);
+  });
+});
+
+describe('useDismissNotification', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('calls DELETE /api/notifications/user/{id}', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
+    const { result } = renderHook(() => useDismissNotification(), { wrapper });
+
+    mockApiFetch.mockResolvedValueOnce(null);
+
+    await act(async () => {
+      await result.current.mutateAsync('notif-99');
+    });
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/api/notifications/user/notif-99',
+      { method: 'DELETE' }
+    );
+  });
+
+  it('invalidates notifications-list query on success', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: Infinity },
+        mutations: { retry: false },
+      },
+    });
+    queryClient.setQueryData(['notifications-list', 30], { notifications: [] });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
+    const { result } = renderHook(() => useDismissNotification(), { wrapper });
+
+    mockApiFetch.mockResolvedValueOnce(null);
+
+    await act(async () => {
+      await result.current.mutateAsync('notif-99');
     });
 
     expect(queryClient.getQueryState(['notifications-list', 30])?.isInvalidated).toBe(true);

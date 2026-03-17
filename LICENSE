@@ -1,8 +1,151 @@
-Copyright (c) 2026 Sayso Reviews (Pty) Ltd. All rights reserved.
+# SAYSO PROPRIETARY SOFTWARE LICENSE
 
-This software and its source code are proprietary and confidential.
-Unauthorized copying, distribution, modification, or use of this software,
-in whole or in part, is strictly prohibited without the prior written
-permission of Sayso Reviews (Pty) Ltd.
+**Copyright (c) 2024–2026 Sayso. All Rights Reserved.**
 
-For licensing inquiries, contact: legal@sayso.co.za
+---
+
+> **PROPRIETARY AND CONFIDENTIAL**
+>
+> This software, including all source code, object code, documentation, design assets,
+> algorithms, data models, business logic, and associated materials (collectively, the
+> "Software"), is the exclusive proprietary property of Sayso ("the Company") and is
+> protected by copyright law, trade secret law, and other applicable intellectual
+> property laws and treaties worldwide.
+
+---
+
+## 1. Grant of Rights
+
+No rights, licenses, or permissions are granted by this document, express or implied, to
+any person or entity other than authorized employees, contractors, and agents of the
+Company who have executed a written confidentiality agreement with the Company and have
+been explicitly authorized to access, use, or modify the Software solely for the internal
+business purposes of the Company.
+
+---
+
+## 2. Restrictions
+
+Without the prior written consent of the Company, no person or entity may:
+
+- **(a)** Copy, reproduce, or duplicate the Software or any portion thereof, in whole or
+  in part, by any means or in any medium;
+
+- **(b)** Modify, adapt, translate, reverse engineer, decompile, disassemble, or create
+  derivative works based on the Software or any portion thereof;
+
+- **(c)** Distribute, sublicense, sell, resell, transfer, assign, or otherwise make
+  available the Software or any portion thereof to any third party;
+
+- **(d)** Use the Software to build, train, or improve any competing product or service,
+  including but not limited to business discovery, local search, review, or recommendation
+  platforms;
+
+- **(e)** Remove, alter, or obscure any proprietary notices, labels, or marks on the
+  Software, including this license and any copyright, trademark, or trade secret notices;
+
+- **(f)** Use the Software to process or store data in violation of any applicable law,
+  regulation, or third-party rights;
+
+- **(g)** Access the Software by means of automated tools, bots, scrapers, or similar
+  mechanisms other than as expressly authorized by the Company;
+
+- **(h)** Disclose, publish, or otherwise make the Software or any information derived
+  from it available to any third party.
+
+---
+
+## 3. Ownership
+
+The Software, and all intellectual property rights therein, are and shall remain the sole
+and exclusive property of the Company. Nothing in this license shall be construed to grant
+any person or entity any ownership interest in the Software or any intellectual property
+of the Company.
+
+Any contributions, modifications, or improvements to the Software made by authorized
+personnel during the course of their engagement with the Company shall be considered works
+made for hire and shall vest exclusively in the Company. To the extent any such
+contributions are not deemed works made for hire under applicable law, the contributor
+hereby irrevocably assigns all right, title, and interest therein to the Company.
+
+---
+
+## 4. Confidentiality
+
+The Software constitutes confidential and proprietary information of the Company.
+Authorized recipients must:
+
+- **(a)** Maintain the confidentiality of the Software using at least the same degree of
+  care used to protect their own confidential information, but in no event less than
+  reasonable care;
+
+- **(b)** Use the Software only as expressly authorized under this license;
+
+- **(c)** Promptly notify the Company of any actual or suspected unauthorized access, use,
+  or disclosure of the Software.
+
+---
+
+## 5. Disclaimer of Warranties
+
+THE SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, NON-INFRINGEMENT, OR TITLE. THE COMPANY DOES NOT WARRANT THAT THE SOFTWARE WILL
+MEET ANY PARTICULAR REQUIREMENTS OR THAT OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED
+OR ERROR-FREE.
+
+---
+
+## 6. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE COMPANY BE
+LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE
+DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, GOODWILL, OR BUSINESS
+INTERRUPTION, HOWEVER CAUSED AND UNDER ANY THEORY OF LIABILITY, ARISING OUT OF OR RELATED
+TO THE SOFTWARE OR THIS LICENSE, EVEN IF THE COMPANY HAS BEEN ADVISED OF THE POSSIBILITY
+OF SUCH DAMAGES.
+
+---
+
+## 7. Enforcement
+
+Any unauthorized use, reproduction, distribution, or disclosure of the Software may result
+in severe civil and criminal penalties and will be prosecuted to the maximum extent
+possible under applicable law. The Company reserves the right to seek all available legal
+and equitable remedies, including injunctive relief, in the event of any actual or
+threatened violation of this license.
+
+---
+
+## 8. Governing Law
+
+This license shall be governed by and construed in accordance with the laws of the
+Republic of South Africa, without regard to its conflict of law provisions. Any dispute
+arising out of or relating to this license shall be subject to the exclusive jurisdiction
+of the courts of South Africa.
+
+---
+
+## 9. Severability
+
+If any provision of this license is found to be invalid, illegal, or unenforceable, the
+remaining provisions shall continue in full force and effect. The invalid or unenforceable
+provision shall be modified to the minimum extent necessary to make it valid and
+enforceable while preserving the original intent of the parties.
+
+---
+
+## 10. Entire Agreement
+
+This license constitutes the entire agreement between the parties with respect to the
+subject matter hereof and supersedes all prior and contemporaneous agreements,
+understandings, negotiations, and discussions, whether oral or written, relating to the
+Software.
+
+---
+
+For licensing inquiries or permissions, contact: **info@sayso.co.za**
+
+---
+
+**© 2024–2026 Sayso. ALL RIGHTS RESERVED.**

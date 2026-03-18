@@ -751,7 +751,7 @@ type ConfettiPiece = {
   shape: 'square' | 'circle' | 'rect';
 };
 
-type FeedbackVariant = 'success' | 'error';
+type FeedbackVariant = 'success' | 'warning' | 'error';
 
 type FeedbackNotice = {
   id: number;
@@ -1373,6 +1373,7 @@ export default function WriteReviewScreen() {
     }
     setFormError(null);
     setSubmitting(true);
+    let partialSuccessWarningMessage: string | null = null;
 
     try {
       if (isEditMode && reviewId) {
@@ -1416,9 +1417,15 @@ export default function WriteReviewScreen() {
         );
         if (result.success === false) {
           const message = getErrorMessage(result);
-          setFormError(message);
-          showSubmissionFeedback('error', 'Review submission failed', message);
-          return;
+          const isImageUploadPartialSuccess =
+            result.code === 'IMAGE_UPLOAD_FAILED' || message === REVIEW_ERROR_MESSAGES.IMAGE_UPLOAD_FAILED;
+          if (isImageUploadPartialSuccess) {
+            partialSuccessWarningMessage = REVIEW_ERROR_MESSAGES.IMAGE_UPLOAD_FAILED;
+          } else {
+            setFormError(message);
+            showSubmissionFeedback('error', 'Review submission failed', message);
+            return;
+          }
         }
       } else {
         const formData = new FormData();
@@ -1442,9 +1449,15 @@ export default function WriteReviewScreen() {
         );
         if (result.success === false) {
           const message = getErrorMessage(result);
-          setFormError(message);
-          showSubmissionFeedback('error', 'Review submission failed', message);
-          return;
+          const isImageUploadPartialSuccess =
+            result.code === 'IMAGE_UPLOAD_FAILED' || message === REVIEW_ERROR_MESSAGES.IMAGE_UPLOAD_FAILED;
+          if (isImageUploadPartialSuccess) {
+            partialSuccessWarningMessage = REVIEW_ERROR_MESSAGES.IMAGE_UPLOAD_FAILED;
+          } else {
+            setFormError(message);
+            showSubmissionFeedback('error', 'Review submission failed', message);
+            return;
+          }
         }
       }
 
@@ -1462,50 +1475,47 @@ export default function WriteReviewScreen() {
       qc.invalidateQueries({ queryKey: ['profile'] });
       qc.invalidateQueries({ queryKey: ['user-stats'] });
 
-      const prevBadges = qc.getQueryData<UserBadgeDto[]>(['user-badges', user?.id]) ?? [];
-      const prevEarnedIds = new Set(prevBadges.map((b) => b.id));
-
       qc.invalidateQueries({ queryKey: ['user-badges'] });
       qc.invalidateQueries({ queryKey: ['user-badges-all'] });
 
-      let newlyEarned: UserBadgeDto[] = [];
-      try {
-        await qc.refetchQueries({ queryKey: ['user-badges', user?.id] });
-        const freshBadges = qc.getQueryData<UserBadgeDto[]>(['user-badges', user?.id]) ?? [];
-        newlyEarned = freshBadges.filter((b) => !prevEarnedIds.has(b.id));
-      } catch {
-        // Badge refetch failures must never surface as a review submission error
-      }
-
-      const badgeMessage =
-        newlyEarned.length === 1
-          ? `\n\nYou earned the "${newlyEarned[0].name}" badge!`
-          : newlyEarned.length > 1
-            ? `\n\nYou earned ${newlyEarned.length} new badges!`
-            : '';
-      if (__DEV__ && badgeMessage) {
-        console.info('[WriteReview] badge unlock', badgeMessage.replace(/\n+/g, ' ').trim());
-      }
-
+      // Show success feedback immediately — do not block on badge check
       const successTitle = isEditMode ? 'Review updated' : 'Review submitted';
       const successMessage = isEditMode
         ? 'Your review changes were saved.'
-        : `Thanks for sharing your experience.${
-            newlyEarned.length === 1
-              ? ` Badge earned: ${newlyEarned[0].name}.`
-              : newlyEarned.length > 1
-                ? ` ${newlyEarned.length} new badges earned.`
-                : ''
-          }`;
-      showSubmissionFeedback('success', successTitle, successMessage);
-
-      try {
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch {
-        // Non-blocking celebratory haptic.
+        : 'Thanks for sharing your experience.';
+      if (partialSuccessWarningMessage) {
+        showSubmissionFeedback('warning', 'Review submitted', partialSuccessWarningMessage);
+      } else {
+        showSubmissionFeedback('success', successTitle, successMessage);
       }
 
-      setShowSuccessConfetti(true);
+      if (!partialSuccessWarningMessage) {
+        try {
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch {
+          // Non-blocking celebratory haptic.
+        }
+      }
+
+      if (!isEditMode && !partialSuccessWarningMessage) {
+        setShowSuccessConfetti(true);
+      }
+
+      // Award badges in the background — result surfaces via push notification
+      if (user?.id && !isEditMode) {
+        apiFetch<{ ok?: boolean; newBadges?: UserBadgeDto[] }>(
+          '/api/badges/check-and-award',
+          { method: 'POST', timeoutMs: 10_000 }
+        )
+          .then((badgeResult) => {
+            if ((badgeResult?.newBadges ?? []).length > 0) {
+              void qc.refetchQueries({ queryKey: ['user-badges', user!.id] });
+            }
+          })
+          .catch(() => {
+            // Badge check failures must never surface as a review submission error
+          });
+      }
 
       const redirectBusinessId = (() => {
         if (isBusinessReview) {
@@ -1546,7 +1556,7 @@ export default function WriteReviewScreen() {
         successRedirectTimerRef.current = null;
         setShowSuccessConfetti(false);
         router.replace(redirectTarget as never);
-      }, reducedMotion ? 0 : 1100);
+      }, reducedMotion ? 2000 : 1100);
     } catch (err) {
       if (err instanceof ApiError) {
         const details =
@@ -2032,13 +2042,29 @@ export default function WriteReviewScreen() {
           pointerEvents="none"
           style={[
             styles.reviewStatusNotice,
-            notificationNotice.variant === 'success' ? styles.reviewStatusNoticeSuccess : styles.reviewStatusNoticeError,
+            notificationNotice.variant === 'success'
+              ? styles.reviewStatusNoticeSuccess
+              : notificationNotice.variant === 'warning'
+                ? styles.reviewStatusNoticeWarning
+                : styles.reviewStatusNoticeError,
           ]}
         >
           <Ionicons
-            name={notificationNotice.variant === 'success' ? 'checkmark-circle-outline' : 'alert-circle-outline'}
+            name={
+              notificationNotice.variant === 'success'
+                ? 'checkmark-circle-outline'
+                : notificationNotice.variant === 'warning'
+                  ? 'warning-outline'
+                  : 'alert-circle-outline'
+            }
             size={16}
-            color={notificationNotice.variant === 'success' ? '#1F5133' : '#722F37'}
+            color={
+              notificationNotice.variant === 'success'
+                ? '#1F5133'
+                : notificationNotice.variant === 'warning'
+                  ? '#6B3F1D'
+                  : '#722F37'
+            }
           />
           <Text style={styles.reviewStatusNoticeTitle}>{notificationNotice.title}</Text>
         </View>
@@ -2048,13 +2074,21 @@ export default function WriteReviewScreen() {
           pointerEvents="none"
           style={[
             styles.reviewStatusToast,
-            toastNotice.variant === 'success' ? styles.reviewStatusToastSuccess : styles.reviewStatusToastError,
+            toastNotice.variant === 'success'
+              ? styles.reviewStatusToastSuccess
+              : toastNotice.variant === 'warning'
+                ? styles.reviewStatusToastWarning
+                : styles.reviewStatusToastError,
           ]}
         >
           <Text
             style={[
               styles.reviewStatusToastTitle,
-              toastNotice.variant === 'success' ? styles.reviewStatusToastTitleSuccess : styles.reviewStatusToastTitleError,
+              toastNotice.variant === 'success'
+                ? styles.reviewStatusToastTitleSuccess
+                : toastNotice.variant === 'warning'
+                  ? styles.reviewStatusToastTitleWarning
+                  : styles.reviewStatusToastTitleError,
             ]}
           >
             {toastNotice.title}
@@ -2062,7 +2096,11 @@ export default function WriteReviewScreen() {
           <Text
             style={[
               styles.reviewStatusToastMessage,
-              toastNotice.variant === 'success' ? styles.reviewStatusToastMessageSuccess : styles.reviewStatusToastMessageError,
+              toastNotice.variant === 'success'
+                ? styles.reviewStatusToastMessageSuccess
+                : toastNotice.variant === 'warning'
+                  ? styles.reviewStatusToastMessageWarning
+                  : styles.reviewStatusToastMessageError,
             ]}
           >
             {toastNotice.message}
@@ -2102,6 +2140,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(157,171,155,0.96)',
     borderColor: 'rgba(31,81,51,0.25)',
   },
+  reviewStatusNoticeWarning: {
+    backgroundColor: 'rgba(255,209,102,0.95)',
+    borderColor: 'rgba(212,145,92,0.34)',
+  },
   reviewStatusNoticeError: {
     backgroundColor: 'rgba(229,224,229,0.98)',
     borderColor: 'rgba(114,47,55,0.26)',
@@ -2127,6 +2169,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(157,171,155,0.98)',
     borderColor: 'rgba(31,81,51,0.30)',
   },
+  reviewStatusToastWarning: {
+    backgroundColor: 'rgba(255,209,102,0.96)',
+    borderColor: 'rgba(212,145,92,0.34)',
+  },
   reviewStatusToastError: {
     backgroundColor: 'rgba(114,47,55,0.95)',
     borderColor: 'rgba(255,255,255,0.16)',
@@ -2138,6 +2184,9 @@ const styles = StyleSheet.create({
   reviewStatusToastTitleSuccess: {
     color: '#1F5133',
   },
+  reviewStatusToastTitleWarning: {
+    color: '#6B3F1D',
+  },
   reviewStatusToastTitleError: {
     color: '#FFFFFF',
   },
@@ -2146,6 +2195,9 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   reviewStatusToastMessageSuccess: {
+    color: 'rgba(45,45,45,0.86)',
+  },
+  reviewStatusToastMessageWarning: {
     color: 'rgba(45,45,45,0.86)',
   },
   reviewStatusToastMessageError: {

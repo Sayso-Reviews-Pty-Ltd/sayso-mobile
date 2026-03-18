@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
+import { apiFetch } from '../../lib/api';
 import { useAuthSession } from '../../hooks/useSession';
 import { routes } from '../../navigation/routes';
 import { Text } from '../../components/Typography';
@@ -95,6 +96,10 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<'username' | 'email' | 'password' | null>(null);
+  const [usernameAvailable, setUsernameAvailable] = useState<null | boolean>(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameCheckFailed, setUsernameCheckFailed] = useState(false);
+  const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tabAnim = useRef(new Animated.Value(defaultMode === 'login' ? 1 : 0)).current;
   const formOpacity = useRef(new Animated.Value(1)).current;
@@ -128,6 +133,18 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
     ]).start(() => {
       setAuthMode(mode);
       setError('');
+      setUsernameTouched(false);
+      setEmailTouched(false);
+      setPasswordTouched(false);
+      setUsername('');
+      setEmail('');
+      setPassword('');
+      setUsernameAvailable(null);
+      setUsernameChecking(false);
+      if (usernameDebounceRef.current) {
+        clearTimeout(usernameDebounceRef.current);
+        usernameDebounceRef.current = null;
+      }
       formTranslateY.setValue(GRID);
       titleTranslateY.setValue(GRID * 0.5);
 
@@ -184,6 +201,45 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
     ]).start();
   }, [cardEntranceOpacity, cardEntranceY, headerEntranceOpacity, headerEntranceY, primaryFocusScale]);
 
+  useEffect(() => {
+    if (authMode !== 'register') return;
+    const clientError = validateUsername(username);
+    if (clientError) {
+      setUsernameAvailable(null);
+      setUsernameChecking(false);
+      setUsernameCheckFailed(false);
+      if (usernameDebounceRef.current) {
+        clearTimeout(usernameDebounceRef.current);
+        usernameDebounceRef.current = null;
+      }
+      return;
+    }
+    setUsernameChecking(true);
+    if (usernameDebounceRef.current) {
+      clearTimeout(usernameDebounceRef.current);
+    }
+    usernameDebounceRef.current = setTimeout(async () => {
+      try {
+        const result = await apiFetch<{ available: boolean }>(
+          `/api/user/check-username?username=${encodeURIComponent(username)}`
+        );
+        setUsernameAvailable(result.available);
+        setUsernameCheckFailed(false);
+      } catch {
+        setUsernameAvailable(null);
+        setUsernameCheckFailed(true);
+      } finally {
+        setUsernameChecking(false);
+      }
+    }, 300);
+    return () => {
+      if (usernameDebounceRef.current) {
+        clearTimeout(usernameDebounceRef.current);
+        usernameDebounceRef.current = null;
+      }
+    };
+  }, [username, authMode]);
+
   const isRegister = authMode === 'register';
 
   const usernameError = usernameTouched ? validateUsername(username) : '';
@@ -195,7 +251,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
 
   const isFormValid = isRegister
     ? !validateUsername(username) && !validateEmail(email) && pwScore >= 3 && consent
-    : email.length > 0 && password.length > 0;
+    : email.length > 0 && password.length >= 6;
 
   const handleBack = useCallback(() => {
     router.push(routes.onboarding() as never);
@@ -240,6 +296,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
+      setIsGoogleLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed.');
       setIsGoogleLoading(false);
@@ -384,6 +441,12 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                         />
                       </View>
                       {usernameError ? <Text style={styles.fieldError}>{usernameError}</Text> : null}
+                      {!usernameError && usernameAvailable === false ? (
+                        <Text style={styles.fieldError}>That username is already taken</Text>
+                      ) : null}
+                      {!usernameError && usernameCheckFailed ? (
+                        <Text style={styles.fieldError}>Couldn't verify username — you can still continue</Text>
+                      ) : null}
                     </View>
                   ) : null}
 
@@ -431,7 +494,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
 
                   <View style={styles.fieldWrap}>
                     <Text style={styles.fieldLabel}>Password</Text>
-                    <View style={[styles.inputRow, focusedField === 'password' ? styles.inputRowFocused : null]}>
+                    <View style={[styles.inputRow, focusedField === 'password' ? styles.inputRowFocused : null, !isRegister && passwordTouched && password.length === 0 ? styles.inputRowError : null]}>
                       <Ionicons
                         name={
                           !passwordHasState
@@ -490,6 +553,9 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                         </Text>
                       </View>
                     ) : null}
+                    {!isRegister && passwordTouched && password.length > 0 && password.length < 6 ? (
+                      <Text style={styles.fieldError}>Password must be at least 6 characters</Text>
+                    ) : null}
                   </View>
 
                   {!isRegister ? (
@@ -520,11 +586,11 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                     <Pressable
                       style={({ pressed }) => [
                         styles.submitBtn,
-                        (!isFormValid || isSubmitting) ? styles.submitBtnDisabled : null,
-                        pressed && isFormValid ? styles.submitBtnPressed : null,
+                        (!isFormValid || isSubmitting || usernameChecking) ? styles.submitBtnDisabled : null,
+                        pressed && isFormValid && !usernameChecking ? styles.submitBtnPressed : null,
                       ]}
                       onPress={handleSubmit}
-                      disabled={!isFormValid || isSubmitting}
+                      disabled={!isFormValid || isSubmitting || usernameChecking}
                     >
                       <LinearGradient
                         colors={[C.coral, 'rgba(114,47,55,0.8)']}
@@ -843,11 +909,6 @@ const styles = StyleSheet.create({
   submitBtn: {
     borderRadius: 999,
     overflow: 'hidden',
-    shadowColor: C.wine,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 14,
-    elevation: 6,
   },
   submitBtnGradient: {
     minHeight: GRID * 7,

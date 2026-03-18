@@ -67,6 +67,14 @@ export default function ResetPasswordScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
+
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(GRID * 2)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
@@ -91,13 +99,26 @@ export default function ResetPasswordScreen() {
 
   useEffect(() => {
     let cancelled = false;
+    const timeoutGuardRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
 
     async function checkSession() {
       try {
         if (code) {
           // Deep-link from password reset email — exchange the PKCE code for a recovery session
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeError) throw exchangeError;
+          await new Promise<void>((resolve, reject) => {
+            timeoutGuardRef.current = setTimeout(() => {
+              reject(new Error('The link timed out. Please request a new one.'));
+            }, 10000);
+
+            supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
+              if (timeoutGuardRef.current) {
+                clearTimeout(timeoutGuardRef.current);
+                timeoutGuardRef.current = null;
+              }
+              if (exchangeError) reject(exchangeError);
+              else resolve();
+            }).catch(reject);
+          });
         }
 
         const { data, error: sessionError } = await supabase.auth.getSession();
@@ -111,8 +132,13 @@ export default function ResetPasswordScreen() {
           }
           runEntrance();
         }
-      } catch {
+      } catch (err) {
+        if (timeoutGuardRef.current) {
+          clearTimeout(timeoutGuardRef.current);
+          timeoutGuardRef.current = null;
+        }
         if (!cancelled) {
+          setError(err instanceof Error ? err.message : '');
           setScreenState('invalid');
           runEntrance();
         }
@@ -120,7 +146,13 @@ export default function ResetPasswordScreen() {
     }
 
     checkSession();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (timeoutGuardRef.current) {
+        clearTimeout(timeoutGuardRef.current);
+        timeoutGuardRef.current = null;
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runEntrance]);
 
@@ -146,7 +178,7 @@ export default function ResetPasswordScreen() {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
       setScreenState('success');
-      setTimeout(() => {
+      redirectTimerRef.current = setTimeout(() => {
         router.replace(routes.home() as never);
       }, 2000);
     } catch (err) {
@@ -157,7 +189,7 @@ export default function ResetPasswordScreen() {
   }, [isFormValid, isSubmitting, password, router]);
 
   const getPasswordIcon = () => {
-    if (!password.length) return focusedField === 'password' ? 'checkmark-circle' : 'lock-closed';
+    if (!password.length) return 'lock-closed';
     if (pwScore >= 3) return 'checkmark-circle';
     return 'alert-circle';
   };
@@ -173,7 +205,17 @@ export default function ResetPasswordScreen() {
     <View style={[styles.root, { backgroundColor: C.page }]}>
       {screenState !== 'checking' && (
         <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
-          <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
+          <Pressable
+            style={styles.backBtn}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace(routes.home() as never);
+              }
+            }}
+            hitSlop={12}
+          >
             <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
           </Pressable>
         </View>

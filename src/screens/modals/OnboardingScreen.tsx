@@ -9,6 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { routes } from '../../navigation/routes';
+import { useAuthSession } from '../../hooks/useSession';
 import { Text } from '../../components/Typography';
 import { NAVBAR_BG_COLOR } from '../../styles/colors';
 
@@ -32,6 +33,14 @@ const C = {
 export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuthSession();
+  const isNavigatingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (user) {
+      router.replace(routes.home() as never);
+    }
+  }, [user, router]);
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(GRID * 2)).current;
@@ -107,7 +116,12 @@ export default function OnboardingScreen() {
   };
 
   const handleLogIn = () => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
     router.push(routes.login() as never);
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 300);
   };
 
   return (

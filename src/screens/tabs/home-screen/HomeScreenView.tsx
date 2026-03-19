@@ -369,7 +369,7 @@ export const HomeScreenView = memo(HomeScreenViewComponent);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: homeTokens.offWhite,
+    backgroundColor: homeTokens.coral,
   },
   flexOne: {
     flex: 1,

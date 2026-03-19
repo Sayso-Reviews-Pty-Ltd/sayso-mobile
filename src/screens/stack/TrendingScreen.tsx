@@ -27,6 +27,7 @@ import { businessDetailColors } from '../../components/business-detail/styles';
 import { TrendingScreenView } from './trending-screen/TrendingScreenView';
 import { styles } from './trending-screen/trendingStyles';
 import { HomeSearchBar } from '../tabs/home/HomeSearchBar';
+import { NAVBAR_BG_COLOR } from '../../styles/colors';
 
 const VISIBLE_CHUNK = 12;
 const BACK_TO_TOP_THRESHOLD = 900;
@@ -39,7 +40,6 @@ type FilterState = {
   radiusKm: number | null;
 };
 
-const NAVBAR_BG = '#722F37';
 const SCROLL_COLOR_THRESHOLD = 60;
 
 export default function TrendingScreen() {
@@ -233,7 +233,7 @@ export default function TrendingScreen() {
       headerCollapsedRef.current = collapsed;
       navigation.setOptions({
         headerStyle: {
-          backgroundColor: NAVBAR_BG,
+          backgroundColor: NAVBAR_BG_COLOR,
         },
         headerTintColor: '#FFFFFF',
       });

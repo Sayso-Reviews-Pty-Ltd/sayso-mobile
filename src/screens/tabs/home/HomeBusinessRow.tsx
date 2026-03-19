@@ -1,4 +1,5 @@
-import { FlatList, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useRef } from 'react';
+import { Animated, FlatList, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { BusinessListItemDto, FeaturedBusinessDto } from '@sayso/contracts';
 import { BusinessCard } from '../../../components/BusinessCard';
 import { Text } from '../../../components/Typography';
@@ -6,15 +7,62 @@ import { SkeletonCard } from '../../../components/SkeletonCard';
 import { homeTokens } from './HomeTokens';
 import { CARD_RADIUS } from '../../../styles/radii';
 import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
+import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
 const GAP = 14;
 const SKELETONS = [0, 1, 2];
+
+// Scale and opacity targets for off-center cards.
+// The active card is 1.0 / 1.0; neighbours ease toward these values.
+const SCALE_INACTIVE = 0.92;
+const OPACITY_INACTIVE = 0.7;
+
 const FLATLIST_PERF = {
   initialNumToRender: 2,
   maxToRenderPerBatch: 2,
   windowSize: 5,
   removeClippedSubviews: Platform.OS === 'android',
 } as const;
+
+// ─── Animated card wrapper ────────────────────────────────────────────────────
+// Interpolates scale and opacity from a shared scrollX value so that the
+// active (centred) card is full-size and the neighbours recede slightly.
+// All transforms run via useNativeDriver — zero JS-thread involvement during scroll.
+
+type AnimatedCardProps = {
+  scrollX: Animated.Value;
+  index: number;
+  snapInterval: number;
+  children: React.ReactNode;
+};
+
+function AnimatedCard({ scrollX, index, snapInterval, children }: AnimatedCardProps) {
+  const inputRange = [
+    (index - 1) * snapInterval,
+    index * snapInterval,
+    (index + 1) * snapInterval,
+  ];
+
+  const scale = scrollX.interpolate({
+    inputRange,
+    outputRange: [SCALE_INACTIVE, 1, SCALE_INACTIVE],
+    extrapolate: 'clamp',
+  });
+
+  const opacity = scrollX.interpolate({
+    inputRange,
+    outputRange: [OPACITY_INACTIVE, 1, OPACITY_INACTIVE],
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <Animated.View style={{ transform: [{ scale }], opacity }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// ─── Row ─────────────────────────────────────────────────────────────────────
 
 type Props<T extends BusinessListItemDto | FeaturedBusinessDto> = {
   items: T[];
@@ -37,6 +85,13 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
   const cardWidth = windowWidth - homeTokens.pageGutter - GAP - 40;
   const snapInterval = cardWidth + GAP;
   const resolvedPaddingBottom = Math.max(contentPaddingBottom, 12);
+  const reducedMotion = useReducedMotion();
+
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const onScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    { useNativeDriver: true }
+  );
 
   if (loading) {
     return (
@@ -90,9 +145,15 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
       horizontal
       data={items}
       keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <BusinessCard business={item} style={{ width: cardWidth }} />
-      )}
+      renderItem={({ item, index }) =>
+        reducedMotion ? (
+          <BusinessCard business={item} style={{ width: cardWidth }} />
+        ) : (
+          <AnimatedCard scrollX={scrollX} index={index} snapInterval={snapInterval}>
+            <BusinessCard business={item} style={{ width: cardWidth }} />
+          </AnimatedCard>
+        )
+      }
       ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
       getItemLayout={(_, index) => ({
         length: cardWidth,
@@ -104,6 +165,8 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
       snapToAlignment="start"
       decelerationRate="fast"
       disableIntervalMomentum
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       style={styles.row}
       contentContainerStyle={[styles.content, { paddingBottom: resolvedPaddingBottom }]}
       {...FLATLIST_PERF}

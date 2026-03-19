@@ -7,9 +7,10 @@ import {
   NativeSyntheticEvent,
   ScrollView,
   Share,
+  StatusBar,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '../../components/EmptyState';
 import { Text } from '../../components/Typography';
@@ -57,7 +58,8 @@ type Props = {
 };
 
 export default function BusinessScreen({ initialTab }: Props) {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
+  const { id, newReviewId } = useLocalSearchParams<{ id: string; newReviewId?: string }>();
   const router = useRouter();
   const { user } = useAuthSession();
   const savedQuery = useSavedBusinesses();
@@ -207,20 +209,8 @@ export default function BusinessScreen({ initialTab }: Props) {
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollTopVisibleRef = useRef(false);
   const [showScrollTopButton, setShowScrollTopButton] = useState(false);
-  const [showDeferredSections, setShowDeferredSections] = useState(false);
-
-  useEffect(() => {
-    setShowDeferredSections(false);
-    const task = InteractionManager.runAfterInteractions(() => {
-      requestAnimationFrame(() => {
-        setShowDeferredSections(true);
-      });
-    });
-
-    return () => {
-      task.cancel();
-    };
-  }, [business?.id]);
+  const reviewsSectionYRef = useRef(0);
+  const hasScrolledToReviewsRef = useRef(false);
 
   const setScrollTopVisible = useCallback((visible: boolean) => {
     if (scrollTopVisibleRef.current === visible) return;
@@ -246,10 +236,28 @@ export default function BusinessScreen({ initialTab }: Props) {
     [setScrollTopVisible]
   );
 
+  // Scroll to the reviews section once after a fresh review submission.
+  // Uses InteractionManager so the scroll fires after the layout wave settles
+  // (including async sections above the reviews). Clears the URL param
+  // afterward to prevent re-triggering on back-navigation.
+  useEffect(() => {
+    if (!newReviewId || isLoading || hasScrolledToReviewsRef.current) return;
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (reviewsSectionYRef.current > 0) {
+        hasScrolledToReviewsRef.current = true;
+        scrollRef.current?.scrollTo({ y: Math.max(0, reviewsSectionYRef.current - 16), animated: true });
+        router.setParams({ newReviewId: undefined } as never);
+      }
+    });
+    return () => handle.cancel();
+  }, [newReviewId, isLoading, router]);
+
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         <Stack.Screen options={{ headerShown: false }} />
+        <StatusBar barStyle="light-content" backgroundColor={businessDetailColors.coral} />
+        <View style={[styles.topChrome, { height: insets.top }]} />
         <BusinessScreenSkeleton />
       </SafeAreaView>
     );
@@ -257,8 +265,10 @@ export default function BusinessScreen({ initialTab }: Props) {
 
   if (isError || !business) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         <Stack.Screen options={{ headerShown: false }} />
+        <StatusBar barStyle="light-content" backgroundColor={businessDetailColors.coral} />
+        <View style={[styles.topChrome, { height: insets.top }]} />
         <EmptyState
           icon="alert-circle"
           title="Business not found"
@@ -271,10 +281,12 @@ export default function BusinessScreen({ initialTab }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar barStyle="light-content" backgroundColor={businessDetailColors.coral} />
+      <View style={[styles.topChrome, { height: insets.top }]} />
 
-      <View style={[styles.stickyHeader, { backgroundColor: businessDetailColors.coral, elevation: 8, shadowOpacity: 0.12 }]}>
+      <View style={[styles.stickyHeader, { backgroundColor: businessDetailColors.coral }]}>
         <BusinessPageHeader
           onPressBack={handleBack}
           onPressNotifications={handleOpenNotifications}
@@ -328,82 +340,82 @@ export default function BusinessScreen({ initialTab }: Props) {
             />
           </TransitionItem>
 
-          {showDeferredSections ? (
-            <>
-              <TransitionItem variant="card" index={4} animate={false}>
-                <BusinessPhotoGrid businessName={business.name} photos={images} />
-              </TransitionItem>
+          <TransitionItem variant="card" index={4} animate={false}>
+            <BusinessPhotoGrid businessName={business.name} photos={images} />
+          </TransitionItem>
 
-              <TransitionItem variant="card" index={5} animate={false}>
-                <BusinessLocationCard
-                  name={business.name}
-                  address={business.address}
-                  location={business.location}
-                  latitude={business.lat}
-                  longitude={business.lng}
-                />
-              </TransitionItem>
+          <TransitionItem variant="card" index={5} animate={false}>
+            <BusinessLocationCard
+              name={business.name}
+              address={business.address}
+              location={business.location}
+              latitude={business.lat}
+              longitude={business.lng}
+            />
+          </TransitionItem>
 
-              <TransitionItem variant="card" index={6} animate={false}>
-                <BusinessContactInfoCard
-                  phone={business.phone}
-                  email={business.email}
-                  website={business.website}
-                  address={business.address}
-                  location={business.location}
-                />
-              </TransitionItem>
+          <TransitionItem variant="card" index={6} animate={false}>
+            <BusinessContactInfoCard
+              phone={business.phone}
+              email={business.email}
+              website={business.website}
+              address={business.address}
+              location={business.location}
+            />
+          </TransitionItem>
 
-              <TransitionItem variant="card" index={7} animate={false}>
-                <BusinessActionCard
-                  onPressLeaveReview={handleLeaveReview}
-                  onPressEditBusiness={() => router.push('/role-unsupported' as never)}
-                  isBusinessOwner={isBusinessOwner}
-                />
-              </TransitionItem>
+          <TransitionItem variant="card" index={7} animate={false}>
+            <BusinessActionCard
+              onPressLeaveReview={handleLeaveReview}
+              onPressEditBusiness={() => router.push('/role-unsupported' as never)}
+              isBusinessOwner={isBusinessOwner}
+            />
+          </TransitionItem>
 
-              <TransitionItem variant="card" index={8} animate={false}>
-                <PersonalizationInsightsCard
-                  business={business}
-                  onPressLogin={() => router.push(routes.onboarding() as never)}
-                />
-              </TransitionItem>
+          <TransitionItem variant="card" index={8} animate={false}>
+            <PersonalizationInsightsCard
+              business={business}
+              onPressLogin={() => router.push(routes.onboarding() as never)}
+            />
+          </TransitionItem>
 
-              <TransitionItem variant="card" index={9} animate={false}>
-                <BusinessPerformanceInsightsCard
-                  punctuality={business.stats?.percentiles?.punctuality}
-                  costEffectiveness={business.stats?.percentiles?.['cost-effectiveness']}
-                  friendliness={business.stats?.percentiles?.friendliness}
-                  trustworthiness={business.stats?.percentiles?.trustworthiness}
-                />
-              </TransitionItem>
+          <TransitionItem variant="card" index={9} animate={false}>
+            <BusinessPerformanceInsightsCard
+              punctuality={business.stats?.percentiles?.punctuality}
+              costEffectiveness={business.stats?.percentiles?.['cost-effectiveness']}
+              friendliness={business.stats?.percentiles?.friendliness}
+              trustworthiness={business.stats?.percentiles?.trustworthiness}
+            />
+          </TransitionItem>
 
-              <TransitionItem variant="card" index={10} animate={false}>
-                <BusinessContactCard
-                  businessId={business.id}
-                  businessName={business.name}
-                  phone={business.phone}
-                />
-              </TransitionItem>
-            </>
-          ) : null}
+          <TransitionItem variant="card" index={10} animate={false}>
+            <BusinessContactCard
+              businessId={business.id}
+              businessName={business.name}
+              phone={business.phone}
+            />
+          </TransitionItem>
         </View>
 
-        {showDeferredSections ? (
-          <>
-            <TransitionItem variant="card" index={11} animate={false}>
-              <BusinessOwnedEventsSection businessId={business.id} businessName={business.name} />
-            </TransitionItem>
+        <TransitionItem variant="card" index={11} animate={false}>
+          <BusinessOwnedEventsSection businessId={business.id} businessName={business.name} />
+        </TransitionItem>
 
-            <TransitionItem variant="card" index={12} animate={false}>
-              <BusinessReviewsSection businessId={business.id} onPressWriteReview={handleLeaveReview} />
-            </TransitionItem>
+        <View
+          onLayout={(e) => { reviewsSectionYRef.current = e.nativeEvent.layout.y; }}
+        >
+          <TransitionItem variant="card" index={12} animate={false}>
+            <BusinessReviewsSection
+              businessId={business.id}
+              onPressWriteReview={handleLeaveReview}
+              newReviewId={newReviewId}
+            />
+          </TransitionItem>
+        </View>
 
-            <TransitionItem variant="card" index={13} animate={false}>
-              <SimilarBusinessesSection businessId={business.id} />
-            </TransitionItem>
-          </>
-        ) : null}
+        <TransitionItem variant="card" index={13} animate={false}>
+          <SimilarBusinessesSection businessId={business.id} />
+        </TransitionItem>
 
         {initialTab === 'reviews' ? (
           <TransitionItem variant="card" index={14} animate={false}>

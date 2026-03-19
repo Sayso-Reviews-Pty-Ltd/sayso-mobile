@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -61,8 +62,8 @@ function passwordScore(pw: string): number {
 
 function validateUsername(u: string): string {
   if (!u) return 'Username is required';
-  if (u.length < 3) return 'At least 3 characters';
-  if (u.length > 20) return 'Max 20 characters';
+  if (u.length < 3) return 'Username must be at least 3 characters';
+  if (u.length > 20) return "Username can't exceed 20 characters";
   if (!/^[a-zA-Z0-9_]+$/.test(u)) return 'Letters, numbers and underscores only';
   return '';
 }
@@ -71,6 +72,19 @@ function validateEmail(e: string): string {
   if (!e) return 'Email is required';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return 'Enter a valid email';
   return '';
+}
+
+function getFriendlyAuthError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : '';
+  if (msg.includes('Invalid login credentials')) return 'Incorrect email or password.';
+  if (msg.includes('User already registered') || msg.includes('already been registered')) return 'An account with this email already exists.';
+  if (msg.includes('Email rate limit exceeded') || msg.includes('rate limit')) return 'Too many attempts. Please try again later.';
+  if (msg.includes('Email not confirmed')) return 'Please verify your email before signing in.';
+  if (msg.includes('Password should be at least')) return 'Your password is too short.';
+  if (msg.includes('Unable to validate email') || msg.includes('invalid format')) return 'Please enter a valid email address.';
+  if (msg.includes('Network request failed') || msg.includes('fetch')) return 'Connection error. Check your internet and try again.';
+  if (msg) return msg;
+  return 'Something went wrong. Please try again.';
 }
 
 const STRENGTH_LABELS = ['', 'Needs more characters', 'Good', 'Strong', 'Very strong'];
@@ -100,6 +114,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
   const [usernameChecking, setUsernameChecking] = useState(false);
   const [usernameCheckFailed, setUsernameCheckFailed] = useState(false);
   const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const passwordInputRef = useRef<TextInput>(null);
 
   const tabAnim = useRef(new Animated.Value(defaultMode === 'login' ? 1 : 0)).current;
   const formOpacity = useRef(new Animated.Value(1)).current;
@@ -131,6 +146,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
       Animated.timing(titleOpacity, { toValue: 0, duration: 110, useNativeDriver: true }),
       Animated.timing(titleTranslateY, { toValue: -(GRID * 0.5), duration: 110, useNativeDriver: true }),
     ]).start(() => {
+      Keyboard.dismiss();
       setAuthMode(mode);
       setError('');
       setUsernameTouched(false);
@@ -285,7 +301,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
 
       await signInWithPassword(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setError(getFriendlyAuthError(err));
       setIsSubmitting(false);
     }
   }, [email, isFormValid, isRegister, isSubmitting, password, router, signInWithPassword, username]);
@@ -298,7 +314,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
       await signInWithGoogle();
       setIsGoogleLoading(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed.');
+      setError(getFriendlyAuthError(err));
       setIsGoogleLoading(false);
     }
   }, [isGoogleLoading, signInWithGoogle]);
@@ -411,18 +427,19 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                           usernameError ? styles.inputRowError : null,
                         ]}
                       >
-                        <Ionicons
-                          name={usernameError ? 'alert-circle' : usernameIsValid ? 'checkmark-circle' : 'person'}
-                          size={FIELD_ICON_SIZE}
-                          color={usernameError
-                            ? C.wine
-                            : usernameIsValid
-                              ? C.sage
-                              : focusedField === 'username'
+                        <View style={styles.inputLeftIcon}>
+                          <Ionicons
+                            name={usernameError ? 'alert-circle' : usernameIsValid ? 'checkmark-circle' : 'person'}
+                            size={FIELD_ICON_SIZE}
+                            color={usernameError
+                              ? C.wine
+                              : usernameIsValid
                                 ? C.sage
-                                : C.charcoal60}
-                          style={styles.inputLeftIcon}
-                        />
+                                : focusedField === 'username'
+                                  ? C.sage
+                                  : C.charcoal60}
+                          />
+                        </View>
                         <TextInput
                           style={[styles.input, username ? styles.inputFilled : null]}
                           value={username}
@@ -459,18 +476,19 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                         emailError ? styles.inputRowError : null,
                       ]}
                     >
-                      <Ionicons
-                        name={emailError ? 'alert-circle' : emailIsValid ? 'checkmark-circle' : 'mail'}
-                        size={FIELD_ICON_SIZE}
-                        color={emailError
-                          ? C.wine
-                          : emailIsValid
-                            ? C.sage
-                            : focusedField === 'email'
+                      <View style={styles.inputLeftIcon}>
+                        <Ionicons
+                          name={emailError ? 'alert-circle' : emailIsValid ? 'checkmark-circle' : 'mail'}
+                          size={FIELD_ICON_SIZE}
+                          color={emailError
+                            ? C.wine
+                            : emailIsValid
                               ? C.sage
-                              : C.charcoal60}
-                        style={styles.inputLeftIcon}
-                      />
+                              : focusedField === 'email'
+                                ? C.sage
+                                : C.charcoal60}
+                        />
+                      </View>
                       <TextInput
                         style={[styles.input, email ? styles.inputFilled : null]}
                         value={email}
@@ -487,6 +505,7 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                         autoCorrect={false}
                         autoComplete="email"
                         returnKeyType="next"
+                        onSubmitEditing={() => passwordInputRef.current?.focus()}
                       />
                     </View>
                     {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
@@ -495,25 +514,27 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                   <View style={styles.fieldWrap}>
                     <Text style={styles.fieldLabel}>Password</Text>
                     <View style={[styles.inputRow, focusedField === 'password' ? styles.inputRowFocused : null, !isRegister && passwordTouched && password.length === 0 ? styles.inputRowError : null]}>
-                      <Ionicons
-                        name={
-                          !passwordHasState
-                            ? 'lock-closed'
+                      <View style={styles.inputLeftIcon}>
+                        <Ionicons
+                          name={
+                            !passwordHasState
+                              ? 'lock-closed'
+                              : pwScore >= 3
+                                ? 'checkmark-circle'
+                                : 'alert-circle'
+                          }
+                          size={FIELD_ICON_SIZE}
+                          color={!passwordHasState
+                            ? focusedField === 'password'
+                              ? C.sage
+                              : C.charcoal60
                             : pwScore >= 3
-                              ? 'checkmark-circle'
-                              : 'alert-circle'
-                        }
-                        size={FIELD_ICON_SIZE}
-                        color={!passwordHasState
-                          ? focusedField === 'password'
-                            ? C.sage
-                            : C.charcoal60
-                          : pwScore >= 3
-                            ? C.sage
-                            : '#F59E0B'}
-                        style={styles.inputLeftIcon}
-                      />
+                              ? C.sage
+                              : '#F59E0B'}
+                        />
+                      </View>
                       <TextInput
+                        ref={passwordInputRef}
                         style={[styles.input, password ? styles.inputFilled : null, styles.passwordInput]}
                         value={password}
                         onChangeText={setPassword}
@@ -527,11 +548,14 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                         }}
                         autoCapitalize="none"
                         autoCorrect={false}
+                        spellCheck={false}
                         autoComplete={isRegister ? 'new-password' : 'current-password'}
+                        textContentType={isRegister ? 'newPassword' : 'password'}
                         returnKeyType="done"
+                        maxLength={128}
                         onSubmitEditing={handleSubmit}
                       />
-                      <Pressable style={styles.eyeBtn} onPress={() => setPasswordVisible((v) => !v)} hitSlop={8}>
+                      <Pressable style={styles.eyeBtn} onPress={() => setPasswordVisible((v) => !v)} hitSlop={4}>
                         <Ionicons name={passwordVisible ? 'eye-off' : 'eye'} size={FIELD_ICON_SIZE} color={C.charcoal60} />
                       </Pressable>
                     </View>
@@ -553,7 +577,9 @@ export default function LoginScreen({ defaultMode = 'login' }: Props) {
                         </Text>
                       </View>
                     ) : null}
-                    {!isRegister && passwordTouched && password.length > 0 && password.length < 6 ? (
+                    {!isRegister && passwordTouched && password.length === 0 ? (
+                      <Text style={styles.fieldError}>Password is required</Text>
+                    ) : !isRegister && passwordTouched && password.length > 0 && password.length < 6 ? (
                       <Text style={styles.fieldError}>Password must be at least 6 characters</Text>
                     ) : null}
                   </View>
@@ -790,6 +816,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.inputBg,
     borderWidth: 1,
     borderColor: C.inputBorder,
+    overflow: 'hidden',
   },
   inputRowError: {
     borderColor: C.wine,
@@ -805,8 +832,10 @@ const styles = StyleSheet.create({
   inputLeftIcon: {
     position: 'absolute',
     left: GRID * 2,
-    top: '50%',
-    marginTop: -(FIELD_ICON_SIZE / 2),
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 2,
   },
   input: {
@@ -836,6 +865,7 @@ const styles = StyleSheet.create({
     right: GRID * 1.75,
     top: 0,
     bottom: 0,
+    alignItems: 'center',
     justifyContent: 'center',
   },
 

@@ -21,6 +21,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   userInterfaceStyle: 'light',
   backgroundColor: '#722F37',
+  androidNavigationBar: {
+    backgroundColor: '#722F37',
+    barStyle: 'light-content',
+  },
 
   ios: {
     bundleIdentifier:

@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { useNavigation } from 'expo-router';
 import { EventsSpecialsFeedScreen } from '../../src/screens/shared/EventsSpecialsFeedScreen';
+import { NAVBAR_BG_COLOR } from '../../src/styles/colors';
 
-const NAVBAR_BG = '#722F37';
 const SCROLL_COLOR_THRESHOLD = 60;
 
 export default function EventsSpecialsRoute() {
@@ -17,7 +17,7 @@ export default function EventsSpecialsRoute() {
     headerCollapsedRef.current = collapsed;
     navigation.setOptions({
       headerStyle: {
-        backgroundColor: NAVBAR_BG,
+        backgroundColor: NAVBAR_BG_COLOR,
       },
       headerTintColor: '#FFFFFF',
     });

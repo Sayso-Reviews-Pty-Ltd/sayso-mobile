@@ -2,8 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BusinessPageHeader, type BusinessHeaderRightAction } from './business-detail/BusinessPageHeader';
-import { businessDetailColors } from './business-detail/styles';
-import { FROSTED_CARD_BORDER_COLOR } from '../styles/cardSurface';
+import { NAVBAR_BG_COLOR } from '../styles/colors';
 
 type Props = {
   navigation: { canGoBack: () => boolean; goBack: () => void };
@@ -19,7 +18,7 @@ export function StackPageHeader({ navigation, options, onPressBack, showBackButt
   const flattenedHeaderStyle = options?.headerStyle
     ? (StyleSheet.flatten(options.headerStyle as never) as { backgroundColor?: string } | undefined)
     : undefined;
-  const bgColor = flattenedHeaderStyle?.backgroundColor ?? businessDetailColors.coral;
+  const bgColor = flattenedHeaderStyle?.backgroundColor ?? NAVBAR_BG_COLOR;
   const collapsed = options?.headerTintColor === '#FFFFFF';
   const effectiveShowBackButton = showBackButton ?? navigation.canGoBack();
 
@@ -46,16 +45,8 @@ export function StackPageHeader({ navigation, options, onPressBack, showBackButt
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: businessDetailColors.coral,
+    backgroundColor: NAVBAR_BG_COLOR,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.12)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
-    shadowRadius: 8,
-    elevation: 6,
-    zIndex: 50,
   },
 });

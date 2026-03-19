@@ -3,8 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useNotifications } from '../../src/hooks/useNotifications';
 import { StackPageHeader } from '../../src/components/StackPageHeader';
-
-const NAVBAR_BG_COLOR = '#722F37';
+import { NAVBAR_BG_COLOR } from '../../src/styles/colors';
 
 export default function TabsLayout() {
   const { unreadCount } = useNotifications();
@@ -14,6 +13,9 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        headerStyle: { backgroundColor: NAVBAR_BG_COLOR },
+        headerTintColor: '#FFFFFF',
+        headerShadowVisible: false,
         sceneStyle: { backgroundColor: '#E5E0E5' },
         tabBarActiveTintColor: '#FFFFFF',
         tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
@@ -80,12 +82,5 @@ const styles = StyleSheet.create({
   nativeTabBarBackground: {
     flex: 1,
     backgroundColor: NAVBAR_BG_COLOR,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.10)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 12,
   },
 });

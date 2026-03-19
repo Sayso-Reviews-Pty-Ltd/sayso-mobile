@@ -6,13 +6,13 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: businessDetailColors.page,
   },
+  topChrome: {
+    backgroundColor: businessDetailColors.coral,
+  },
   stickyHeader: {
     paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 8,
   },
   scroll: {
     flex: 1,

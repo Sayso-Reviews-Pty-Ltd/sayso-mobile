@@ -83,6 +83,22 @@ describe('useBusinessReviews', () => {
     expect(firstItem?.created_at).toBe('2024-06-01T10:00:00Z');
   });
 
+  it('normalizes tags from API response', async () => {
+    mockApiFetch.mockResolvedValueOnce({
+      reviews: [
+        makeRawReview({
+          tags: ['Friendly', 'Quick service'],
+        }),
+      ],
+    });
+
+    const { result } = renderHookWithQuery(() => useBusinessReviews('biz-1'));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const firstItem = result.current.data?.pages[0].data[0];
+    expect(firstItem?.tags).toEqual(['Friendly', 'Quick service']);
+  });
+
   it('normalizes nested user fields (username, display_name, avatar_url)', async () => {
     mockApiFetch.mockResolvedValueOnce({
       reviews: [

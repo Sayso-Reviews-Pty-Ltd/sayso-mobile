@@ -19,6 +19,7 @@ import { businessDetailColors, businessDetailSpacing } from './styles';
 type Props = {
   businessId: string;
   onPressWriteReview: () => void;
+  newReviewId?: string;
 };
 
 const COLLAPSED_VISIBLE_REVIEWS = 3;
@@ -39,9 +40,25 @@ const runReviewsLayoutAnimation = () => {
   });
 };
 
-export function BusinessReviewsSection({ businessId, onPressWriteReview }: Props) {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error, refetch } =
+export function BusinessReviewsSection({ businessId, onPressWriteReview, newReviewId }: Props) {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, isError, error, refetch } =
     useBusinessReviews(businessId);
+
+  // When arriving from a fresh review submission, force skeleton until the
+  // refetch triggered by query invalidation completes, so the new review
+  // appears rather than stale cached data flashing in briefly.
+  // We wait for isFetching to transition true→false rather than checking
+  // !isFetching on mount, which may be false before the refetch even starts.
+  const [forceLoading, setForceLoading] = useState(!!newReviewId);
+  const wasFetchingRef = useRef(false);
+  useEffect(() => {
+    if (!forceLoading) return;
+    if (isFetching) {
+      wasFetchingRef.current = true;
+    } else if (wasFetchingRef.current) {
+      setForceLoading(false);
+    }
+  }, [forceLoading, isFetching]);
   const reviews = data?.pages.flatMap((page) => page.data) ?? [];
   const [isExpanded, setIsExpanded] = useState(false);
   const toggleChevron = useRef(new Animated.Value(0)).current;
@@ -73,6 +90,7 @@ export function BusinessReviewsSection({ businessId, onPressWriteReview }: Props
         userId: r.user_id,
         rating: r.rating,
         content: r.body ?? '',
+        tags: r.tags ?? [],
         helpfulCount: 0,
         createdAt: r.created_at,
         user: {
@@ -85,7 +103,7 @@ export function BusinessReviewsSection({ businessId, onPressWriteReview }: Props
     [reviews]
   );
 
-  const canToggleReviews = normalized.length > COLLAPSED_VISIBLE_REVIEWS;
+  const canToggleReviews = normalized.length > COLLAPSED_VISIBLE_REVIEWS || !!hasNextPage;
   const hiddenLoadedCount = Math.max(0, normalized.length - COLLAPSED_VISIBLE_REVIEWS);
   const visibleReviews = isExpanded ? normalized : normalized.slice(0, COLLAPSED_VISIBLE_REVIEWS);
 
@@ -124,41 +142,43 @@ export function BusinessReviewsSection({ businessId, onPressWriteReview }: Props
     <View style={styles.section}>
       <Text style={styles.label}>Community Reviews</Text>
 
-      <ReviewsList
-        reviews={visibleReviews}
-        loading={isLoading}
-        error={isError ? (error instanceof Error ? error.message : 'Failed to load reviews') : null}
-        emptyMessage="No reviews yet. Be the first to review this business!"
-        realtimeTarget={{ type: 'business', id: businessId }}
-        onUpdate={() => {
-          void refetch();
-        }}
-        emptyStateAction={{ label: 'Write First Review', onPress: onPressWriteReview }}
-      />
+      <View style={styles.reviewsContainer}>
+        <ReviewsList
+          reviews={visibleReviews}
+          loading={isLoading || forceLoading}
+          error={isError ? (error instanceof Error ? error.message : 'Failed to load reviews') : null}
+          emptyMessage="No reviews yet. Be the first to review this business!"
+          realtimeTarget={{ type: 'business', id: businessId }}
+          onUpdate={() => {
+            void refetch();
+          }}
+          emptyStateAction={{ label: 'Write First Review', onPress: onPressWriteReview }}
+        />
 
-      {canToggleReviews && (
-        <Pressable
-          style={({ pressed }) => [styles.toggleButton, pressed && styles.toggleButtonPressed]}
-          onPress={handleToggleReviews}
-        >
-          <Text style={styles.toggleText}>{isExpanded ? 'Show fewer reviews' : viewMoreLabel}</Text>
-          <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-            <Ionicons name="chevron-down-outline" size={15} color={businessDetailColors.charcoal} />
-          </Animated.View>
-        </Pressable>
-      )}
+        {canToggleReviews && (
+          <Pressable
+            style={({ pressed }) => [styles.toggleButton, pressed && styles.toggleButtonPressed]}
+            onPress={handleToggleReviews}
+          >
+            <Text style={styles.toggleText}>{isExpanded ? 'Show fewer reviews' : viewMoreLabel}</Text>
+            <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
+              <Ionicons name="chevron-down-outline" size={15} color={businessDetailColors.charcoal} />
+            </Animated.View>
+          </Pressable>
+        )}
 
-      {isExpanded && hasNextPage && (
-        <Pressable
-          style={[styles.loadMoreButton, isFetchingNextPage && styles.loadMoreDisabled]}
-          onPress={handleLoadMoreReviews}
-          disabled={isFetchingNextPage}
-        >
-          <Text style={styles.loadMoreText}>
-            {isFetchingNextPage ? 'Loading...' : 'Load more reviews'}
-          </Text>
-        </Pressable>
-      )}
+        {isExpanded && hasNextPage && (
+          <Pressable
+            style={[styles.loadMoreButton, isFetchingNextPage && styles.loadMoreDisabled]}
+            onPress={handleLoadMoreReviews}
+            disabled={isFetchingNextPage}
+          >
+            <Text style={styles.loadMoreText}>
+              {isFetchingNextPage ? 'Loading...' : 'Load more reviews'}
+            </Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -168,6 +188,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 16,
     paddingHorizontal: businessDetailSpacing.pageGutter,
+  },
+  reviewsContainer: {
+    backgroundColor: businessDetailColors.cardBg,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: businessDetailColors.borderSoft,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 10,
   },
   label: {
     color: businessDetailColors.charcoal,

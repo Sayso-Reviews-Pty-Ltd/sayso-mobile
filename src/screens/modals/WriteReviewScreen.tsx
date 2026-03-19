@@ -1015,6 +1015,9 @@ export default function WriteReviewScreen() {
     : eventReviewsResult.isLoading;
 
   const reviewPrefilledRef = useRef(false);
+  const submitAbortRef = useRef<AbortController | null>(null);
+  const originalValuesRef = useRef<{ rating: number; reviewTitle: string; reviewText: string; selectedTags: string[] } | null>(null);
+  const imagePickingRef = useRef(false);
 
   const reviewDetailQuery = useQuery({
     queryKey: ['review-detail', reviewId],
@@ -1127,7 +1130,7 @@ export default function WriteReviewScreen() {
   }, [textFocused]);
 
   // Validation message fade+slide
-  const showValidation = reviewText.length > 0 && reviewText.length < MIN_CHARS;
+  const showValidation = reviewText.trim().length > 0 && reviewText.trim().length < MIN_CHARS;
   useEffect(() => {
     if (showValidation && !wasShowingValidation.current) {
       wasShowingValidation.current = true;
@@ -1180,6 +1183,7 @@ export default function WriteReviewScreen() {
         clearTimeout(toastTimerRef.current);
         toastTimerRef.current = null;
       }
+      submitAbortRef.current?.abort();
     };
   }, []);
 
@@ -1203,14 +1207,24 @@ export default function WriteReviewScreen() {
     const review = reviewDetailQuery.data?.review;
     if (!review) return;
 
-    setRating(typeof review.rating === 'number' ? review.rating : 0);
-    setReviewTitle((review.title ?? '').trim());
-    setReviewText((review.content ?? review.body ?? '').trim());
-    setSelectedTags(
-      Array.isArray(review.tags)
-        ? review.tags.filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0).slice(0, 4)
-        : []
-    );
+    const rating = typeof review.rating === 'number' ? review.rating : 0;
+    const reviewTitle = (review.title ?? '').trim();
+    const reviewText = (review.content ?? review.body ?? '').trim();
+    const selectedTags = Array.isArray(review.tags)
+      ? review.tags.filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0).slice(0, 4)
+      : [];
+
+    setRating(rating);
+    setReviewTitle(reviewTitle);
+    setReviewText(reviewText);
+    setSelectedTags(selectedTags);
+
+    originalValuesRef.current = {
+      rating,
+      reviewTitle,
+      reviewText,
+      selectedTags,
+    };
     reviewPrefilledRef.current = true;
   }, [isEditMode, reviewDetailQuery.data?.review]);
 
@@ -1223,11 +1237,32 @@ export default function WriteReviewScreen() {
     setFormError('Failed to load review details for editing.');
   }, [isEditMode, reviewDetailQuery.error]);
 
-  const hasContent = rating > 0 || reviewText.trim().length > 0 || reviewTitle.trim().length > 0 ||
-    selectedTags.length > 0 || selectedImages.length > 0;
+  const hasContent = (() => {
+    if (isEditMode && originalValuesRef.current) {
+      const orig = originalValuesRef.current;
+      return (
+        rating !== orig.rating ||
+        reviewTitle.trim() !== orig.reviewTitle ||
+        reviewText.trim() !== orig.reviewText ||
+        selectedTags.join(',') !== orig.selectedTags.join(',')
+      );
+    }
+    return (
+      rating > 0 ||
+      reviewText.trim().length > 0 ||
+      reviewTitle.trim().length > 0 ||
+      selectedTags.length > 0 ||
+      selectedImages.length > 0
+    );
+  })();
 
-  const isFormValid = rating > 0 && reviewText.trim().length >= MIN_CHARS && !submitting && !existingReviewLoading;
+  const isFormValid = rating > 0 && reviewText.trim().length >= MIN_CHARS && !submitting && !existingReviewLoading && !isLoading;
   const controlsDisabled = submitting || existingReviewLoading;
+
+  const effectiveQuickTags = useMemo(() => {
+    const extra = selectedTags.filter((t) => !quickTags.includes(t));
+    return extra.length > 0 ? [...extra, ...quickTags] : quickTags;
+  }, [quickTags, selectedTags]);
 
   const handleTagToggle = (tag: string) => {
     setSelectedTags((prev) =>
@@ -1275,54 +1310,65 @@ export default function WriteReviewScreen() {
   };
 
   const handlePickFromLibrary = async () => {
-    if (selectedImages.length >= MAX_PHOTOS) return;
-
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission required', 'Photo library access is needed to attach images.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      quality: 1,
-    });
-
-    if (result.canceled || !result.assets?.[0]) return;
-
+    imagePickingRef.current = true;
     try {
-      await processPickedAsset(result.assets[0]);
-    } catch {
-      Alert.alert('Unable to process image', 'Please try a different photo.');
+      if (selectedImages.length >= MAX_PHOTOS) return;
+
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission required', 'Photo library access is needed to attach images.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      try {
+        await processPickedAsset(result.assets[0]);
+      } catch {
+        Alert.alert('Unable to process image', 'Please try a different photo.');
+      }
+    } finally {
+      imagePickingRef.current = false;
     }
   };
 
   const handleTakePhoto = async () => {
-    if (selectedImages.length >= MAX_PHOTOS) return;
-
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission required', 'Camera access is needed to take a photo.');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      quality: 1,
-    });
-
-    if (result.canceled || !result.assets?.[0]) return;
-
+    imagePickingRef.current = true;
     try {
-      await processPickedAsset(result.assets[0]);
-    } catch {
-      Alert.alert('Unable to process image', 'Please try a different photo.');
+      if (selectedImages.length >= MAX_PHOTOS) return;
+
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission required', 'Camera access is needed to take a photo.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      try {
+        await processPickedAsset(result.assets[0]);
+      } catch {
+        Alert.alert('Unable to process image', 'Please try a different photo.');
+      }
+    } finally {
+      imagePickingRef.current = false;
     }
   };
 
   const handleAddPhoto = () => {
+    if (imagePickingRef.current) return;
     Alert.alert('Add Photo', 'Choose an option', [
       { text: 'Take Photo', onPress: handleTakePhoto },
       { text: 'Choose from Library', onPress: handlePickFromLibrary },
@@ -1364,6 +1410,15 @@ export default function WriteReviewScreen() {
 
   const handleSubmit = async () => {
     if (!isFormValid) return;
+
+    // Fix 8: Check for empty id
+    if (!id.trim()) {
+      const message = 'This listing could not be identified. Please go back and try again.';
+      setFormError(message);
+      showSubmissionFeedback('error', 'Review submission failed', message);
+      return;
+    }
+
     const gate = guardSensitiveAction('write_review');
     if (!gate.allowed) {
       const message = gate.reason || 'This action is temporarily unavailable on this device.';
@@ -1371,9 +1426,15 @@ export default function WriteReviewScreen() {
       showSubmissionFeedback('error', 'Review submission failed', message);
       return;
     }
+
+    // Fix 2: Create and store abort controller
+    const abortController = new AbortController();
+    submitAbortRef.current = abortController;
+
     setFormError(null);
     setSubmitting(true);
     let partialSuccessWarningMessage: string | null = null;
+    let submittedReviewId: string | null = null;
 
     try {
       if (isEditMode && reviewId) {
@@ -1388,6 +1449,7 @@ export default function WriteReviewScreen() {
               tags: selectedTags,
             }),
             timeoutMs: 20_000,
+            signal: abortController.signal,
           }
         );
         if (result.success === false) {
@@ -1396,6 +1458,7 @@ export default function WriteReviewScreen() {
           showSubmissionFeedback('error', 'Review update failed', message);
           return;
         }
+        submittedReviewId = reviewId;
       } else if (isBusinessReview) {
         const formData = new FormData();
         formData.append('business_id', businessDetail?.id ?? id);
@@ -1411,9 +1474,9 @@ export default function WriteReviewScreen() {
           } as unknown as Blob);
         });
 
-        const result = await apiFetch<{ message?: string; code?: string; error?: string; success?: boolean }>(
+        const result = await apiFetch<{ message?: string; code?: string; error?: string; success?: boolean; review?: { id: string } }>(
           '/api/reviews',
-          { method: 'POST', body: formData, includeAnonymousIdOnMissingAuth: true, timeoutMs: 20_000 }
+          { method: 'POST', body: formData, includeAnonymousIdOnMissingAuth: true, timeoutMs: 20_000, signal: abortController.signal }
         );
         if (result.success === false) {
           const message = getErrorMessage(result);
@@ -1427,6 +1490,7 @@ export default function WriteReviewScreen() {
             return;
           }
         }
+        submittedReviewId = result.review?.id ?? null;
       } else {
         const formData = new FormData();
         formData.append('target_id', id);
@@ -1443,9 +1507,9 @@ export default function WriteReviewScreen() {
           } as unknown as Blob);
         });
 
-        const result = await apiFetch<{ message?: string; code?: string; error?: string; success?: boolean }>(
+        const result = await apiFetch<{ message?: string; code?: string; error?: string; success?: boolean; review?: { id: string } }>(
           '/api/reviews',
-          { method: 'POST', body: formData, includeAnonymousIdOnMissingAuth: true, timeoutMs: 20_000 }
+          { method: 'POST', body: formData, includeAnonymousIdOnMissingAuth: true, timeoutMs: 20_000, signal: abortController.signal }
         );
         if (result.success === false) {
           const message = getErrorMessage(result);
@@ -1459,6 +1523,9 @@ export default function WriteReviewScreen() {
             return;
           }
         }
+        // Event/special reviews do not appear in the business reviews list,
+        // so do not set submittedReviewId — the business reviews query was
+        // not invalidated and the review won't be found there.
       }
 
       if (isBusinessReview) {
@@ -1505,7 +1572,7 @@ export default function WriteReviewScreen() {
       if (user?.id && !isEditMode) {
         apiFetch<{ ok?: boolean; newBadges?: UserBadgeDto[] }>(
           '/api/badges/check-and-award',
-          { method: 'POST', timeoutMs: 10_000 }
+          { method: 'POST', timeoutMs: 10_000, signal: abortController.signal }
         )
           .then((badgeResult) => {
             if ((badgeResult?.newBadges ?? []).length > 0) {
@@ -1545,8 +1612,12 @@ export default function WriteReviewScreen() {
         return null;
       })();
 
+      const reviewParam =
+        redirectBusinessId && submittedReviewId
+          ? `?newReviewId=${encodeURIComponent(submittedReviewId)}`
+          : '';
       const redirectTarget = redirectBusinessId
-        ? routes.businessDetail(redirectBusinessId)
+        ? routes.businessDetail(redirectBusinessId) + reviewParam
         : routes.home();
 
       if (successRedirectTimerRef.current) {
@@ -1734,6 +1805,7 @@ export default function WriteReviewScreen() {
 
   return (
     <SafeAreaView edges={['left', 'right', 'bottom']} style={styles.safeArea}>
+      <View style={styles.safeAreaInner}>
       {!isBusinessReview && (
         <LinearGradient
           colors={['rgba(125,155,118,0.12)', C.offWhite, 'rgba(114,47,55,0.06)']}
@@ -1869,7 +1941,7 @@ export default function WriteReviewScreen() {
           {/* ── Tags — stagger delay 150ms */}
           <Animated.View style={[styles.section, { opacity: sectionAnims[1].opacity, transform: [{ translateX: sectionAnims[1].translateX }] }]}>
             <TagSelector
-              tags={quickTags} selected={selectedTags}
+              tags={effectiveQuickTags} selected={selectedTags}
               onToggle={(tag) => { setFormError(null); handleTagToggle(tag); }}
               disabled={controlsDisabled}
             />
@@ -1932,41 +2004,43 @@ export default function WriteReviewScreen() {
             ) : null}
           </Animated.View>
 
-          <Divider />
+          {!isEditMode && <Divider />}
 
-          {/* ── Photos — stagger delay 250ms */}
-          <Animated.View style={[styles.section, { opacity: sectionAnims[4].opacity, transform: [{ translateX: sectionAnims[4].translateX }] }]}>
-            <View style={styles.fieldHeaderRow}>
-              <View style={styles.fieldHeader}>
-                <Ionicons name="camera-outline" size={16} color={C.charcoal60} />
-                <Text style={styles.fieldLabel}>Photos <Text style={styles.fieldOptional}>(optional)</Text></Text>
-              </View>
-              {selectedImages.length > 0 ? <Text style={styles.charCount}>{selectedImages.length}/{MAX_PHOTOS}</Text> : null}
-            </View>
-            {selectedImages.length > 0 ? (
-              <View style={styles.photosRow}>
-                {selectedImages.map((img, i) => (
-                  <View key={i} style={styles.photoThumb}>
-                    <Image source={{ uri: img.uri }} style={styles.photoImg} />
-                    <Pressable style={styles.photoRemoveBtn} onPress={() => handleRemoveImage(i)} disabled={controlsDisabled}>
-                      <Ionicons name="close-outline" size={11} color={C.white} />
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-            {selectedImages.length < MAX_PHOTOS ? (
-              <Pressable style={styles.photoPickerZone} onPress={handleAddPhoto} disabled={controlsDisabled}>
-                <View style={styles.photoPickerIcon}>
-                  <Ionicons name="image-outline" size={22} color={C.charcoal60} />
+          {!isEditMode && (
+            /* ── Photos — stagger delay 250ms */
+            <Animated.View style={[styles.section, { opacity: sectionAnims[4].opacity, transform: [{ translateX: sectionAnims[4].translateX }] }]}>
+              <View style={styles.fieldHeaderRow}>
+                <View style={styles.fieldHeader}>
+                  <Ionicons name="camera-outline" size={16} color={C.charcoal60} />
+                  <Text style={styles.fieldLabel}>Photos <Text style={styles.fieldOptional}>(optional)</Text></Text>
                 </View>
-                <Text style={styles.photoPickerLabel}>Tap to add photos</Text>
-                <Text style={styles.photoPickerSub}>
-                  {selectedImages.length > 0 ? `${selectedImages.length}/${MAX_PHOTOS} added` : `Up to ${MAX_PHOTOS} images, max 2MB each`}
-                </Text>
-              </Pressable>
-            ) : null}
-          </Animated.View>
+                {selectedImages.length > 0 ? <Text style={styles.charCount}>{selectedImages.length}/{MAX_PHOTOS}</Text> : null}
+              </View>
+              {selectedImages.length > 0 ? (
+                <View style={styles.photosRow}>
+                  {selectedImages.map((img, i) => (
+                    <View key={i} style={styles.photoThumb}>
+                      <Image source={{ uri: img.uri }} style={styles.photoImg} />
+                      <Pressable style={styles.photoRemoveBtn} onPress={() => handleRemoveImage(i)} disabled={controlsDisabled}>
+                        <Ionicons name="close-outline" size={11} color={C.white} />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              {selectedImages.length < MAX_PHOTOS ? (
+                <Pressable style={styles.photoPickerZone} onPress={handleAddPhoto} disabled={controlsDisabled}>
+                  <View style={styles.photoPickerIcon}>
+                    <Ionicons name="image-outline" size={22} color={C.charcoal60} />
+                  </View>
+                  <Text style={styles.photoPickerLabel}>Tap to add photos</Text>
+                  <Text style={styles.photoPickerSub}>
+                    {selectedImages.length > 0 ? `${selectedImages.length}/${MAX_PHOTOS} added` : `Up to ${MAX_PHOTOS} images, max 2MB each`}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </Animated.View>
+          )}
 
           {/* ── Error */}
           {formError ? (
@@ -2107,12 +2181,14 @@ export default function WriteReviewScreen() {
           </Text>
         </View>
       ) : null}
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: C.offWhite },
+  safeArea: { flex: 1, backgroundColor: C.coral },
+  safeAreaInner: { flex: 1, backgroundColor: C.offWhite },
   confettiOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 60,

@@ -9,6 +9,7 @@ export interface ReviewItem {
   avatar_url?: string;
   rating: number;
   body?: string;
+  tags?: string[];
   created_at: string;
   images?: { url: string }[];
 }
@@ -18,6 +19,7 @@ interface RawReviewItem {
   user_id: string;
   rating: number;
   content?: string;
+  tags?: string[];
   created_at: string;
   user?: {
     username?: string | null;
@@ -61,6 +63,7 @@ export function useBusinessReviews(businessId: string) {
         avatar_url: review.user?.avatar_url ?? undefined,
         rating: review.rating,
         body: review.content,
+        tags: review.tags ?? [],
         created_at: review.created_at,
         images: review.images?.map((image) => ({
           url: image.url ?? image.image_url ?? '',

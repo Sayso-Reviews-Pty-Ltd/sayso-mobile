@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { apiFetch } from '../../lib/api';
+import { ApiError, apiFetch } from '../../lib/api';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -365,10 +365,13 @@ describe('WriteReviewScreen — form submission', () => {
     jest.useRealTimers();
   });
 
-  it('shows form error when API returns success: false', async () => {
+  it('shows warning feedback and redirects when images fail but review is saved', async () => {
+    jest.useFakeTimers();
     mockApiFetch.mockImplementation((url: string, opts: any) => {
       if (url === '/api/deal-breakers') return Promise.resolve({ dealBreakers: [] });
-      if (opts?.method === 'POST') return Promise.resolve({ success: false, message: 'You have already reviewed this business.' });
+      if (url === '/api/reviews' && opts?.method === 'POST') {
+        return Promise.resolve({ success: false, code: 'IMAGE_UPLOAD_FAILED' });
+      }
       return Promise.resolve({});
     });
 
@@ -379,10 +382,94 @@ describe('WriteReviewScreen — form submission', () => {
     });
 
     await waitFor(() => {
+      expect(screen.getAllByText('Review submitted').length).toBeGreaterThan(0);
       expect(
-        screen.getAllByText('You have already reviewed this business.').length
+        screen.getAllByText("Some images couldn't be uploaded. Your review was saved.").length
       ).toBeGreaterThan(0);
     });
+
+    expect(screen.queryByText('Review submission failed')).toBeNull();
+    expect(screen.queryByText('Thanks for sharing your experience.')).toBeNull();
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(1999);
+    });
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(mockRouterReplace).toHaveBeenCalledWith('/business/biz-123');
+    jest.useRealTimers();
+  });
+
+  it('shows form error when API returns success: false', async () => {
+    jest.useFakeTimers();
+    mockApiFetch.mockImplementation((url: string, opts: any) => {
+      if (url === '/api/deal-breakers') return Promise.resolve({ dealBreakers: [] });
+      if (opts?.method === 'POST') return Promise.resolve({ success: false, code: 'DB_ERROR' });
+      return Promise.resolve({});
+    });
+
+    await fillValidForm();
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('submit-review-btn'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Review submission failed').length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText("We couldn't save your review. Please try again.").length
+      ).toBeGreaterThan(0);
+      expect(screen.getByDisplayValue('This is a great cafe!')).toBeTruthy();
+      expect(screen.getByText('Write a Review')).toBeTruthy();
+      expect(screen.getByTestId('submit-review-btn').props.accessibilityState?.disabled).toBe(false);
+    });
+
+    expect(screen.queryByText('Review submitted')).toBeNull();
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
+  it('shows error feedback and stays on form when submit throws ApiError', async () => {
+    jest.useFakeTimers();
+    mockApiFetch.mockImplementation((url: string, opts: any) => {
+      if (url === '/api/deal-breakers') return Promise.resolve({ dealBreakers: [] });
+      if (url === '/api/reviews' && opts?.method === 'POST') {
+        const error = new ApiError('Request failed' as any);
+        error.code = 'DB_ERROR';
+        error.details = undefined;
+        return Promise.reject(error);
+      }
+      return Promise.resolve({});
+    });
+
+    await fillValidForm();
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('submit-review-btn'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Review submission failed').length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText("We couldn't save your review. Please try again.").length
+      ).toBeGreaterThan(0);
+      expect(screen.getByDisplayValue('This is a great cafe!')).toBeTruthy();
+      expect(screen.getByText('Write a Review')).toBeTruthy();
+      expect(screen.getByTestId('submit-review-btn').props.accessibilityState?.disabled).toBe(false);
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+    jest.useRealTimers();
   });
 
   it('does not submit when form is invalid (no rating)', async () => {

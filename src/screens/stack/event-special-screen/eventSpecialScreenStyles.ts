@@ -10,9 +10,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: businessDetailSpacing.pageGutter,
     paddingTop: 14,
     paddingBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 8,
   },
   scroll: {
     flex: 1,

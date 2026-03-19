@@ -19,10 +19,10 @@ import { TransitionItem } from '../../src/components/motion/TransitionItem';
 import { ForYouRouteView } from '../../src/screens/stack/for-you-screen/ForYouRouteView';
 import { HomeSearchBar } from '../../src/screens/tabs/home/HomeSearchBar';
 import { HomeMoodPicker, MOOD_QUERY_SET } from '../../src/screens/tabs/home/HomeMoodPicker';
+import { NAVBAR_BG_COLOR } from '../../src/styles/colors';
 
 const REQUEST_LIMIT = 120;
 const VISIBLE_CHUNK_SIZE = 12;
-const NAVBAR_BG = '#722F37';
 const SCROLL_COLOR_THRESHOLD = 60;
 const BACK_TO_TOP_THRESHOLD = 900;
 
@@ -123,7 +123,7 @@ export default function ForYouRoute() {
       headerCollapsedRef.current = collapsed;
       navigation.setOptions({
         headerStyle: {
-          backgroundColor: NAVBAR_BG,
+          backgroundColor: NAVBAR_BG_COLOR,
         },
         headerTintColor: '#FFFFFF',
       });

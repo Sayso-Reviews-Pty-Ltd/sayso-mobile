@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { Text } from '../Typography';
 import { useAuth } from '../../providers/AuthProvider';
 import { useReviewHelpful } from '../../hooks/useReviewHelpful';
+import { NAVBAR_BG_COLOR } from '../../styles/colors';
 
 // ─── Shared review data type (normalised from both ReviewItem & EventReviewItem)
 export interface ReviewCardData {
@@ -36,7 +37,7 @@ const C = {
   offWhite: '#E5E0E5',
   charcoal: '#2D2D2D',
   sage: '#7D9B76',
-  coral: '#722F37',
+  coral: NAVBAR_BG_COLOR,
   white: '#FFFFFF',
   charcoal60: 'rgba(45,45,45,0.60)',
   charcoal45: 'rgba(45,45,45,0.45)',
@@ -142,7 +143,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
 
   return (
     <LinearGradient
-      colors={['#9DAB9B', '#9DAB9B', 'rgba(157,171,155,0.95)']}
+      colors={[C.offWhite, C.offWhite, C.offWhiteBg]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.card}
@@ -365,16 +366,16 @@ const styles = StyleSheet.create({
   },
   tagPill: {
     borderRadius: 999,
-    backgroundColor: 'rgba(125,155,118,0.10)',
+    backgroundColor: C.coral,
     borderWidth: 1,
-    borderColor: 'rgba(125,155,118,0.20)',
+    borderColor: 'rgba(255,255,255,0.28)',
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
   tagText: {
     fontSize: 13,
-    fontWeight: '500',
-    color: C.sage,
+    fontWeight: '600',
+    color: C.offWhite,
   },
   imagesScroll: {
     marginTop: 4,

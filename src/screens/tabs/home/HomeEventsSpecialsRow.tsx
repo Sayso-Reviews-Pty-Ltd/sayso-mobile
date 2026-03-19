@@ -19,6 +19,7 @@ const FLATLIST_PERF = {
   windowSize: 5,
   removeClippedSubviews: Platform.OS === 'android',
 } as const;
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList) as unknown as typeof FlatList;
 
 type AnimatedCardProps = {
   scrollX: Animated.Value;
@@ -109,7 +110,7 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
   }
 
   return (
-    <FlatList
+    <AnimatedFlatList
       horizontal
       data={items}
       keyExtractor={(item) => `${item.type}-${item.id}`}

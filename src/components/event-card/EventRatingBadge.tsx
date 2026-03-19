@@ -1,43 +1,48 @@
 import { StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getOverlayShadowStyle } from '../../styles/overlayShadow';
+import { getRatingGradient } from '../../styles/ratingColors';
 import { Text } from '../Typography';
 
 type Props = {
   rating: number;
 };
 
-function getStarColor(value: number) {
-  if (value > 4.0) return '#E6A547';
-  if (value > 2.0) return '#D4915C';
-  return '#D66B6B';
-}
-
 export function EventRatingBadge({ rating }: Props) {
   return (
-    <View style={[styles.badge, getOverlayShadowStyle(999)]} pointerEvents="none">
-      <Ionicons name="star-outline" size={14} color={getStarColor(rating)} />
-      <Text style={styles.label}>{rating.toFixed(1)}</Text>
+    <View style={[styles.badgeWrap, getOverlayShadowStyle(999)]} pointerEvents="none">
+      <LinearGradient
+        colors={getRatingGradient(rating)}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.badge}
+      >
+        <Ionicons name="star" size={13} color="#fff" />
+        <Text style={styles.label}>{rating.toFixed(1)}</Text>
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  badge: {
+  badgeWrap: {
     position: 'absolute',
     right: 14,
     top: 14,
+    borderRadius: 999,
+  },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     borderRadius: 999,
-    backgroundColor: 'rgba(229, 224, 229, 0.95)',
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#2D2D2D',
+    fontWeight: '700',
+    color: '#fff',
   },
 });

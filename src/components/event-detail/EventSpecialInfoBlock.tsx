@@ -1,7 +1,9 @@
 import { StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../Typography';
 import { businessDetailColors } from '../business-detail/styles';
+import { getRatingGradient } from '../../styles/ratingColors';
 
 type Props = {
   title: string;
@@ -16,10 +18,21 @@ export function EventSpecialInfoBlock({ title, rating, location, type }: Props) 
       <Text style={styles.title}>{title}</Text>
 
       <View style={styles.metaRow}>
-        <View style={styles.metaPill}>
-          <Ionicons name="star-outline" size={13} color="#F59E0B" />
-          <Text style={styles.metaText}>{rating > 0 ? rating.toFixed(1) : '0.0'}</Text>
-        </View>
+        {rating > 0 ? (
+          <LinearGradient
+            colors={getRatingGradient(rating)}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.metaPill}
+          >
+            <Ionicons name="star" size={13} color="#fff" />
+            <Text style={styles.metaText}>{rating.toFixed(1)}</Text>
+          </LinearGradient>
+        ) : (
+          <View style={[styles.metaPill, styles.noRatingPill]}>
+            <Text style={styles.noRatingText}>No reviews yet</Text>
+          </View>
+        )}
 
         <View style={styles.typePill}>
           <Text style={styles.typeText}>{type === 'special' ? 'Special' : 'Event'}</Text>
@@ -58,14 +71,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     borderRadius: 999,
-    backgroundColor: 'rgba(229,224,229,0.95)',
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   metaText: {
-    color: businessDetailColors.charcoal,
+    color: '#fff',
     fontSize: 12,
     fontWeight: '700',
+  },
+  noRatingPill: {
+    backgroundColor: 'rgba(229,224,229,0.95)',
+  },
+  noRatingText: {
+    color: businessDetailColors.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
   },
   typePill: {
     borderRadius: 999,

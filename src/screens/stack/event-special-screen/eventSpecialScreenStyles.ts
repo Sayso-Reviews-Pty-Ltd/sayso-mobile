@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
   },
   content: {
     paddingTop: 8,
-    paddingBottom: 48,
+    paddingBottom: 24,
     gap: 20,
   },
   mainColumn: {

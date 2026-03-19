@@ -1,14 +1,9 @@
 import { Pressable, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getOverlayShadowStyle } from '../../styles/overlayShadow';
+import { getRatingGradient } from '../../styles/ratingColors';
 import { Text } from '../Typography';
-
-// Matches web's Gold (>4.0) / Bronze (>2.0) / Low star gradient tiers
-function getStarColor(rating: number): string {
-  if (rating > 4.0) return '#E6A547'; // Gold
-  if (rating > 2.0) return '#D4915C'; // Bronze
-  return '#D66B6B';                   // Low
-}
 
 type Props = {
   verified?: boolean;
@@ -34,16 +29,23 @@ export function BusinessCardBadges({
         </View>
       ) : null}
 
-      <View style={[styles.badge, getOverlayShadowStyle(999), styles.rightBadge]}>
-        {hasRating && rating != null ? (
-          <>
-            <Ionicons name="star-outline" size={14} color={getStarColor(rating)} />
-            <Text style={styles.badgeText}>{rating.toFixed(1)}</Text>
-          </>
-        ) : (
+      {hasRating && rating != null ? (
+        <View style={[styles.ratingBadge, getOverlayShadowStyle(999)]}>
+          <LinearGradient
+            colors={getRatingGradient(rating)}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.ratingBadgeGradient}
+          >
+            <Ionicons name="star" size={13} color="#fff" />
+            <Text style={styles.ratingBadgeText}>{rating.toFixed(1)}</Text>
+          </LinearGradient>
+        </View>
+      ) : (
+        <View style={[styles.badge, getOverlayShadowStyle(999), styles.rightBadge]}>
           <Text style={styles.badgeText}>New</Text>
-        )}
-      </View>
+        </View>
+      )}
 
       {distanceBadgeText ? (
         <Pressable
@@ -87,6 +89,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(229, 224, 229, 0.9)',
     paddingHorizontal: 10,
     paddingVertical: 5,
+  },
+  ratingBadge: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 2,
+    borderRadius: 999,
+  },
+  ratingBadgeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  ratingBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
   },
   badgeText: {
     fontSize: 14,

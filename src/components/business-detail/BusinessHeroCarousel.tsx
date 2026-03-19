@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../Typography';
 import { businessDetailColors, businessDetailSpacing } from './styles';
 import { getBusinessPlaceholderFromCandidates } from '../../lib/businessPlaceholders';
+import { getRatingGradient } from '../../styles/ratingColors';
 
 type Props = {
   businessName: string;
@@ -14,12 +16,6 @@ type Props = {
   subcategorySlug?: string | null;
   interestId?: string | null;
 };
-
-function getStarColor(rating: number): string {
-  if (rating > 4.0) return '#E6A547';
-  if (rating > 2.0) return '#D4915C';
-  return '#D66B6B';
-}
 
 export function BusinessHeroCarousel({ businessName, images, rating, verified, subcategorySlug, interestId }: Props) {
   const [index, setIndex] = useState(0);
@@ -64,10 +60,23 @@ export function BusinessHeroCarousel({ businessName, images, rating, verified, s
         </View>
       ) : null}
 
-      <View style={styles.ratingBadge}>
-        <Ionicons name="star-outline" size={14} color={getStarColor(displayRating)} />
-        <Text style={styles.ratingText}>{displayRating > 0 ? displayRating.toFixed(1) : '0.0'}</Text>
-      </View>
+      {displayRating > 0 ? (
+        <View style={styles.ratingBadgeWrap}>
+          <LinearGradient
+            colors={getRatingGradient(displayRating)}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.ratingBadge}
+          >
+            <Ionicons name="star" size={13} color="#fff" />
+            <Text style={styles.ratingText}>{displayRating.toFixed(1)}</Text>
+          </LinearGradient>
+        </View>
+      ) : (
+        <View style={[styles.ratingBadgeWrap, styles.noRatingBadge]}>
+          <Text style={styles.noRatingText}>No reviews yet</Text>
+        </View>
+      )}
 
       {hasMultiple ? (
         <>
@@ -147,22 +156,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  ratingBadge: {
+  ratingBadgeWrap: {
     position: 'absolute',
     top: 16,
     right: 16,
+    borderRadius: 999,
+  },
+  ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     borderRadius: 999,
-    backgroundColor: 'rgba(229,224,229,0.96)',
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
   ratingText: {
-    color: businessDetailColors.charcoal,
+    color: '#fff',
     fontSize: 13,
     fontWeight: '700',
+  },
+  noRatingBadge: {
+    backgroundColor: 'rgba(229,224,229,0.95)',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  noRatingText: {
+    color: businessDetailColors.charcoal,
+    fontSize: 12,
+    fontWeight: '600',
   },
   carouselArrowLeft: {
     position: 'absolute',

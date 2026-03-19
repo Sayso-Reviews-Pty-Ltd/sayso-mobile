@@ -7,6 +7,7 @@ import type { EventSpecialDetail } from '../../hooks/useEventSpecialDetail';
 import { resolveEventMediaImage } from '../event-card/eventCardUtils';
 import { Text } from '../Typography';
 import { businessDetailColors } from '../business-detail/styles';
+import { getRatingGradient } from '../../styles/ratingColors';
 
 type Props = {
   item: EventSpecialDetail;
@@ -60,10 +61,23 @@ export function EventSpecialHero({ item, rating }: Props) {
         </View>
       ) : null}
 
-      <View style={[styles.ratingBadge, item.availabilityStatus ? styles.ratingBadgeShifted : null]}>
-        <Ionicons name="star-outline" size={14} color="#F59E0B" />
-        <Text style={styles.ratingText}>{displayRating > 0 ? displayRating.toFixed(1) : '0.0'}</Text>
-      </View>
+      {displayRating > 0 ? (
+        <View style={[styles.ratingBadgeWrap, item.availabilityStatus ? styles.ratingBadgeShifted : null]}>
+          <LinearGradient
+            colors={getRatingGradient(displayRating)}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.ratingBadge}
+          >
+            <Ionicons name="star" size={13} color="#fff" />
+            <Text style={styles.ratingText}>{displayRating.toFixed(1)}</Text>
+          </LinearGradient>
+        </View>
+      ) : (
+        <View style={[styles.ratingBadgeWrap, styles.noRatingBadge, item.availabilityStatus ? styles.ratingBadgeShifted : null]}>
+          <Text style={styles.noRatingText}>No reviews yet</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -130,24 +144,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  ratingBadge: {
+  ratingBadgeWrap: {
     position: 'absolute',
     top: 16,
     right: 16,
     borderRadius: 999,
-    backgroundColor: 'rgba(229,224,229,0.95)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
   },
   ratingBadgeShifted: {
     right: 126,
   },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
   ratingText: {
-    color: businessDetailColors.charcoal,
+    color: '#fff',
     fontSize: 13,
     fontWeight: '700',
+  },
+  noRatingBadge: {
+    backgroundColor: 'rgba(229,224,229,0.95)',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  noRatingText: {
+    color: businessDetailColors.charcoal,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

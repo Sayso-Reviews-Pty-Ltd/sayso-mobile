@@ -23,6 +23,7 @@ const FLATLIST_PERF = {
   windowSize: 5,
   removeClippedSubviews: Platform.OS === 'android',
 } as const;
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList) as unknown as typeof FlatList;
 
 // ─── Animated card wrapper ────────────────────────────────────────────────────
 // Interpolates scale and opacity from a shared scrollX value so that the
@@ -141,7 +142,7 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
   }
 
   return (
-    <FlatList
+    <AnimatedFlatList
       horizontal
       data={items}
       keyExtractor={(item) => item.id}

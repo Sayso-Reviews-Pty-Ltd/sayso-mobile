@@ -1,7 +1,9 @@
 import { StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../Typography';
 import { businessDetailColors } from './styles';
+import { getRatingGradient } from '../../styles/ratingColors';
 
 type Props = {
   name: string;
@@ -10,22 +12,27 @@ type Props = {
   location: string;
 };
 
-function getStarColor(rating: number): string {
-  if (rating > 4.0) return '#E6A547';
-  if (rating > 2.0) return '#D4915C';
-  return '#D66B6B';
-}
-
 export function BusinessInfoBlock({ name, rating, category, location }: Props) {
   return (
     <View style={styles.wrap}>
       <Text style={styles.title}>{name}</Text>
 
       <View style={styles.metaRow}>
-        <View style={styles.metaPill}>
-          <Ionicons name="star-outline" size={13} color={getStarColor(rating)} />
-          <Text style={styles.metaText}>{rating > 0 ? rating.toFixed(1) : '0.0'}</Text>
-        </View>
+        {rating > 0 ? (
+          <LinearGradient
+            colors={getRatingGradient(rating)}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.metaPill}
+          >
+            <Ionicons name="star" size={13} color="#fff" />
+            <Text style={styles.metaText}>{rating.toFixed(1)}</Text>
+          </LinearGradient>
+        ) : (
+          <View style={[styles.metaPill, styles.noRatingPill]}>
+            <Text style={styles.noRatingText}>No reviews yet</Text>
+          </View>
+        )}
 
         <View style={styles.categoryPill}>
           <Text style={styles.categoryText}>{category}</Text>
@@ -63,14 +70,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     borderRadius: 999,
-    backgroundColor: 'rgba(229,224,229,0.95)',
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   metaText: {
-    color: businessDetailColors.charcoal,
+    color: '#fff',
     fontSize: 12,
     fontWeight: '700',
+  },
+  noRatingPill: {
+    backgroundColor: 'rgba(229,224,229,0.95)',
+  },
+  noRatingText: {
+    color: businessDetailColors.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
   },
   categoryPill: {
     borderRadius: 999,

@@ -380,20 +380,22 @@ function AnimatedTip({ promptIndex, reducedMotion }: { promptIndex: number; redu
   );
 }
 
-// ─── Gradient star (two-layer clip: bright gold top, deep amber base)
+const STAR_GRADIENT = ['#F7D060', '#E8A030'] as const;
+
+// ─── Gradient star
 function GradientStar({ filled, size = 42 }: { filled: boolean; size?: number }) {
   if (!filled) {
     return <Ionicons name="star-outline" size={size} color={C.charcoal30} />;
   }
   return (
-    <View style={{ width: size, height: size }}>
-      {/* Base layer — deep warm amber */}
-      <Ionicons name="star-outline" size={size} color="#C8720A" />
-      {/* Top 42% — bright gold highlight, clipped */}
-      <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', height: Math.round(size * 0.42) }]}>
-        <Ionicons name="star-outline" size={size} color="#FFD747" />
-      </View>
-    </View>
+    <LinearGradient
+      colors={STAR_GRADIENT}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ width: size, height: size, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Ionicons name="star" size={Math.round(size * 0.72)} color="#fff" />
+    </LinearGradient>
   );
 }
 
@@ -767,6 +769,9 @@ const CONFETTI_COLORS = [
   '#FF8C69',
   '#B5E48C',
   '#E5E0E5',
+  '#F7D060',
+  '#E8A030',
+  '#FFF0A0',
 ];
 
 function ConfettiPieceView({ piece }: { piece: ConfettiPiece }) {
@@ -947,6 +952,8 @@ export default function WriteReviewScreen() {
   const [toastNotice, setToastNotice] = useState<FeedbackNotice | null>(null);
   const [nonCriticalReady, setNonCriticalReady] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const thumbScales = useRef([0, 1].map(() => new Animated.Value(1))).current;
   const successRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2019,12 +2026,20 @@ export default function WriteReviewScreen() {
               {selectedImages.length > 0 ? (
                 <View style={styles.photosRow}>
                   {selectedImages.map((img, i) => (
-                    <View key={i} style={styles.photoThumb}>
-                      <Image source={{ uri: img.uri }} style={styles.photoImg} />
+                    <Animated.View key={i} style={[styles.photoThumb, { transform: [{ scale: thumbScales[i] }] }]}>
+                      <Pressable
+                        style={styles.photoImg}
+                        onPressIn={() => Animated.spring(thumbScales[i], { toValue: 0.88, useNativeDriver: true, speed: 40, bounciness: 6 }).start()}
+                        onPressOut={() => Animated.spring(thumbScales[i], { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 8 }).start()}
+                        onPress={() => setPreviewUri(img.uri)}
+                        disabled={controlsDisabled}
+                      >
+                        <Image source={{ uri: img.uri }} style={styles.photoImg} />
+                      </Pressable>
                       <Pressable style={styles.photoRemoveBtn} onPress={() => handleRemoveImage(i)} disabled={controlsDisabled}>
                         <Ionicons name="close-outline" size={11} color={C.white} />
                       </Pressable>
-                    </View>
+                    </Animated.View>
                   ))}
                 </View>
               ) : null}
@@ -2182,6 +2197,15 @@ export default function WriteReviewScreen() {
         </View>
       ) : null}
       </View>
+
+      {previewUri ? (
+        <Pressable style={styles.imagePreviewOverlay} onPress={() => setPreviewUri(null)}>
+          <Image source={{ uri: previewUri }} style={styles.imagePreviewFull} resizeMode="contain" />
+          <Pressable style={styles.imagePreviewClose} onPress={() => setPreviewUri(null)}>
+            <Ionicons name="close" size={22} color={C.white} />
+          </Pressable>
+        </Pressable>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -2285,7 +2309,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     ...cardShadowStyle,
   } as object,
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 48, gap: 16 },
+  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 16 },
 
   formHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 4, paddingTop: 16, marginBottom: 4 },
   formHeaderText: { flex: 1, gap: 2 },
@@ -2331,6 +2355,9 @@ const styles = StyleSheet.create({
   photoThumb: { width: 80, height: 80, borderRadius: 10, overflow: 'hidden', position: 'relative' },
   photoImg: { width: 80, height: 80 },
   photoRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: C.coral, alignItems: 'center', justifyContent: 'center' },
+  imagePreviewOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 200, alignItems: 'center', justifyContent: 'center' },
+  imagePreviewFull: { width: '100%', height: '80%' },
+  imagePreviewClose: { position: 'absolute', top: 16, right: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
   photoPickerZone: { borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(45,45,45,0.20)', borderRadius: 12, paddingVertical: 24, paddingHorizontal: 16, alignItems: 'center', gap: 6, backgroundColor: C.charcoal10, marginTop: 12 },
   photoPickerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(45,45,45,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   photoPickerLabel: { fontSize: 15, fontWeight: '600', color: C.charcoal60 },

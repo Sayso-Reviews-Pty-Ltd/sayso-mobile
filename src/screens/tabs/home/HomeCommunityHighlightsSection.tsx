@@ -42,6 +42,7 @@ const FLATLIST_PERF = {
   windowSize: 5,
   removeClippedSubviews: Platform.OS === 'android',
 } as const;
+const AnimatedFlatList = RNAnimated.createAnimatedComponent(FlatList) as unknown as typeof FlatList;
 
 const REVIEWER_SNAP_INTERVAL = REVIEWER_CARD_WIDTH + REVIEWER_GAP;
 const SCALE_INACTIVE = 0.92;
@@ -272,7 +273,7 @@ export function HomeCommunityHighlightsSection({
             <CommunityBadgeMarquee />
           </View>
         ) : (
-          <FlatList
+          <AnimatedFlatList
             horizontal
             data={reviewers}
             keyExtractor={(reviewer) => reviewer.id}

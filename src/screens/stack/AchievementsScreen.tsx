@@ -11,7 +11,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAllUserBadges, type UserUserBadgeDto } from '../../hooks/useUserBadges';
+import { useAllUserBadges, type UserBadgeDto } from '../../hooks/useUserBadges';
 import { useAuthSession } from '../../hooks/useSession';
 import { getBadgeImage } from '../../lib/badgeImages';
 import { getBadgeById } from '../../lib/badgeMappings';

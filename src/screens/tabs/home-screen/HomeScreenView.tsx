@@ -16,6 +16,7 @@ import type { BusinessListItemDto, TopReviewerDto } from '@sayso/contracts';
 import { CardSurface } from '../../../components/CardSurface';
 import { HeaderDmBellActions } from '../../../components/HeaderDmBellActions';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { Text } from '../../../components/Typography';
 import { HomeBusinessRow } from '../home/HomeBusinessRow';
 import { HomeCommunityHighlightsSection } from '../home/HomeCommunityHighlightsSection';
@@ -139,7 +140,12 @@ function HomeScreenViewComponent({
 }: Props) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
-  const showSuggestions = searchFocused && searchInput.length >= 2;
+  const [dismissedSuggestionsQuery, setDismissedSuggestionsQuery] = useState<string | null>(null);
+  const normalizedSearchInput = searchInput.trim();
+  const showSuggestions =
+    searchFocused &&
+    normalizedSearchInput.length >= 2 &&
+    dismissedSuggestionsQuery !== normalizedSearchInput;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -171,8 +177,17 @@ function HomeScreenViewComponent({
           <TransitionItem variant="input" index={1}>
             <HomeSearchBar
               value={searchInput}
-              onChangeText={setSearchInput}
-              onClear={() => { setSearchInput(''); setSearchFocused(false); }}
+              onChangeText={(value) => {
+                setSearchInput(value);
+                if (dismissedSuggestionsQuery && value.trim() !== dismissedSuggestionsQuery) {
+                  setDismissedSuggestionsQuery(null);
+                }
+              }}
+              onClear={() => {
+                setSearchInput('');
+                setSearchFocused(false);
+                setDismissedSuggestionsQuery(null);
+              }}
               isFetching={isSearchActive && searchIsFetching}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 100)}
@@ -185,7 +200,7 @@ function HomeScreenViewComponent({
       {/* Live suggestions overlay — absolute, sits above content below header */}
       {showSuggestions ? (
         <View
-          style={[styles.suggestionsOverlay, { top: headerHeight - 8 }]}
+          style={[styles.suggestionsOverlay, { top: headerHeight - 4 }]}
           pointerEvents="box-none"
         >
           <HomeSearchSuggestions
@@ -198,13 +213,15 @@ function HomeScreenViewComponent({
               setSearchFocused(false);
               setSearchInput(q);
             }}
+            onClose={() => setDismissedSuggestionsQuery(normalizedSearchInput)}
           />
         </View>
       ) : null}
 
       {isSearchActive ? (
-        <TransitionItem variant="card" index={2} style={styles.flexOne}>
-          <HomeSearchResults
+        <ScreenTransitionScope>
+          <TransitionItem variant="card" index={2} style={styles.flexOne}>
+            <HomeSearchResults
             listRef={searchResultsRef}
             query={debouncedQuery}
             results={searchBusinesses}
@@ -226,9 +243,11 @@ function HomeScreenViewComponent({
             refreshing={refreshing}
             onScroll={handleScroll}
           />
-        </TransitionItem>
+          </TransitionItem>
+        </ScreenTransitionScope>
       ) : (
-        <Animated.ScrollView
+        <ScreenTransitionScope>
+          <Animated.ScrollView
           ref={homeFeedRef}
           style={styles.scroll}
           showsVerticalScrollIndicator={false}
@@ -357,7 +376,8 @@ function HomeScreenViewComponent({
               onPressReviewer={navigateToReviewer}
             />
           </TransitionItem>
-        </Animated.ScrollView>
+          </Animated.ScrollView>
+        </ScreenTransitionScope>
       )}
 
     </SafeAreaView>
@@ -391,9 +411,7 @@ const styles = StyleSheet.create({
   },
   headerMaterial: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: homeTokens.coralDark,
-    borderBottomWidth: 1,
-    borderBottomColor: FROSTED_CARD_BORDER_COLOR,
+    backgroundColor: 'transparent',
   },
   headerMaterialCollapsed: {
     shadowColor: homeTokens.coralDark,
@@ -455,7 +473,7 @@ const styles = StyleSheet.create({
   },
   content: {
     backgroundColor: homeTokens.offWhite,
-    paddingBottom: 48,
+    paddingBottom: 24,
   },
   section: {
     paddingTop: 24,

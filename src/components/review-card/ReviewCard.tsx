@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
   Image,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -49,6 +51,8 @@ const C = {
   offWhiteBg: 'rgba(229,224,229,0.95)',
 };
 
+const BODY_COLLAPSE_THRESHOLD = 200;
+
 // ─── Relative date (no dayjs needed)
 function relativeDate(iso: string): string {
   if (!iso) return 'Recently';
@@ -90,14 +94,24 @@ function Avatar({ src, name }: { src?: string | null; name: string }) {
   );
 }
 
-// ─── Stars
+// ─── Stars — clamped to 0–5
 const STAR_GRADIENT = ['#FDE68A', '#FBBF24', '#D97706'] as const;
 
 function Stars({ rating }: { rating: number }) {
+  const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
+
+  if (safeRating === 0) {
+    return (
+      <View style={styles.noRatingPill}>
+        <Text style={styles.noRatingText}>No rating</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.starsRow}>
       {[1, 2, 3, 4, 5].map((i) => (
-        i <= rating ? (
+        i <= safeRating ? (
           <LinearGradient
             key={i}
             colors={STAR_GRADIENT}
@@ -105,24 +119,50 @@ function Stars({ rating }: { rating: number }) {
             end={{ x: 1, y: 0 }}
             style={styles.starFilledWrap}
           >
-            <Ionicons
-              testID="star-filled"
-              name="star"
-              size={16}
-              color={C.white}
-            />
+            <Ionicons testID="star-filled" name="star" size={16} color={C.white} />
           </LinearGradient>
         ) : (
-          <Ionicons
-            key={i}
-            testID="star-empty"
-            name="star"
-            size={20}
-            color={C.charcoal30}
-          />
+          <Ionicons key={i} testID="star-empty" name="star" size={20} color={C.charcoal30} />
         )
       ))}
     </View>
+  );
+}
+
+// ─── Review image with error fallback + lightbox trigger
+function ReviewImage({ uri, onPress }: { uri: string; onPress: () => void }) {
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <View style={[styles.reviewImage, styles.reviewImageError]}>
+        <Ionicons name="image-outline" size={24} color={C.charcoal30} />
+      </View>
+    );
+  }
+
+  return (
+    <Pressable onPress={onPress}>
+      <Image
+        source={{ uri }}
+        style={styles.reviewImage}
+        onError={() => setError(true)}
+      />
+    </Pressable>
+  );
+}
+
+// ─── Image lightbox modal
+function ImageLightbox({ uri, onClose }: { uri: string; onClose: () => void }) {
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.lightboxOverlay} onPress={onClose}>
+        <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
+        <Pressable style={styles.lightboxClose} onPress={onClose}>
+          <Ionicons name="close" size={22} color={C.white} />
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -134,7 +174,13 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
     review.helpfulCount,
   );
 
+  const [expanded, setExpanded] = useState(false);
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
+
   const isAnonymous = !review.userId;
+  const isLongBody = review.content.length > BODY_COLLAPSE_THRESHOLD;
+  const validTags = review.tags?.filter((t) => t.trim() !== '') ?? [];
+  const validImages = review.images?.filter(Boolean) ?? [];
 
   const handleToggleHelpful = () => {
     try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
@@ -185,16 +231,28 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
 
           {/* Title */}
           {review.title ? (
-            <Text style={styles.title}>{review.title}</Text>
+            <Text style={styles.title} numberOfLines={2}>{review.title}</Text>
           ) : null}
 
           {/* Body */}
-          <Text style={styles.body}>{review.content}</Text>
+          <Text
+            style={styles.body}
+            numberOfLines={expanded || !isLongBody ? undefined : 4}
+          >
+            {review.content}
+          </Text>
+          {isLongBody ? (
+            <Pressable onPress={() => setExpanded((v) => !v)}>
+              <Text style={styles.readMoreText}>
+                {expanded ? 'Show less' : 'Read more'}
+              </Text>
+            </Pressable>
+          ) : null}
 
           {/* Tags */}
-          {review.tags && review.tags.length > 0 ? (
+          {validTags.length > 0 ? (
             <View style={styles.tagsRow}>
-              {review.tags.map((tag) => (
+              {validTags.map((tag) => (
                 <View key={tag} style={styles.tagPill}>
                   <Text style={styles.tagText}>{tag}</Text>
                 </View>
@@ -203,19 +261,16 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
           ) : null}
 
           {/* Images */}
-          {review.images && review.images.length > 0 ? (
+          {validImages.length > 0 ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.imagesScroll}
               contentContainerStyle={styles.imagesContent}
+              nestedScrollEnabled={Platform.OS === 'android'}
             >
-              {review.images.map((uri, i) => (
-                <Image
-                  key={i}
-                  source={{ uri }}
-                  style={styles.reviewImage}
-                />
+              {validImages.map((uri, i) => (
+                <ReviewImage key={i} uri={uri} onPress={() => setPreviewUri(uri)} />
               ))}
             </ScrollView>
           ) : null}
@@ -223,20 +278,25 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
           {/* Actions */}
           <View style={styles.actionsRow}>
             <Pressable
-              style={[styles.helpfulBtn, isHelpful && styles.helpfulBtnActive]}
-              onPress={handleToggleHelpful}
-              disabled={!user || loading}
-              accessibilityLabel="Mark review as helpful"
+              style={[
+                styles.helpfulBtn,
+                isHelpful && styles.helpfulBtnActive,
+                !user && styles.helpfulBtnGuest,
+              ]}
+              onPress={user ? handleToggleHelpful : undefined}
+              disabled={loading}
+              accessibilityLabel={user ? 'Mark review as helpful' : 'Sign in to mark as helpful'}
             >
               <Ionicons
                 name={isHelpful ? 'heart' : 'heart-outline'}
                 size={16}
-                color={isHelpful ? C.sage : C.charcoal45}
+                color={isHelpful ? C.sage : !user ? C.charcoal30 : C.charcoal45}
               />
               <Text
                 style={[
                   styles.helpfulText,
                   isHelpful && styles.helpfulTextActive,
+                  !user && styles.helpfulTextGuest,
                 ]}
               >
                 Helpful ({count})
@@ -245,6 +305,10 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
           </View>
         </View>
       </View>
+
+      {previewUri ? (
+        <ImageLightbox uri={previewUri} onClose={() => setPreviewUri(null)} />
+      ) : null}
     </LinearGradient>
   );
 }
@@ -343,6 +407,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  noRatingPill: {
+    borderRadius: 999,
+    backgroundColor: 'rgba(45,45,45,0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  noRatingText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.charcoal45,
+  },
   date: {
     fontSize: 12,
     fontWeight: '600',
@@ -358,6 +433,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'rgba(45,45,45,0.90)',
     lineHeight: 24,
+  },
+  readMoreText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.sage,
+    marginTop: -4,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -388,6 +469,11 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8,
   },
+  reviewImageError: {
+    backgroundColor: 'rgba(45,45,45,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -407,6 +493,9 @@ const styles = StyleSheet.create({
   helpfulBtnActive: {
     backgroundColor: 'rgba(125,155,118,0.10)',
   },
+  helpfulBtnGuest: {
+    opacity: 0.45,
+  },
   helpfulText: {
     fontSize: 13,
     fontWeight: '500',
@@ -414,5 +503,29 @@ const styles = StyleSheet.create({
   },
   helpfulTextActive: {
     color: C.sage,
+  },
+  helpfulTextGuest: {
+    color: C.charcoal30,
+  },
+  lightboxOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lightboxImage: {
+    width: '100%',
+    height: '80%',
+  },
+  lightboxClose: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

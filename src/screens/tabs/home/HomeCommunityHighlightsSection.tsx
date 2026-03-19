@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated as RNAnimated,
   FlatList,
   Platform,
   StyleSheet,
@@ -30,6 +31,7 @@ import { homeTokens } from './HomeTokens';
 import { CARD_SHADOW_MD, getCardDepthShadowStyle } from '../../../styles/overlayShadow';
 import { CARD_RADIUS } from '../../../styles/radii';
 import { NAVBAR_BG_COLOR } from '../../../styles/colors';
+import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
 const REVIEWER_CARD_WIDTH = 240;
 const REVIEWER_GAP = 16;
@@ -40,6 +42,39 @@ const FLATLIST_PERF = {
   windowSize: 5,
   removeClippedSubviews: Platform.OS === 'android',
 } as const;
+
+const REVIEWER_SNAP_INTERVAL = REVIEWER_CARD_WIDTH + REVIEWER_GAP;
+const SCALE_INACTIVE = 0.92;
+const OPACITY_INACTIVE = 0.7;
+
+type AnimatedCardProps = {
+  scrollX: RNAnimated.Value;
+  index: number;
+  children: React.ReactNode;
+};
+
+function AnimatedCard({ scrollX, index, children }: AnimatedCardProps) {
+  const inputRange = [
+    (index - 1) * REVIEWER_SNAP_INTERVAL,
+    index * REVIEWER_SNAP_INTERVAL,
+    (index + 1) * REVIEWER_SNAP_INTERVAL,
+  ];
+  const scale = scrollX.interpolate({
+    inputRange,
+    outputRange: [SCALE_INACTIVE, 1, SCALE_INACTIVE],
+    extrapolate: 'clamp',
+  });
+  const opacity = scrollX.interpolate({
+    inputRange,
+    outputRange: [OPACITY_INACTIVE, 1, OPACITY_INACTIVE],
+    extrapolate: 'clamp',
+  });
+  return (
+    <RNAnimated.View style={{ transform: [{ scale }], opacity }}>
+      {children}
+    </RNAnimated.View>
+  );
+}
 
 type Props = {
   reviewers: TopReviewerDto[];
@@ -135,6 +170,12 @@ export function HomeCommunityHighlightsSection({
 }: Props) {
   const contributorsHeading = reviewersMode === 'normal' ? 'Top Contributors' : 'Early Voices';
   const showContributorsAction = reviewers.length > 0 && !reviewersLoading;
+  const reducedMotion = useReducedMotion();
+  const reviewerScrollX = useRef(new RNAnimated.Value(0)).current;
+  const onReviewerScroll = RNAnimated.event(
+    [{ nativeEvent: { contentOffset: { x: reviewerScrollX } } }],
+    { useNativeDriver: true }
+  );
 
   const badgesAnim = useSharedValue(0);
 
@@ -235,14 +276,19 @@ export function HomeCommunityHighlightsSection({
             horizontal
             data={reviewers}
             keyExtractor={(reviewer) => reviewer.id}
-            renderItem={({ item: reviewer }) => {
+            renderItem={({ item: reviewer, index }) => {
               const latestReview = recentReviews.find((item) => item.reviewer.id === reviewer.id);
-              return (
+              const card = (
                 <ReviewerCard
                   variant="reviewer"
                   reviewer={reviewer}
                   latestReview={latestReview}
                 />
+              );
+              return reducedMotion ? card : (
+                <AnimatedCard scrollX={reviewerScrollX} index={index}>
+                  {card}
+                </AnimatedCard>
               );
             }}
             ItemSeparatorComponent={() => <View style={{ width: REVIEWER_GAP }} />}
@@ -252,10 +298,12 @@ export function HomeCommunityHighlightsSection({
               index,
             })}
             showsHorizontalScrollIndicator={false}
-            snapToInterval={REVIEWER_CARD_WIDTH + REVIEWER_GAP}
+            snapToInterval={REVIEWER_SNAP_INTERVAL}
             snapToAlignment="start"
             decelerationRate="fast"
             disableIntervalMomentum
+            onScroll={onReviewerScroll}
+            scrollEventThrottle={16}
             style={styles.row}
             contentContainerStyle={styles.rowContent}
             {...FLATLIST_PERF}

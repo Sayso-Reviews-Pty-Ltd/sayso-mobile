@@ -10,7 +10,6 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { routes } from '../../navigation/routes';
-import { useAuthSession } from '../../hooks/useSession';
 import { Text } from '../../components/Typography';
 import { CARD_BG_COLOR, CARD_BG_RGB, NAVBAR_BG_COLOR } from '../../styles/colors';
 
@@ -34,14 +33,8 @@ const C = {
 export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuthSession();
   const isNavigatingRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    if (user) {
-      router.replace(routes.home() as never);
-    }
-  }, [user, router]);
+  // Redirect handled by RootGuard — do not re-add here.
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(GRID * 2)).current;

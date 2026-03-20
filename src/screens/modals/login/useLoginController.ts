@@ -25,7 +25,8 @@ export function useLoginController(defaultMode: AuthMode) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<FocusedField>(null);
   const [usernameAvailable, setUsernameAvailable] = useState<null | boolean>(null);
@@ -33,6 +34,9 @@ export function useLoginController(defaultMode: AuthMode) {
   const [usernameCheckFailed, setUsernameCheckFailed] = useState(false);
   const [tabPillWidth, setTabPillWidth] = useState(0);
 
+  const mounted = useRef(true);
+  // ref not state — avoids re-render window between guard check and set
+  const isAuthSettling = useRef(false);
   const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const passwordInputRef = useRef<TextInput>(null);
 
@@ -94,6 +98,22 @@ export function useLoginController(defaultMode: AuthMode) {
     },
     [authMode, formOpacity, formTranslateY, tabAnim, titleOpacity, titleTranslateY]
   );
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        isAuthSettling.current = false;
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const easeOut = Easing.out(Easing.cubic);
@@ -195,7 +215,8 @@ export function useLoginController(defaultMode: AuthMode) {
     : email.length > 0 && password.length >= 6;
 
   const handleBack = useCallback(() => {
-    router.push(routes.onboarding() as never);
+    // replace() prevents login accumulating on the stack — do not change to push().
+    router.replace(routes.onboarding() as never);
   }, [router]);
 
   const handleForgotPassword = useCallback(() => {
@@ -211,9 +232,10 @@ export function useLoginController(defaultMode: AuthMode) {
   }, [router]);
 
   const handleSubmit = useCallback(async () => {
-    if (!isFormValid || isSubmitting) return;
+    if (isAuthSettling.current) return;
+    if (!isFormValid || isPending) return;
     setError('');
-    setIsSubmitting(true);
+    setIsPending(true);
 
     try {
       if (isRegister) {
@@ -236,12 +258,31 @@ export function useLoginController(defaultMode: AuthMode) {
         return;
       }
 
-      await signInWithPassword(email, password);
+      if (!navigator.onLine) {
+        if (mounted.current) setError('No internet connection. Please check your network and try again.');
+        setIsPending(false);
+        return;
+      }
+
+      isAuthSettling.current = true;
+      if (mounted.current) setIsVerifying(true);
+      try {
+        await signInWithPassword(email, password);
+      } finally {
+        if (mounted.current) setIsVerifying(false);
+      }
     } catch (err) {
-      setError(getFriendlyAuthError(err));
-      setIsSubmitting(false);
+      isAuthSettling.current = false;
+      const isNetworkFailure = err instanceof TypeError && err.message === 'Failed to fetch';
+      if (mounted.current) {
+        setError(isNetworkFailure
+          ? 'No internet connection. Please check your network and try again.'
+          : getFriendlyAuthError(err)
+        );
+      }
+      setIsPending(false);
     }
-  }, [email, isFormValid, isRegister, isSubmitting, password, router, signInWithPassword, username]);
+  }, [email, isFormValid, isRegister, isPending, password, router, signInWithPassword, username]);
 
   const handleGoogle = useCallback(async () => {
     if (isGoogleLoading) return;
@@ -251,7 +292,7 @@ export function useLoginController(defaultMode: AuthMode) {
       await signInWithGoogle();
       setIsGoogleLoading(false);
     } catch (err) {
-      setError(getFriendlyAuthError(err));
+      if (mounted.current) setError(getFriendlyAuthError(err));
       setIsGoogleLoading(false);
     }
   }, [isGoogleLoading, signInWithGoogle]);
@@ -278,8 +319,9 @@ export function useLoginController(defaultMode: AuthMode) {
     headerEntranceY,
     isFormValid,
     isGoogleLoading,
+    isPending,
     isRegister,
-    isSubmitting,
+    isVerifying,
     password,
     passwordHasState,
     passwordInputRef,

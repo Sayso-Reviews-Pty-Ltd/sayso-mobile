@@ -1,8 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { usePathname, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { usePathname, useRouter, useRootNavigationState } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../providers/AuthProvider';
 import { useProfile } from '../providers/ProfileProvider';
 import { routes } from '../navigation/routes';
+import { supabase } from '../lib/supabase';
+
+const ONBOARDING_RESUME_KEY = 'onboarding_resume';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Route classification
@@ -119,14 +123,47 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { session, isLoading: isAuthLoading } = useAuth();
   const { profileState, isProfileLoading } = useProfile();
+  // Used in Case 2 to verify the role-unsupported route is registered before
+  // redirecting there. routeNames is undefined while the navigator is still
+  // mounting; in that case we treat the route as present (safe default).
+  const navigationState = useRootNavigationState();
 
   // Prevent the same redirect from firing multiple times per pathname
   const lastRedirectRef = useRef<string | null>(null);
   const hasHandledInitialRoutingRef = useRef(false);
 
+  // Resume route read from AsyncStorage — null means no resume, undefined means
+  // not yet loaded. The main effect waits for resumeLoaded before routing so the
+  // resume is always available before the first routing decision is made.
+  const [resumeRoute, setResumeRoute] = useState<string | null>(null);
+  const [resumeLoaded, setResumeLoaded] = useState(false);
+
   useEffect(() => {
-    // Wait for both auth + profile to fully resolve before making any decision
-    if (isAuthLoading || isProfileLoading) return;
+    AsyncStorage.getItem(ONBOARDING_RESUME_KEY)
+      .then(raw => {
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (
+              typeof parsed?.route === 'string' &&
+              isMatch(parsed.route, ONBOARDING_STEP_ROUTES)
+            ) {
+              setResumeRoute(parsed.route);
+            }
+          } catch {
+            // Malformed entry — ignore and treat as no resume
+          }
+        }
+      })
+      .catch(() => { /* AsyncStorage failure — continue without resume */ })
+      .finally(() => setResumeLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    // Wait for both auth + profile to fully resolve before making any decision.
+    // Also wait for the AsyncStorage resume read so it is available before the
+    // first routing decision — prevents a double-navigation race.
+    if (isAuthLoading || isProfileLoading || !resumeLoaded) return;
 
     const isUnauthOnly     = isMatch(pathname, UNAUTHENTICATED_ONLY_ROUTES);
     const isAuthBridge     = isMatch(pathname, AUTH_BRIDGE_ROUTES);
@@ -158,6 +195,14 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
     if (!session) {
       // Block access to authenticated-only features
       if (isPrivate(pathname)) {
+        // Preserve mid-onboarding position so it can be resumed after re-auth.
+        // Only serialise the route — no form values or auth tokens.
+        if (isOnboardingStep) {
+          AsyncStorage.setItem(
+            ONBOARDING_RESUME_KEY,
+            JSON.stringify({ route: pathname }),
+          ).catch(() => { /* silent — default routing still proceeds */ });
+        }
         navigate(routes.onboarding());
       }
       // Public routes remain available to guest users once they pass onboarding.
@@ -171,7 +216,24 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
 
     // ── Case 2: Unsupported role ──────────────────────────────────────────────
     if (effectiveRole === 'business_owner' || effectiveRole === 'admin') {
-      navigate('/role-unsupported');
+      // Before redirecting, verify the route is actually registered in the
+      // navigator. If routeNames is undefined the navigator is still mounting
+      // — treat that as "route present" so we don't sign out prematurely.
+      const routeNames = navigationState?.routeNames;
+      const roleUnsupportedExists =
+        routeNames == null || routeNames.includes('role-unsupported');
+
+      if (roleUnsupportedExists) {
+        navigate('/role-unsupported');
+      } else {
+        // Route is missing — sign out directly and go to onboarding.
+        // Use router.replace directly (bypasses the pathname comparison in
+        // navigate()) and set lastRedirectRef so the guard doesn't re-fire.
+        lastRedirectRef.current = routes.onboarding();
+        supabase.auth.signOut().finally(() => {
+          router.replace(routes.onboarding() as never);
+        });
+      }
       return;
     }
 
@@ -191,6 +253,27 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
       const expectedStep = routeToOnboardingStep(expectedRoute) ?? 'interests';
       const currentStep = routeToOnboardingStep(pathname);
 
+      // Attempt to resume from saved progress after re-authentication.
+      // The guard checks in Cases 2–3 have already passed (role OK, email verified),
+      // so we only need to confirm the resume step doesn't leap ahead of the
+      // user's actual onboarding position.
+      if (resumeRoute) {
+        const resumeStep = routeToOnboardingStep(resumeRoute);
+        const isValidResume =
+          resumeStep !== null &&
+          ONBOARDING_STEP_ORDER[resumeStep] <= ONBOARDING_STEP_ORDER[expectedStep];
+
+        // Always consume the resume entry — valid or not — so it is never reused.
+        AsyncStorage.removeItem(ONBOARDING_RESUME_KEY).catch(() => {});
+        setResumeRoute(null);
+
+        if (isValidResume) {
+          navigate(resumeRoute);
+          return;
+        }
+        // Invalid or ahead-of-progress resume — fall through to normal routing.
+      }
+
       if (!currentStep) {
         navigate(expectedRoute);
         return;
@@ -205,11 +288,14 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
     // ── Case 5: Fully onboarded ───────────────────────────────────────────────
     // Move logged-in, onboarded users off landing/auth/onboarding screens
     if (isUnauthOnly || isOnboardingStep) {
+      // Clear any stale resume so normal completion never triggers a resume redirect.
+      AsyncStorage.removeItem(ONBOARDING_RESUME_KEY).catch(() => {});
+      setResumeRoute(null);
       navigate(routes.home());
     }
     // Auth-bridge routes (verify-email, role-unsupported) — let them sit there;
     // they'll navigate forward themselves once their state resolves.
-  }, [isAuthLoading, isProfileLoading, session, profileState, pathname, router]);
+  }, [isAuthLoading, isProfileLoading, session, profileState, pathname, router, navigationState, resumeRoute, resumeLoaded]);
 
   return <>{children}</>;
 }

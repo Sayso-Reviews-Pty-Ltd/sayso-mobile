@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -51,82 +51,107 @@ export default function ChangePasswordScreen() {
   const [focused, setFocused] = useState<Field | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [isSignedOut, setIsSignedOut] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const currentError = touched.current && !currentPw ? 'Current password is required.' : '';
   const newError =
     touched.new && !newPw ? 'New password is required.' :
-    touched.new && newPw.length < 6 ? 'Use at least 6 characters.' : '';
+    touched.new && [...newPw].length < 6 ? 'Use at least 6 characters.' : '';
   const confirmError =
     touched.confirm && !confirmPw ? 'Please confirm your password.' :
     touched.confirm && confirmPw !== newPw ? 'Passwords do not match.' : '';
 
   const isValid = !currentError && !newError && !confirmError &&
-    !!currentPw && newPw.length >= 6 && confirmPw === newPw;
+    !!currentPw && [...newPw].length >= 6 && confirmPw === newPw;
+  const formDisabled = changePassword.isPending || isSignedOut;
 
   const touch = (field: Field) => setTouched((t) => ({ ...t, [field]: true }));
   const toggleVisible = (field: Field) => setVisible((v) => ({ ...v, [field]: !v[field] }));
 
   const handleSubmit = useCallback(async () => {
-    setTouched({ current: true, new: true, confirm: true });
-    if (!isValid || changePassword.isPending) return;
-    setError('');
-
-    if (!user?.email) {
-      setError('You are not signed in. Please sign in again before changing your password.');
-      return;
-    }
-
-    // ── Step 1: verify current password ────────────────────────────────────
-    // Errors here return early without touching auth state.
-    let authVerified = false;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPw,
-      });
-      if (authError) {
-        const isCredentialError =
-          authError.code === 'invalid_grant' ||
-          authError.message?.includes('Email not confirmed') ||
-          authError.message?.includes('Invalid login credentials');
+      setTouched({ current: true, new: true, confirm: true });
+      if (!isValid || changePassword.isPending || isSignedOut) return;
+      setError('');
 
-        if (isCredentialError) {
-          const isOAuthOnly =
-            Array.isArray(user.identities) &&
-            user.identities.length > 0 &&
-            !user.identities.some((id) => id.provider === 'email');
-
-          if (isOAuthOnly) {
-            setError(
-              "Your account uses Google sign-in and does not have a password. Use 'Forgot password' to set one via email.",
-            );
-            return;
-          }
-        }
-
-        setError('Current password is incorrect.');
+      if (!user?.email) {
+        setError('You are not signed in. Please sign in again before changing your password.');
         return;
       }
-      authVerified = true;
-    } catch {
-      setError('Failed to update password. Please try again.');
-      return;
-    }
 
-    // ── Step 2: update password ─────────────────────────────────────────────
-    // signInWithPassword succeeded; sign out on any failure to prevent
-    // ambiguous re-auth state.
-    if (!authVerified) return;
-    try {
-      await changePassword.mutateAsync({ newPassword: newPw });
-      setSuccess(true);
-    } catch {
-      await supabase.auth.signOut();
-      setError(
-        'Something went wrong updating your password. You have been signed out for security. Please sign in and try again.',
-      );
+      const currentPassword = currentPw.trim();
+      const newPassword = newPw.trim();
+
+      if (currentPassword === newPassword) {
+        setError('Your new password must be different from your current password.');
+        return;
+      }
+
+      if ([...newPassword].length > 72) {
+        setError('Password must be 72 characters or fewer.');
+        return;
+      }
+
+      // ── Step 1: verify current password ────────────────────────────────────
+      // Errors here return early without touching auth state.
+      let authVerified = false;
+      try {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        });
+        if (authError) {
+          const isCredentialError =
+            authError.code === 'invalid_grant' ||
+            authError.message?.includes('Email not confirmed') ||
+            authError.message?.includes('Invalid login credentials');
+
+          if (isCredentialError) {
+            const isOAuthOnly =
+              Array.isArray(user.identities) &&
+              user.identities.length > 0 &&
+              !user.identities.some((id) => id.provider === 'email');
+
+            if (isOAuthOnly) {
+              setError(
+                "Your account uses Google sign-in and does not have a password. Use 'Forgot password' to set one via email.",
+              );
+              return;
+            }
+          }
+
+          setError('Current password is incorrect.');
+          return;
+        }
+        authVerified = true;
+      } catch {
+        setError('Failed to update password. Please try again.');
+        return;
+      }
+
+      // ── Step 2: update password ─────────────────────────────────────────────
+      // signInWithPassword succeeded; sign out on any failure to prevent
+      // ambiguous re-auth state.
+      if (!authVerified) return;
+      try {
+        await changePassword.mutateAsync({ newPassword });
+        setSuccess(true);
+      } catch {
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Continue to signed-out recovery UI even if sign-out call fails.
+        }
+        setError('');
+        setIsSignedOut(true);
+      }
+    } finally {
+      isSubmittingRef.current = false;
     }
-  }, [isValid, changePassword, user, currentPw, newPw]);
+  }, [isValid, changePassword, user, currentPw, newPw, isSignedOut]);
 
   const renderField = (
     field: Field,
@@ -154,6 +179,7 @@ export default function ChangePasswordScreen() {
           style={[styles.input, value && styles.inputFilled]}
           value={value}
           onChangeText={onChange}
+          editable={!isSignedOut}
           onFocus={() => setFocused(field)}
           onBlur={() => { setFocused(null); touch(field); }}
           placeholder={placeholder}
@@ -163,7 +189,12 @@ export default function ChangePasswordScreen() {
           autoCorrect={false}
           {...extraProps}
         />
-        <Pressable style={styles.eyeBtn} onPress={() => toggleVisible(field)} hitSlop={8}>
+        <Pressable
+          style={[styles.eyeBtn, isSignedOut ? styles.eyeBtnDisabled : null]}
+          onPress={() => toggleVisible(field)}
+          hitSlop={8}
+          disabled={isSignedOut}
+        >
           <Ionicons name={visible[field] ? 'eye-off' : 'eye'} size={ICON_SIZE} color={C.charcoal60} />
         </Pressable>
       </View>
@@ -227,23 +258,31 @@ export default function ChangePasswordScreen() {
                 </View>
               ) : (
                 <>
-                  {!!error && (
+                  {isSignedOut ? (
+                    <View style={styles.errorBanner}>
+                      <Ionicons name="shield-checkmark-outline" size={16} color={C.errorText} />
+                      <Text style={styles.errorText}>
+                        You have been signed out for security. Please sign in again to change your password.
+                      </Text>
+                    </View>
+                  ) : null}
+                  {!isSignedOut && !!error && (
                     <View style={styles.errorBanner}>
                       <Ionicons name="alert-circle-outline" size={16} color={C.errorText} />
                       <Text style={styles.errorText}>{error}</Text>
                     </View>
                   )}
                   {renderField('current', 'Current Password', currentPw, setCurrentPw, 'Your current password', currentError, { autoComplete: 'current-password' })}
-                  {renderField('new', 'New Password', newPw, setNewPw, 'Create a new password', newError, { autoComplete: 'new-password' })}
+                  {renderField('new', 'New Password', newPw, setNewPw, 'Create a new password', newError, { autoComplete: 'new-password', maxLength: 72 })}
                   {renderField('confirm', 'Confirm New Password', confirmPw, setConfirmPw, 'Confirm new password', confirmError, { autoComplete: 'new-password', returnKeyType: 'done', onSubmitEditing: handleSubmit })}
                   <Pressable
                     style={({ pressed }) => [
                       styles.submitBtn,
-                      (!isValid || changePassword.isPending) && styles.submitBtnDisabled,
+                      (!isValid || formDisabled) && styles.submitBtnDisabled,
                       pressed && isValid && styles.submitBtnPressed,
                     ]}
                     onPress={handleSubmit}
-                    disabled={changePassword.isPending}
+                    disabled={formDisabled}
                   >
                     <LinearGradient
                       colors={[C.wine, 'rgba(114,47,55,0.8)']}
@@ -256,6 +295,21 @@ export default function ChangePasswordScreen() {
                       </Text>
                     </LinearGradient>
                   </Pressable>
+                  {isSignedOut ? (
+                    <Pressable
+                      style={({ pressed }) => [styles.doneBtn, pressed ? styles.submitBtnPressed : null]}
+                      onPress={() => router.replace('/login' as never)}
+                    >
+                      <LinearGradient
+                        colors={[C.wine, 'rgba(114,47,55,0.8)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.btnGradient}
+                      >
+                        <Text style={styles.btnTxt}>Sign in</Text>
+                      </LinearGradient>
+                    </Pressable>
+                  ) : null}
                 </>
               )}
             </LinearGradient>
@@ -318,6 +372,7 @@ const styles = StyleSheet.create({
   inputFilled: { fontFamily: 'Urbanist_600SemiBold' },
   fieldError: { marginTop: GRID * 0.5, fontSize: 12, fontWeight: '600', color: '#FDE2D5' },
   eyeBtn: { position: 'absolute', right: GRID * 1.75, top: 0, bottom: 0, justifyContent: 'center' },
+  eyeBtnDisabled: { opacity: 0.5 },
 
   submitBtn: {
     borderRadius: 999, overflow: 'hidden',

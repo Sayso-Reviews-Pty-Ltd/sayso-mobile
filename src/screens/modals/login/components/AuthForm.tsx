@@ -27,7 +27,8 @@ type Props = {
   passwordTouched: boolean;
   consent: boolean;
   isFormValid: boolean;
-  isSubmitting: boolean;
+  isPending: boolean;
+  isVerifying: boolean;
   isGoogleLoading: boolean;
   formOpacity: Animated.Value;
   formTranslateY: Animated.Value;
@@ -70,7 +71,8 @@ export function AuthForm({
   passwordTouched,
   consent,
   isFormValid,
-  isSubmitting,
+  isPending,
+  isVerifying,
   isGoogleLoading,
   formOpacity,
   formTranslateY,
@@ -92,7 +94,7 @@ export function AuthForm({
   onPrivacy,
   onSwitchMode,
 }: Props) {
-  const submitDisabled = !isFormValid || isSubmitting || usernameChecking;
+  const submitDisabled = !isFormValid || isVerifying || isPending || usernameChecking;
 
   return (
     <Animated.View style={{ opacity: formOpacity, transform: [{ translateY: formTranslateY }] }}>
@@ -296,7 +298,7 @@ export function AuthForm({
           style={({ pressed }) => [
             styles.submitBtn,
             submitDisabled ? styles.submitBtnDisabled : null,
-            pressed && isFormValid && !usernameChecking ? styles.submitBtnPressed : null,
+            pressed && isFormValid && !usernameChecking && !isVerifying && !isPending ? styles.submitBtnPressed : null,
           ]}
           onPress={onSubmit}
           disabled={submitDisabled}
@@ -308,7 +310,13 @@ export function AuthForm({
             style={styles.submitBtnGradient}
           >
             <Text style={styles.submitTxt}>
-              {isSubmitting ? (isRegister ? 'Creating account…' : 'Signing in…') : isRegister ? 'Create account' : 'Sign in'}
+              {isVerifying
+                ? 'Verifying'
+                : isPending
+                  ? 'Updating…'
+                  : isRegister
+                    ? 'Create account'
+                    : 'Sign in'}
             </Text>
           </LinearGradient>
         </Pressable>

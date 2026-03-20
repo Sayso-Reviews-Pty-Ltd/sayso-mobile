@@ -5,7 +5,17 @@ import { supabase } from '../../../lib/supabase';
 import { routes } from '../../../navigation/routes';
 import { GRID } from './constants';
 import { passwordScore } from './helpers';
-import type { FocusedField, ScreenState } from './types';
+import type { FocusedField, InvalidReason, ScreenState } from './types';
+
+const ALREADY_USED_LINK_MESSAGE =
+  'This reset link has already been used. If you have already changed your password, sign in. If not, request a new link.';
+
+class TimeoutError extends Error {
+  constructor() {
+    super('The link timed out. Please request a new one.');
+    this.name = 'TimeoutError';
+  }
+}
 
 export function useResetPasswordController() {
   const router = useRouter();
@@ -22,6 +32,7 @@ export function useResetPasswordController() {
   const [focusedField, setFocusedField] = useState<FocusedField>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [invalidReason, setInvalidReason] = useState<InvalidReason>('invalid-link');
 
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -83,31 +94,31 @@ export function useResetPasswordController() {
 
   useEffect(() => {
     let cancelled = false;
-    const timeoutGuardRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
+    let exchangeAttempted = false;
+    let exchangeSucceeded = false;
 
     async function checkSession() {
       try {
         if (recoveryCode) {
-          await new Promise<void>((resolve, reject) => {
-            timeoutGuardRef.current = setTimeout(() => {
-              reject(new Error('The link timed out. Please request a new one.'));
-            }, 10000);
+          exchangeAttempted = true;
+          let timedOut = false;
 
-            supabase.auth
-              .exchangeCodeForSession(recoveryCode)
-              .then(({ error: exchangeError }) => {
-                if (timeoutGuardRef.current) {
-                  clearTimeout(timeoutGuardRef.current);
-                  timeoutGuardRef.current = null;
-                }
-                if (exchangeError) {
-                  reject(exchangeError);
-                  return;
-                }
-                resolve();
-              })
-              .catch(reject);
-          });
+          const exchangePromise = (async () => {
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(recoveryCode);
+            if (timedOut) return; // timeout already won — discard result
+            if (exchangeError) throw exchangeError;
+          })();
+
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => {
+              timedOut = true;
+              supabase.auth.signOut().catch(() => {});
+              reject(new TimeoutError());
+            }, 10000),
+          );
+
+          await Promise.race([exchangePromise, timeoutPromise]);
+          exchangeSucceeded = true;
         }
 
         const { data, error: sessionError } = await supabase.auth.getSession();
@@ -118,12 +129,24 @@ export function useResetPasswordController() {
           runEntrance();
         }
       } catch (err) {
-        if (timeoutGuardRef.current) {
-          clearTimeout(timeoutGuardRef.current);
-          timeoutGuardRef.current = null;
+        let nextInvalidReason: InvalidReason = 'invalid-link';
+        let nextError = err instanceof Error ? err.message : '';
+
+        if (exchangeAttempted && !exchangeSucceeded && !(err instanceof TimeoutError)) {
+          try {
+            const { data: userData, error: getUserError } = await supabase.auth.getUser();
+            if (!getUserError && userData.user) {
+              nextInvalidReason = 'already-used';
+              nextError = ALREADY_USED_LINK_MESSAGE;
+            }
+          } catch {
+            // Keep invalid-link fallback messaging unchanged.
+          }
         }
+
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : '');
+          setInvalidReason(nextInvalidReason);
+          setError(nextError);
           setScreenState('invalid');
           runEntrance();
         }
@@ -131,13 +154,7 @@ export function useResetPasswordController() {
     }
 
     checkSession();
-    return () => {
-      cancelled = true;
-      if (timeoutGuardRef.current) {
-        clearTimeout(timeoutGuardRef.current);
-        timeoutGuardRef.current = null;
-      }
-    };
+    return () => { cancelled = true; };
   }, [recoveryCode, runEntrance]);
 
   const pwScore = passwordScore(password);
@@ -222,6 +239,7 @@ export function useResetPasswordController() {
     handleSubmit,
     headerOpacity,
     headerY,
+    invalidReason,
     isFormValid,
     isSubmitting,
     password,

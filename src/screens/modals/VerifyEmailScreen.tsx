@@ -19,9 +19,18 @@ import { C, RESEND_COOLDOWN_SECS } from './verify-email/constants';
 import { getInboxUrl } from './verify-email/helpers';
 import { styles } from './verify-email/VerifyEmailScreen.styles';
 
+function stepToRoute(step: string | null | undefined): string {
+  switch (step) {
+    case 'subcategories': return routes.subcategories();
+    case 'deal-breakers': return routes.dealBreakers();
+    case 'complete':      return routes.completeProfile();
+    default:              return routes.interests();
+  }
+}
+
 export default function VerifyEmailScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ expired?: string }>();
+  const params = useLocalSearchParams<{ expired?: string; already_verified?: string }>();
   const insets = useSafeAreaInsets();
   const { refreshProfile } = useProfile();
 
@@ -31,6 +40,7 @@ export default function VerifyEmailScreen() {
   const [isChecking, setIsChecking] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [profileWarning, setProfileWarning] = useState<string | null>(null);
 
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -121,8 +131,31 @@ export default function VerifyEmailScreen() {
         const { data: userData } = await supabase.auth.getUser();
 
         if (userData.user?.email_confirmed_at) {
-          await supabase.auth.refreshSession();
-          await refreshProfile();
+          try { await supabase.auth.refreshSession(); } catch { /* non-blocking */ }
+          try {
+            await refreshProfile();
+          } catch (profileErr) {
+            console.error(profileErr);
+            setProfileWarning('Verification succeeded, but your profile could not be refreshed. Please restart the app.');
+          }
+
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('onboarding_step, onboarding_completed_at, onboarding_complete')
+            .eq('user_id', userData.user.id)
+            .maybeSingle();
+
+          const isOnboardingComplete =
+            Boolean(profileData?.onboarding_completed_at) || Boolean(profileData?.onboarding_complete);
+          const destination = isOnboardingComplete
+            ? routes.home()
+            : stepToRoute(profileData?.onboarding_step);
+
+          try {
+            router.replace(destination as never);
+          } catch {
+            // Route unreachable — stay on screen without error
+          }
           return;
         }
 
@@ -159,6 +192,7 @@ export default function VerifyEmailScreen() {
   }, [pendingEmail]);
 
   const linkExpired = params.expired === '1';
+  const alreadyVerified = params.already_verified === '1';
 
   return (
     <View style={[styles.root, { backgroundColor: C.page }]}> 
@@ -179,18 +213,38 @@ export default function VerifyEmailScreen() {
         <Animated.View style={[styles.textBlock, { opacity: textOpacity, transform: [{ translateY: textY }] }]}> 
           <Text style={styles.heading}>Check Your Email</Text>
           <Text style={styles.subheading}>
-            {linkExpired
-              ? 'Your verification link expired. Request a fresh link and continue.'
-              : "We've sent a confirmation email to verify your account and unlock full features!"}
+            {alreadyVerified
+              ? 'Your email is already verified. You can sign in now.'
+              : linkExpired
+                ? 'Your verification link expired. Request a fresh link and continue.'
+                : "We've sent a confirmation email to verify your account and unlock full features!"}
           </Text>
         </Animated.View>
 
-        <Animated.View style={[styles.card, { opacity: cardOpacity, transform: [{ translateY: cardY }] }]}> 
+        <Animated.View style={[styles.card, { opacity: cardOpacity, transform: [{ translateY: cardY }] }]}>
+          {alreadyVerified ? (
+            <Animated.View style={{ opacity: actionsOpacity, transform: [{ translateY: actionsY }] }}>
+              <Pressable
+                style={({ pressed }) => [styles.resendBtn, pressed && styles.btnPressed]}
+                onPress={() => router.replace(routes.login() as never)}
+              >
+                <LinearGradient
+                  colors={[C.wine, '#7A404A']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.resendBtnGradient}
+                >
+                  <Text style={styles.resendBtnTxt}>Sign in</Text>
+                </LinearGradient>
+              </Pressable>
+            </Animated.View>
+          ) : (
+            <>
           <View style={styles.mailCircle}>
             <Ionicons name="mail-outline" size={42} color={C.charcoal} />
           </View>
 
-          <Pressable onPress={handleOpenInbox} disabled={!pendingEmail} style={({ pressed }) => [styles.emailBtn, pressed && styles.btnPressed, !pendingEmail && styles.btnDisabled]}> 
+          <Pressable onPress={handleOpenInbox} disabled={!pendingEmail} style={({ pressed }) => [styles.emailBtn, pressed && styles.btnPressed, !pendingEmail && styles.btnDisabled]}>
             <Text style={styles.emailBtnTxt}>{displayEmail}</Text>
             <Ionicons name="open-outline" size={14} color={C.white} />
           </Pressable>
@@ -243,6 +297,13 @@ export default function VerifyEmailScreen() {
               </View>
             )}
 
+            {profileWarning !== null && (
+              <View style={styles.successBanner}>
+                <Ionicons name="alert-circle-outline" size={16} color={C.sage} />
+                <Text style={styles.successTxt}>{profileWarning}</Text>
+              </View>
+            )}
+
             {resendSuccess && (
               <View style={styles.successBanner}>
                 <Ionicons name="checkmark-circle-outline" size={16} color={C.sage} />
@@ -254,10 +315,12 @@ export default function VerifyEmailScreen() {
               Didn&apos;t receive the email? Check your spam folder or try resending.
             </Text>
 
-            <Pressable onPress={handleCheckVerification} disabled={isChecking} style={({ pressed }) => [styles.verifiedLink, pressed && styles.btnPressed]}> 
+            <Pressable onPress={handleCheckVerification} disabled={isChecking} style={({ pressed }) => [styles.verifiedLink, pressed && styles.btnPressed]}>
               <Text style={styles.verifiedLinkTxt}>{isChecking ? 'Checking verification…' : "I've verified my email"}</Text>
             </Pressable>
           </Animated.View>
+            </>
+          )}
         </Animated.View>
 
         <Pressable onPress={() => router.replace(routes.login() as never)} style={styles.backToLogin}> 

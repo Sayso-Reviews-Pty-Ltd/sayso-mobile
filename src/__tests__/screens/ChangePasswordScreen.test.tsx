@@ -7,8 +7,9 @@ import '../../lib/supabase';
 
 // ── Router ────────────────────────────────────────────────────────────────────
 const mockBack = jest.fn();
+const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: jest.fn(() => ({ back: mockBack, push: jest.fn() })),
+  useRouter: jest.fn(() => ({ back: mockBack, replace: mockReplace, push: jest.fn() })),
 }));
 
 // ── Safe area ─────────────────────────────────────────────────────────────────
@@ -322,7 +323,7 @@ describe('ChangePasswordScreen', () => {
     expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
-  it('signs out and shows security message when mutateAsync throws after successful re-auth', async () => {
+  it('signs out, shows re-auth prompt, and routes to login on Sign in after Step 2 failure', async () => {
     mockMutateAsync.mockRejectedValueOnce(new Error('network error'));
 
     render(<ChangePasswordScreen />);
@@ -334,10 +335,22 @@ describe('ChangePasswordScreen', () => {
 
     await waitFor(() => {
       expect(screen.getByText(
-        'Something went wrong updating your password. You have been signed out for security. Please sign in and try again.',
+        'You have been signed out for security. Please sign in again to change your password.',
       )).toBeTruthy();
     });
+    expect(screen.queryByText(
+      'Something went wrong updating your password. You have been signed out for security. Please sign in and try again.',
+    )).toBeNull();
     expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(screen.getByPlaceholderText('Your current password').props.editable).toBe(false);
+    expect(screen.getByPlaceholderText('Create a new password').props.editable).toBe(false);
+    expect(screen.getByPlaceholderText('Confirm new password').props.editable).toBe(false);
+
+    fireEvent.press(screen.getByText('Update Password'));
+    expect(mockMutateAsync).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(screen.getByText('Sign in'));
+    expect(mockReplace).toHaveBeenCalledWith('/login');
   });
 
   it('does not call signOut when signInWithPassword fails', async () => {
@@ -351,6 +364,7 @@ describe('ChangePasswordScreen', () => {
     });
 
     expect(mockSignOut).not.toHaveBeenCalled();
+    expect(screen.queryByText('Sign in')).toBeNull();
   });
 
   it('does not show success state after an API error', async () => {

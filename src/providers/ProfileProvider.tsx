@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthProvider';
@@ -92,20 +92,34 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     await fetchProfile(userId);
   }, [session?.user?.id, fetchProfile]);
 
+  // Tracks the user ID for which a fetch has been initiated — prevents duplicate
+  // fetches when SIGNED_IN fires multiple times for the same user.
+  const loadedUserIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (isAuthLoading) return;
-
-    if (!session?.user?.id) {
-      setProfileState(null);
-      setIsProfileLoading(false);
-      return;
-    }
-
-    setIsProfileLoading(true);
-    fetchProfile(session.user.id).finally(() => {
-      setIsProfileLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        const userId = newSession?.user?.id;
+        if (!userId) {
+          setProfileState(null);
+          setIsProfileLoading(false);
+          return;
+        }
+        // Same user already loaded — skip to avoid an unnecessary network call.
+        // Does not cancel any in-flight fetch for this user ID.
+        if (userId === loadedUserIdRef.current) return;
+        loadedUserIdRef.current = userId;
+        setIsProfileLoading(true);
+        fetchProfile(userId).finally(() => setIsProfileLoading(false));
+      } else if (event === 'SIGNED_OUT') {
+        loadedUserIdRef.current = null;
+        setProfileState(null);
+        setIsProfileLoading(false);
+      }
     });
-  }, [session?.user?.id, isAuthLoading, fetchProfile]);
+
+    return () => subscription.unsubscribe();
+  }, [fetchProfile]);
 
   const value = useMemo<ProfileContextValue>(
     () => ({

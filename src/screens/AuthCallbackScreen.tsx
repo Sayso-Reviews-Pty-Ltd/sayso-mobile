@@ -12,6 +12,7 @@ type CallbackParams = {
   type?: string;
   error?: string;
   error_description?: string;
+  state?: string;
 };
 
 function isExpiredVerificationError(message: string): boolean {
@@ -54,7 +55,14 @@ export default function AuthCallbackScreen() {
         if (params.error) {
           const paramError = params.error_description || params.error;
           if (isExpiredVerificationError(paramError)) {
-            router.replace('/verify-email?expired=1' as never);
+            // Distinguish an already-verified account from a genuinely expired link.
+            // getUser() is called in the error branch only — never on the success path.
+            const { data: checkData } = await supabase.auth.getUser();
+            if (checkData?.user?.email_confirmed_at) {
+              router.replace('/verify-email?already_verified=1' as never);
+            } else {
+              router.replace('/verify-email?expired=1' as never);
+            }
             return;
           }
           throw new Error(paramError);
@@ -67,17 +75,30 @@ export default function AuthCallbackScreen() {
           // Session already established — fall through to profile check below
         } else {
           // Exchange code for session (PKCE flow)
-          const { error } = await supabase.auth.exchangeCodeForSession(params.code);
-          if (error) {
-            // PKCE mismatch means a different browser clicked the link — Supabase still
-            // confirmed the email server-side, so treat this as a soft error and try
-            // to get an existing session (user may already be signed in).
-            if (error.message?.includes('code verifier') || error.code === 'pkce_mismatch') {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (!session) throw error;
-            } else {
-              throw error;
+          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(params.code);
+          if (exchangeError) {
+            supabase.auth.signOut().catch(() => {});
+            const encoded = encodeURIComponent('Sign-in could not be verified. Please try again.');
+            router.replace((`/auth/auth-code-error?error=${encoded}`) as never);
+            return;
+          }
+
+          // Verify the session user matches the user_id claim in state (if present)
+          const sessionUserId = exchangeData.session?.user?.id;
+          let stateUserId: string | undefined;
+          if (params.state) {
+            try {
+              const decoded = JSON.parse(atob(params.state));
+              stateUserId = typeof decoded?.user_id === 'string' ? decoded.user_id : undefined;
+            } catch {
+              // Malformed state — skip the check
             }
+          }
+          if (stateUserId && sessionUserId && stateUserId !== sessionUserId) {
+            supabase.auth.signOut().catch(() => {});
+            const encoded = encodeURIComponent('Account mismatch detected. Please sign in again.');
+            router.replace((`/auth/auth-code-error?error=${encoded}`) as never);
+            return;
           }
         }
 

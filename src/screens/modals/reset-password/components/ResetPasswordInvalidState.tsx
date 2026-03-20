@@ -4,13 +4,31 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../../../../components/Typography';
 import { C } from '../constants';
 import { styles } from '../ResetPasswordScreen.styles';
+import type { InvalidReason } from '../types';
+
+const INVALID_LINK_MESSAGE =
+  'Your password reset link may have expired or already been used. Request a fresh link to continue.';
 
 type Props = {
+  invalidReason: InvalidReason;
+  message?: string;
   onRequestNewLink: () => void;
   onBackToLogin: () => void;
 };
 
-export function ResetPasswordInvalidState({ onRequestNewLink, onBackToLogin }: Props) {
+export function ResetPasswordInvalidState({
+  invalidReason,
+  message,
+  onRequestNewLink,
+  onBackToLogin,
+}: Props) {
+  const isAlreadyUsed = invalidReason === 'already-used';
+  const bodyMessage = isAlreadyUsed && message ? message : INVALID_LINK_MESSAGE;
+  const primaryLabel = isAlreadyUsed ? 'Sign in' : 'Request New Link';
+  const primaryAction = isAlreadyUsed ? onBackToLogin : onRequestNewLink;
+  const secondaryLabel = isAlreadyUsed ? 'Resend reset link' : 'Back to Login';
+  const secondaryAction = isAlreadyUsed ? onRequestNewLink : onBackToLogin;
+
   return (
     <>
       <View style={styles.stateIconWrap}>
@@ -19,11 +37,11 @@ export function ResetPasswordInvalidState({ onRequestNewLink, onBackToLogin }: P
         </View>
       </View>
       <Text style={styles.stateMessage}>
-        Your password reset link may have expired or already been used. Request a fresh link to continue.
+        {bodyMessage}
       </Text>
       <Pressable
         style={({ pressed }) => [styles.submitBtn, pressed ? styles.submitBtnPressed : null]}
-        onPress={onRequestNewLink}
+        onPress={primaryAction}
       >
         <LinearGradient
           colors={[C.wine, 'rgba(114,47,55,0.8)']}
@@ -31,11 +49,11 @@ export function ResetPasswordInvalidState({ onRequestNewLink, onBackToLogin }: P
           end={{ x: 1, y: 0 }}
           style={styles.submitBtnGradient}
         >
-          <Text style={styles.submitTxt}>Request New Link</Text>
+          <Text style={styles.submitTxt}>{primaryLabel}</Text>
         </LinearGradient>
       </Pressable>
-      <Pressable style={styles.secondaryBtn} onPress={onBackToLogin}>
-        <Text style={styles.secondaryBtnTxt}>Back to Login</Text>
+      <Pressable style={styles.secondaryBtn} onPress={secondaryAction}>
+        <Text style={styles.secondaryBtnTxt}>{secondaryLabel}</Text>
       </Pressable>
     </>
   );

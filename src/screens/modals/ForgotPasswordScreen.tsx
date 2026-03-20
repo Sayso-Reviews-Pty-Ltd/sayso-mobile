@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { routes } from '../../navigation/routes';
+import { getFriendlyAuthError } from './login/helpers';
 import { C, GRID } from './forgot-password/constants';
 import { styles } from './forgot-password/ForgotPasswordScreen.styles';
 import { validateEmail } from './forgot-password/helpers';
@@ -22,6 +23,21 @@ import {
   ForgotPasswordHeader,
   ForgotPasswordSuccessContent,
 } from './forgot-password/components';
+
+const FORGOT_PASSWORD_FALLBACK_ERROR =
+  'Something went wrong. Please check the email address and try again, or contact support.';
+
+const KNOWN_FRIENDLY_AUTH_ERRORS = new Set<string>([
+  'Incorrect email or password.',
+  'An account with this email already exists.',
+  'Too many attempts. Please try again later.',
+  'Please verify your email before signing in.',
+  'Your password is too short.',
+  "That doesn't look like a valid email address.",
+  'Please enter a valid email address.',
+  'Connection error. Check your internet and try again.',
+  'Something went wrong. Please try again.',
+]);
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -103,10 +119,11 @@ export default function ForgotPasswordScreen() {
       if (resetError) throw resetError;
       setEmailSent(true);
     } catch (err) {
+      const friendlyMessage = getFriendlyAuthError(err);
       setError(
-        err instanceof Error
-          ? err.message
-          : "We couldn't send the reset link right now. Please try again."
+        KNOWN_FRIENDLY_AUTH_ERRORS.has(friendlyMessage)
+          ? friendlyMessage
+          : FORGOT_PASSWORD_FALLBACK_ERROR
       );
     } finally {
       setIsSubmitting(false);

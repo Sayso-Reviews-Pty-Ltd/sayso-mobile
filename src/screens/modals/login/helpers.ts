@@ -31,6 +31,9 @@ export function getFriendlyAuthError(err: unknown): string {
   }
   if (msg.includes('Email not confirmed')) return 'Please verify your email before signing in.';
   if (msg.includes('Password should be at least')) return 'Your password is too short.';
+  if (msg.includes('Unable to validate email address: invalid format')) {
+    return "That doesn't look like a valid email address.";
+  }
   if (msg.includes('Unable to validate email') || msg.includes('invalid format')) {
     return 'Please enter a valid email address.';
   }

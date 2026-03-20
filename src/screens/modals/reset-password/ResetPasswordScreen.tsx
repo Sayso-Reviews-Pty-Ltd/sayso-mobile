@@ -67,6 +67,8 @@ export default function ResetPasswordScreen() {
                 >
                   {controller.screenState === 'invalid' ? (
                     <ResetPasswordInvalidState
+                      invalidReason={controller.invalidReason}
+                      message={controller.error}
                       onRequestNewLink={controller.handleRequestNewLink}
                       onBackToLogin={controller.handleBackToLogin}
                     />

@@ -45,7 +45,7 @@ export default function RootLayout() {
             <Stack.Screen name="(stack)" options={{ headerShown: false }} />
             <Stack.Screen name="(modals)" options={{ headerShown: false }} />
             <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-            <Stack.Screen name="role-unsupported" options={{ headerShown: false }} />
+            <Stack.Screen name="role-unsupported" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         </RootGuard>
       </Providers>

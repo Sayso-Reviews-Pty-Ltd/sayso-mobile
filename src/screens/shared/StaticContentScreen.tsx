@@ -12,7 +12,7 @@ import { Text } from '../../components/Typography';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { CARD_RADIUS } from '../../styles/radii';
 import { TransitionItem } from '../../components/motion/TransitionItem';
-import { useTransitionIndex } from '../../components/motion/TransitionScope';
+import { useTransitionIndex, ScreenTransitionScope } from '../../components/motion/TransitionScope';
 
 type Props = {
   title: string;
@@ -54,12 +54,13 @@ export function StaticContentScreen({ title, sections }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title }} />
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.content}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
+      <ScreenTransitionScope>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.content}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
         {sections.map((section, index) => (
           <TransitionItem key={`${title}-${section.heading}`} variant="card" index={transitionIndex(index)}>
             <View style={styles.card}>
@@ -68,7 +69,8 @@ export function StaticContentScreen({ title, sections }: Props) {
             </View>
           </TransitionItem>
         ))}
-      </ScrollView>
+        </ScrollView>
+      </ScreenTransitionScope>
     </SafeAreaView>
   );
 }

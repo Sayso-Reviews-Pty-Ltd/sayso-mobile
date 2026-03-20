@@ -15,6 +15,7 @@ export default function ModalLayout() {
           headerShown: true,
         }}
       />
+      <Stack.Screen name="change-password" options={fullScreenModalScreenOptions} />
     </Stack>
   );
 }

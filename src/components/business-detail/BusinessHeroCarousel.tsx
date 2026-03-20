@@ -19,6 +19,7 @@ type Props = {
 
 export function BusinessHeroCarousel({ businessName, images, rating, verified, subcategorySlug, interestId }: Props) {
   const [index, setIndex] = useState(0);
+  const [failedUris, setFailedUris] = useState<Set<string>>(new Set());
 
   const placeholderAsset = useMemo(
     () => getBusinessPlaceholderFromCandidates([subcategorySlug, interestId]),
@@ -30,23 +31,39 @@ export function BusinessHeroCarousel({ businessName, images, rating, verified, s
     return Math.min(index, images.length - 1);
   }, [images.length, index]);
 
+  const handleImageError = (uri: string) => {
+    setFailedUris((prev) => new Set(prev).add(uri));
+  };
+
   const activeImage = images[activeIndex];
+  const activeImageFailed = activeImage ? failedUris.has(activeImage) : false;
+  const showRemoteImage = !!activeImage && !activeImageFailed;
   const hasMultiple = images.length > 1;
   const displayRating = Number.isFinite(rating) ? rating : 0;
 
   return (
     <View style={styles.wrap}>
-      {activeImage ? (
+      {showRemoteImage ? (
         <>
           {/* Blurred ambient background layer */}
           <Image
             source={{ uri: activeImage }}
             style={styles.imageBlur}
             contentFit="cover"
+            cachePolicy="memory-disk"
             blurRadius={28}
+            onError={() => {/* blur layer failure is cosmetic — no action needed */}}
           />
           {/* Sharp foreground image */}
-          <Image source={{ uri: activeImage }} style={styles.image} contentFit="cover" />
+          <Image
+            source={{ uri: activeImage }}
+            style={styles.image}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={activeImage}
+            transition={180}
+            onError={() => handleImageError(activeImage)}
+          />
         </>
       ) : (
         <Image source={placeholderAsset} style={styles.image} contentFit="cover" />

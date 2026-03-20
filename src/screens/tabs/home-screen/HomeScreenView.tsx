@@ -4,16 +4,12 @@ import {
   FlatList,
   RefreshControl,
   ScrollView,
-  StyleSheet,
-  TouchableOpacity,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { BusinessListItemDto, TopReviewerDto } from '@sayso/contracts';
-import { CardSurface } from '../../../components/CardSurface';
 import { HeaderDmBellActions } from '../../../components/HeaderDmBellActions';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
@@ -25,10 +21,10 @@ import { HomeSearchBar } from '../home/HomeSearchBar';
 import { HomeSearchResults } from '../home/HomeSearchResults';
 import { HomeSearchSuggestions } from '../home/HomeSearchSuggestions';
 import { HomeSectionHeader } from '../home/HomeSectionHeader';
-import { homeTokens } from '../home/HomeTokens';
-import { FROSTED_CARD_BORDER_COLOR } from '../../../styles/cardSurface';
-import { CARD_SHADOW_MD, getOverlayShadowStyle } from '../../../styles/overlayShadow';
-import { CARD_CTA_RADIUS, CARD_RADIUS } from '../../../styles/radii';
+import { getOverlayShadowStyle } from '../../../styles/overlayShadow';
+import { CARD_CTA_RADIUS } from '../../../styles/radii';
+import { ForYouSection } from './components/ForYouSection';
+import { styles } from './HomeScreenView.styles';
 
 const ctaShadowStyle = getOverlayShadowStyle(CARD_CTA_RADIUS);
 
@@ -197,7 +193,6 @@ function HomeScreenViewComponent({
         </View>
       </View>
 
-      {/* Live suggestions overlay — absolute, sits above content below header */}
       {showSuggestions ? (
         <View
           style={[styles.suggestionsOverlay, { top: headerHeight - 4 }]}
@@ -222,345 +217,103 @@ function HomeScreenViewComponent({
         <ScreenTransitionScope>
           <TransitionItem variant="card" index={2} style={styles.flexOne}>
             <HomeSearchResults
-            listRef={searchResultsRef}
-            query={debouncedQuery}
-            results={searchBusinesses}
-            isLoading={searchIsLoading}
-            error={searchError}
-            minRating={minRating}
-            distanceKm={distanceKm}
-            locationDenied={locationDenied}
-            onSetMinRating={(value) => setMinRating(value)}
-            onSetDistanceKm={handleDistanceChange}
-            onClearFilters={() => {
-              setMinRating(null);
-              setDistanceKm(null);
-              setLocationDenied(false);
-            }}
-            onRefresh={() => {
-              void handleRefresh();
-            }}
-            refreshing={refreshing}
-            onScroll={handleScroll}
-          />
+              listRef={searchResultsRef}
+              query={debouncedQuery}
+              results={searchBusinesses}
+              isLoading={searchIsLoading}
+              error={searchError}
+              minRating={minRating}
+              distanceKm={distanceKm}
+              locationDenied={locationDenied}
+              onSetMinRating={(value) => setMinRating(value)}
+              onSetDistanceKm={handleDistanceChange}
+              onClearFilters={() => {
+                setMinRating(null);
+                setDistanceKm(null);
+                setLocationDenied(false);
+              }}
+              onRefresh={() => {
+                void handleRefresh();
+              }}
+              refreshing={refreshing}
+              onScroll={handleScroll}
+            />
           </TransitionItem>
         </ScreenTransitionScope>
       ) : (
         <ScreenTransitionScope>
           <Animated.ScrollView
-          ref={homeFeedRef}
-          style={styles.scroll}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} />}
-          contentContainerStyle={styles.content}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          <TransitionItem variant="card" index={3}>
-            <View style={styles.section}>
-            <HomeSectionHeader
-              title="For You"
-              actionLabel={user ? 'See More' : undefined}
-              onPress={user ? onNavigateForYou : undefined}
-            />
-
-            {!user ? (
-              <CardSurface
-                radius={CARD_RADIUS}
-                style={styles.guestCardWrap}
-                contentStyle={styles.guestCardSurface}
-              >
-                <LinearGradient
-                  colors={[homeTokens.coral, homeTokens.coralDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.guestCard}
-                >
-                  <View style={styles.guestBadge}>
-                    <Text style={styles.guestBadgeText}>For You</Text>
-                  </View>
-                  <Text style={styles.guestTitle}>Create an account to unlock personalised recommendations.</Text>
-                  <View style={styles.guestActions}>
-                    <TouchableOpacity
-                      style={[styles.primaryGuestButton, ctaShadowStyle]}
-                      onPress={onNavigateOnboarding}
-                      activeOpacity={0.88}
-                    >
-                      <Text style={styles.primaryGuestButtonText}>Create Account</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.secondaryGuestButton, ctaShadowStyle]}
-                      onPress={onNavigateOnboarding}
-                      activeOpacity={0.88}
-                    >
-                      <Text style={styles.secondaryGuestButtonText}>Sign In</Text>
-                    </TouchableOpacity>
-                  </View>
-                </LinearGradient>
-              </CardSurface>
-            ) : forYou.error ? (
-              <View style={styles.messageCard}>
-                <Text style={styles.messageTitle}>Couldn&apos;t load personalised picks right now.</Text>
-                <Text style={styles.messageText}>We&apos;ll retry in the background.</Text>
-              </View>
-            ) : forYou.isLoading ? (
-              <HomeBusinessRow
-                items={[]}
-                loading
-                emptyTitle="Curated from your interests"
-                emptyMessage="Based on what you selected, no matches in this section yet. See more on For You or explore Trending."
+            ref={homeFeedRef}
+            style={styles.scroll}
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} />}
+            contentContainerStyle={styles.content}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
+            <TransitionItem variant="card" index={3}>
+              <ForYouSection
+                user={user}
+                forYou={forYou}
+                onNavigateForYou={onNavigateForYou}
+                onNavigateOnboarding={onNavigateOnboarding}
+                ctaShadowStyle={ctaShadowStyle}
               />
-            ) : forYou.businesses.length > 0 ? (
-              <HomeBusinessRow
-                items={forYou.businesses}
-                loading={false}
-                emptyTitle="Curated from your interests"
-                emptyMessage="Based on what you selected, no matches in this section yet. See more on For You or explore Trending."
-              />
-            ) : (
-              <View style={styles.messageCard}>
-                <Text style={styles.messageTitle}>Curated from your interests</Text>
-                <Text style={styles.messageText}>
-                  Based on what you selected, no matches in this section yet. See more on For You or explore Trending.
-                </Text>
+            </TransitionItem>
+
+            <TransitionItem variant="card" index={4}>
+              <View style={styles.section}>
+                <HomeSectionHeader
+                  title="Trending Now"
+                  actionLabel="See More"
+                  onPress={onNavigateTrending}
+                />
+                <HomeBusinessRow
+                  items={trending.data?.businesses ?? []}
+                  loading={trending.isLoading}
+                  error={trending.error instanceof Error ? trending.error.message : null}
+                  emptyTitle="Nothing trending yet"
+                  emptyMessage="Check back soon for live activity."
+                />
               </View>
-            )}
-            </View>
-          </TransitionItem>
+            </TransitionItem>
 
-          <TransitionItem variant="card" index={4}>
-            <View style={styles.section}>
-            <HomeSectionHeader
-              title="Trending Now"
-              actionLabel="See More"
-              onPress={onNavigateTrending}
-            />
-            <HomeBusinessRow
-              items={trending.data?.businesses ?? []}
-              loading={trending.isLoading}
-              error={trending.error instanceof Error ? trending.error.message : null}
-              emptyTitle="Nothing trending yet"
-              emptyMessage="Check back soon for live activity."
-            />
-            </View>
-          </TransitionItem>
+            <TransitionItem variant="card" index={5}>
+              <View style={styles.section}>
+                <HomeSectionHeader
+                  title="Events & Specials"
+                  actionLabel="See More"
+                  onPress={onNavigateEvents}
+                />
+                <HomeEventsSpecialsRow
+                  items={events.items}
+                  loading={events.isLoading}
+                  error={events.error}
+                />
+              </View>
+            </TransitionItem>
 
-          <TransitionItem variant="card" index={5}>
-            <View style={styles.section}>
-            <HomeSectionHeader
-              title="Events & Specials"
-              actionLabel="See More"
-              onPress={onNavigateEvents}
-            />
-            <HomeEventsSpecialsRow
-              items={events.items}
-              loading={events.isLoading}
-              error={events.error}
-            />
-            </View>
-          </TransitionItem>
-
-          <TransitionItem variant="card" index={6}>
-            <HomeCommunityHighlightsSection
-              reviewers={reviewers.reviewers}
-              reviewersMode={reviewers.mode}
-              recentReviews={recentReviews.reviews}
-              reviewersLoading={reviewers.isLoading || recentReviews.isLoading}
-              reviewersError={reviewers.error ?? recentReviews.error}
-              featuredBusinesses={featured.featuredBusinesses}
-              featuredLoading={featured.isLoading}
-              featuredError={featured.error}
-              onPressContributors={onNavigateLeaderboardContributors}
-              onPressFeatured={onNavigateLeaderboardBusinesses}
-              onPressBadges={onNavigateBadges}
-              onPressReviewer={navigateToReviewer}
-            />
-          </TransitionItem>
+            <TransitionItem variant="card" index={6}>
+              <HomeCommunityHighlightsSection
+                reviewers={reviewers.reviewers}
+                reviewersMode={reviewers.mode}
+                recentReviews={recentReviews.reviews}
+                reviewersLoading={reviewers.isLoading || recentReviews.isLoading}
+                reviewersError={reviewers.error ?? recentReviews.error}
+                featuredBusinesses={featured.featuredBusinesses}
+                featuredLoading={featured.isLoading}
+                featuredError={featured.error}
+                onPressContributors={onNavigateLeaderboardContributors}
+                onPressFeatured={onNavigateLeaderboardBusinesses}
+                onPressBadges={onNavigateBadges}
+                onPressReviewer={navigateToReviewer}
+              />
+            </TransitionItem>
           </Animated.ScrollView>
         </ScreenTransitionScope>
       )}
-
     </SafeAreaView>
   );
 }
 
 export const HomeScreenView = memo(HomeScreenViewComponent);
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: homeTokens.coral,
-  },
-  flexOne: {
-    flex: 1,
-  },
-  headerWrap: {
-    backgroundColor: homeTokens.coral,
-    position: 'relative',
-    zIndex: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: FROSTED_CARD_BORDER_COLOR,
-  },
-  headerWrapExpanded: {
-    paddingTop: 10,
-    paddingBottom: 14,
-  },
-  headerWrapCollapsed: {
-    paddingTop: 6,
-    paddingBottom: 10,
-  },
-  headerMaterial: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-  },
-  headerMaterialCollapsed: {
-    shadowColor: homeTokens.coralDark,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    elevation: 8,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    position: 'relative',
-    zIndex: 1,
-  },
-  headerRowWrap: {
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  headerRowWrapExpanded: {
-    height: 42,
-    opacity: 1,
-  },
-  headerRowWrapCollapsed: {
-    height: 0,
-    opacity: 0,
-  },
-  headerCopy: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 30,
-    fontFamily: 'MonarchParadox',
-    color: homeTokens.white,
-    letterSpacing: 3,
-  },
-  searchBarWrap: {
-    marginHorizontal: homeTokens.pageGutter,
-    height: 60,
-    padding: 4,
-    overflow: 'visible',
-    position: 'relative',
-    zIndex: 30,
-  },
-  searchBarWrapExpanded: {
-    marginTop: 10,
-  },
-  searchBarWrapCollapsed: {
-    marginTop: 3,
-  },
-  suggestionsOverlay: {
-    position: 'absolute',
-    left: homeTokens.pageGutter,
-    right: homeTokens.pageGutter,
-    zIndex: 100,
-  },
-  content: {
-    backgroundColor: homeTokens.offWhite,
-    paddingBottom: 24,
-  },
-  section: {
-    paddingTop: 24,
-    backgroundColor: homeTokens.offWhite,
-  },
-  scroll: {
-    backgroundColor: homeTokens.offWhite,
-  },
-  guestCardWrap: {
-    marginHorizontal: homeTokens.pageGutter,
-  },
-  guestCardSurface: {
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-  },
-  guestCard: {
-    borderRadius: CARD_RADIUS,
-    padding: 20,
-  },
-  guestBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    marginBottom: 14,
-  },
-  guestBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: homeTokens.coral,
-  },
-  guestTitle: {
-    fontSize: 24,
-    lineHeight: 31,
-    fontWeight: '700',
-    color: homeTokens.white,
-    maxWidth: 320,
-  },
-  guestActions: {
-    gap: 12,
-    marginTop: 18,
-  },
-  primaryGuestButton: {
-    borderRadius: CARD_CTA_RADIUS,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    backgroundColor: homeTokens.white,
-  },
-  primaryGuestButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: homeTokens.coral,
-    textAlign: 'center',
-  },
-  secondaryGuestButton: {
-    borderRadius: CARD_CTA_RADIUS,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
-  },
-  secondaryGuestButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: homeTokens.white,
-    textAlign: 'center',
-  },
-  messageCard: {
-    marginHorizontal: homeTokens.pageGutter,
-    padding: 20,
-    borderRadius: CARD_RADIUS,
-    borderWidth: 1,
-    borderColor: homeTokens.borderSoft,
-    backgroundColor: homeTokens.cardBg,
-    ...CARD_SHADOW_MD,
-  },
-  messageTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: homeTokens.charcoal,
-  },
-  messageText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: homeTokens.textSecondary,
-    marginTop: 6,
-  },
-});

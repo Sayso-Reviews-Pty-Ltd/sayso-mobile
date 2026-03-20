@@ -32,29 +32,66 @@
 
 ---
 
+## Code Quality
+
+### 300 LOC Rule
+- **No file may exceed 300 lines of code**
+- If a file approaches 300 LOC, split it before adding more logic
+- Extract components, hooks, utilities, or constants into separate files
+- Large screens must be decomposed into smaller sub-components in their own files
+- This rule applies to all file types: `.ts`, `.tsx`, `.js`, `.jsx`
+- The QA Agent must flag any file exceeding 300 LOC as a `FAIL`
+
+---
+
 ## Agents
 
 Use the specialized agents below for their respective domains. Invoke via the Agent tool with the matching `subagent_type`. Each agent has a narrow scope — do not cross boundaries.
+
+> Agent definitions are the source of truth from `.claude/agents/`. Do not override agent behaviour in ad-hoc prompts.
 
 ---
 
 ### UI Agent (`ui-agent`)
 
-Responsible for migrating the Sayso web interface to mobile using Expo and React Native.
+Responsible for migrating the Sayso web interface to a mobile application using Expo and React Native.
 
 **When to use:** Any screen, component, or layout work in `src/screens/`, `src/components/`, or `app/`.
 
-**Rules:**
-- Inspect the equivalent web page/component before building
-- Translate CSS Flexbox → React Native StyleSheet; Tailwind → style objects
-- Prefer Flexbox over absolute positioning
-- Use `FlatList` for large lists; avoid nested ScrollViews
-- Use `expo-router` for navigation; avoid native modules unless necessary
-- Reuse design tokens from `src/styles/` and `src/screens/tabs/home/HomeTokens.ts`
-- No redesigning UI — replicate what exists on web
-- No new UI frameworks
+**Mission:**
+- Convert web UI components into React Native equivalents
+- Maintain visual parity with the web application
+- Ensure consistent layout and spacing
 
-**Forbidden:** Modifying backend logic, introducing new visual styles not in the design system.
+**Technology:** Expo · React Native · TypeScript
+
+**Migration workflow:**
+1. Inspect the equivalent web page/component
+2. Identify layout structure
+3. Translate CSS layout to React Native styles
+4. Reuse shared design tokens
+5. Ensure performance on mobile
+
+**Layout rules:**
+- Maintain visual symmetry
+- Spacing must follow the 4px grid
+- Maintain consistent vertical rhythm
+- Avoid nested scroll views
+
+**React Native rules:**
+- Prefer Flexbox over absolute positioning
+- Use `FlatList` for large lists
+- Optimize re-renders
+- Avoid unnecessary state
+
+**Expo rules:**
+- Use Expo-compatible libraries
+- Prefer `expo-router` for navigation
+- Avoid native modules unless necessary
+
+**Forbidden:** Redesigning UI, modifying backend logic, introducing new UI frameworks.
+
+**Output format:** Summary → Files created/modified → Code diff → Explanation.
 
 ---
 
@@ -66,18 +103,20 @@ Responsible for the Sayso data layer: Supabase, PostgreSQL, and the API layer sh
 
 **Rules:**
 - All tables must include `created_at` timestamps
-- Support offset-based pagination for mobile list endpoints
+- Support pagination for mobile list endpoints
 - Avoid expensive joins — prefer denormalised reads for mobile
 - Ensure indexes exist on all search and filter fields
+
+**Security:**
 - Enforce row-level security on every table
 - Validate user ownership on all write operations
 - Never expose service keys in client-side code
 
-**Core tables:** `users`, `businesses`, `reviews`, `events_and_specials`, `saved_places`, `profiles`
+**Core tables:** `users`, `places`, `reviews`, `saved_places`
 
 **Forbidden:** Modifying UI code, changing search/Algolia architecture.
 
-**Output format:** schema migration → query examples → explanation.
+**Output format:** Schema migration → Query examples → Explanation.
 
 ---
 
@@ -109,12 +148,20 @@ Responsible for mapping web components from `sayso-web` to their React Native eq
 
 **Rules:**
 - Do not redesign — replicate
-- Spacing must follow the 4pt grid
+- Spacing must follow the 4px grid
 - Reuse existing mobile components where they exist
 - Never import web-only libraries (`next/*`, `framer-motion`, etc.)
 - Use expo-router file conventions for routing
 
-**Output format:** Web Source → Mobile Target → Component Map → Files Created/Modified → Requires Manual Review.
+**Output format:**
+
+```
+Web Source:     <path in sayso-web>
+Mobile Target:  <path in sayso-mobile>
+Component Map:  <web element> → <mobile equivalent>
+Files Created/Modified: ...
+Requires Manual Review: ...
+```
 
 ---
 
@@ -128,12 +175,18 @@ Responsible for reviewing code changes for correctness, performance, and UI cons
 - TypeScript errors and unsafe casts
 - Lint violations
 - Layout inconsistencies vs web reference
-- Performance issues (unnecessary re-renders, missing memoisation, expensive operations on the render thread)
+- Performance issues (unnecessary re-renders, expensive operations on the render thread)
 - Mobile responsiveness and safe-area handling
-- Animation correctness (`useNativeDriver` usage, Reanimated worklet safety)
-- Lists: FlatList used where appropriate, `getItemLayout` provided, `keyExtractor` stable
+- Lists: `FlatList` used where appropriate, `keyExtractor` stable
+- **300 LOC rule**: flag any file exceeding 300 lines as a violation
+
+**Migration checks:**
+- UI matches the web layout
+- Spacing and alignment are consistent
+- No unnecessary re-renders
 
 **Output format:**
+
 ```
 Review Summary: PASS / FAIL
 
@@ -152,7 +205,7 @@ Responsible for search and discovery via Algolia.
 
 **When to use:** Changes to search relevance, Algolia index configuration, geo-search behaviour, or Supabase → Algolia sync.
 
-**Indices:** `businesses`, `reviews`
+**Indices:** `places`, `reviews`
 
 **Ranking priorities (in order):**
 1. Proximity to user
@@ -167,7 +220,7 @@ Responsible for search and discovery via Algolia.
 
 **Forbidden:** Modifying UI, modifying database schema.
 
-**Output format:** index configuration → sync strategy → explanation.
+**Output format:** Index configuration → Sync strategy → Explanation.
 
 ---
 
@@ -192,6 +245,7 @@ Responsible for translating product or migration requests into clear engineering
 - Prioritise functional parity
 
 **Output format:**
+
 ```
 Feature:
 <description>

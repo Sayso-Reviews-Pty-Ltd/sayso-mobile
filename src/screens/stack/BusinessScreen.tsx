@@ -46,6 +46,7 @@ import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvali
 import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../hooks/useSession';
 import { TransitionItem } from '../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 import { apiFetch } from '../../lib/api';
 import { ENV } from '../../lib/env';
 import { markFirstContentful, markInteractive } from '../../lib/perf/perfMarkers';
@@ -297,14 +298,15 @@ export default function BusinessScreen({ initialTab }: Props) {
         />
       </View>
 
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
+      <ScreenTransitionScope>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
         <View style={styles.mainColumn}>
           <TransitionItem variant="card" index={0}>
             <BusinessHeroCarousel
@@ -426,7 +428,8 @@ export default function BusinessScreen({ initialTab }: Props) {
             </View>
           </TransitionItem>
         ) : null}
-      </ScrollView>
+        </ScrollView>
+      </ScreenTransitionScope>
     </SafeAreaView>
   );
 }

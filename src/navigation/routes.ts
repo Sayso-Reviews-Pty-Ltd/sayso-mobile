@@ -8,6 +8,7 @@ export const routes = {
   register: () => '/register',
   forgotPassword: () => '/forgot-password',
   resetPassword: () => '/reset-password',
+  changePassword: () => '/change-password',
   verifyEmail: () => '/verify-email',
   authCodeError: () => '/auth/auth-code-error',
   onboarding: () => '/onboarding',

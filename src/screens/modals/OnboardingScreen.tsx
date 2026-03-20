@@ -7,11 +7,12 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { routes } from '../../navigation/routes';
 import { useAuthSession } from '../../hooks/useSession';
 import { Text } from '../../components/Typography';
-import { NAVBAR_BG_COLOR } from '../../styles/colors';
+import { CARD_BG_COLOR, CARD_BG_RGB, NAVBAR_BG_COLOR } from '../../styles/colors';
 
 const GRID = 8;
 const TYPE_SCALE = {
@@ -167,13 +168,23 @@ export default function OnboardingScreen() {
             >
               <Text style={styles.getStartedTxt}>Get Started</Text>
             </Pressable>
-          </Animated.View>
 
-          <Animated.View style={[styles.authRow, { opacity: loginOpacity }]}>
-            <Text style={styles.authHint}>Already have an account? </Text>
-            <Pressable onPress={handleLogIn} hitSlop={8}>
-              <Text style={styles.authLogIn}>Log In</Text>
-            </Pressable>
+            <Animated.View style={[styles.authRow, { opacity: loginOpacity }]}>
+              <Pressable
+                style={({ pressed }) => [styles.logInBtn, pressed && styles.logInBtnPressed]}
+                onPress={handleLogIn}
+                hitSlop={8}
+              >
+                <LinearGradient
+                  colors={[CARD_BG_COLOR, `rgba(${CARD_BG_RGB}, 0.82)`]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.logInBtnGradient}
+                >
+                  <Text style={styles.authLogIn}>Log In</Text>
+                </LinearGradient>
+              </Pressable>
+            </Animated.View>
           </Animated.View>
         </View>
 
@@ -237,6 +248,7 @@ const styles = StyleSheet.create({
 
   ctaWrap: {
     width: '100%',
+    gap: GRID * 1.5,
   },
 
   getStartedBtn: {
@@ -259,20 +271,27 @@ const styles = StyleSheet.create({
   },
 
   authRow: {
-    minHeight: GRID * 3,
-    flexDirection: 'row',
+    width: '100%',
+  },
+  logInBtn: {
+    width: '100%',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  logInBtnGradient: {
+    paddingVertical: GRID * 2,
+    paddingHorizontal: GRID * 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  authHint: {
-    fontSize: TYPE_SCALE.auth,
-    color: C.charcoalSoft,
-    fontWeight: '400',
+  logInBtnPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   authLogIn: {
-    fontSize: TYPE_SCALE.auth,
+    fontSize: TYPE_SCALE.cta,
     fontWeight: '700',
-    color: NAVBAR_BG_COLOR,
+    color: C.white,
   },
 
   tagline: {

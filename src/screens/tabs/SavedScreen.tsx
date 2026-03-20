@@ -18,6 +18,7 @@ import { BusinessCard } from '../../components/BusinessCard';
 import { SkeletonBlock } from '../../components/SkeletonBlock';
 import { Text } from '../../components/Typography';
 import { TransitionItem } from '../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../hooks/useSession';
@@ -520,15 +521,16 @@ export default function SavedScreen() {
         showBackButton={false}
       />
 
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        refreshControl={<RefreshControl refreshing={savedQuery.isRefetching} onRefresh={handleRefetch} />}
-      >
+      <ScreenTransitionScope>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          refreshControl={<RefreshControl refreshing={savedQuery.isRefetching} onRefresh={handleRefetch} />}
+        >
         {isLoading ? (
           <SavedPageSkeleton columnCount={gridColumns} gridGap={gridGap} />
         ) : errorMessage ? (
@@ -616,7 +618,8 @@ export default function SavedScreen() {
             </View>
           </TransitionItem>
         )}
-      </ScrollView>
+        </ScrollView>
+      </ScreenTransitionScope>
 
       {isPaginationLoading ? (
         <View style={styles.paginationOverlay}>

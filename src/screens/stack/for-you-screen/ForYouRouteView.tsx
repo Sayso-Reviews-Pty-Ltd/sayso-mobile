@@ -21,6 +21,7 @@ import { SkeletonBusinessCard } from '../../../components/feed/SkeletonBusinessC
 import { ScrollToTopFab } from '../../../components/ScrollToTopFab';
 import { HeaderDmBellActions } from '../../../components/HeaderDmBellActions';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { Text } from '../../../components/Typography';
 import { homeTokens } from '../../tabs/home/HomeTokens';
 
@@ -78,7 +79,8 @@ function ForYouRouteViewComponent({
     return (
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ title: 'For You' }} />
-        <View style={styles.guestHeader}>
+        <ScreenTransitionScope>
+          <View style={styles.guestHeader}>
           <TransitionItem variant="header" index={0} style={styles.headerCopy}>
             <View>
               <Text style={styles.heroTitle}>Curated Just For You</Text>
@@ -105,7 +107,8 @@ function ForYouRouteViewComponent({
               <Text style={styles.guestSecondaryText}>Sign In</Text>
             </TouchableOpacity>
           </LinearGradient>
-        </TransitionItem>
+          </TransitionItem>
+        </ScreenTransitionScope>
       </SafeAreaView>
     );
   }
@@ -114,7 +117,8 @@ function ForYouRouteViewComponent({
     return (
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ title: 'For You', headerRight: () => <HeaderDmBellActions /> }} />
-        <View style={styles.fullFlex}>
+        <ScreenTransitionScope>
+          <View style={styles.fullFlex}>
           <FlatList
             ref={listRef}
             data={searchLoading ? [] : searchResults}
@@ -131,7 +135,8 @@ function ForYouRouteViewComponent({
             keyboardShouldPersistTaps="handled"
           />
           <ScrollToTopFab visible={showBackToTop} onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })} />
-        </View>
+          </View>
+        </ScreenTransitionScope>
       </SafeAreaView>
     );
   }
@@ -139,6 +144,7 @@ function ForYouRouteViewComponent({
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: 'For You', headerRight: () => <HeaderDmBellActions /> }} />
+      <ScreenTransitionScope>
 
       {preferencesLoading ? (
         <View style={styles.loadingList}>
@@ -182,6 +188,7 @@ function ForYouRouteViewComponent({
           fetchPage={fetchForYouPage}
         />
       )}
+      </ScreenTransitionScope>
     </SafeAreaView>
   );
 }

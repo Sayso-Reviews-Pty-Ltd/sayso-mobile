@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { EmptyState } from '../../components/EmptyState';
 import { TransitionItem } from '../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 import { Text } from '../../components/Typography';
 import { BusinessCard } from '../../components/BusinessCard';
 import { SkeletonBusinessCard } from '../../components/feed/SkeletonBusinessCard';
@@ -468,7 +469,8 @@ export default function TrendingScreen() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <TrendingScreenView
+    <ScreenTransitionScope>
+      <TrendingScreenView
       isMapMode={isMapMode}
       listHeader={listHeader}
       mapBusinesses={mapBusinesses}
@@ -485,6 +487,7 @@ export default function TrendingScreen() {
       onScrollToTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
       showBackToTop={showBackToTop}
       listRef={listRef}
-    />
+      />
+    </ScreenTransitionScope>
   );
 }

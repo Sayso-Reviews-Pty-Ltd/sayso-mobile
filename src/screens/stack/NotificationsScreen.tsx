@@ -29,6 +29,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { SkeletonCard } from '../../components/SkeletonCard';
 import { Text } from '../../components/Typography';
 import { TransitionItem } from '../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 import { APP_PAGE_GUTTER } from '../../styles/layout';
 
 // The server response includes entity_id and entity_type though the DTO
@@ -189,14 +190,16 @@ export default function NotificationsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ title: 'Notifications' }} />
-        <TransitionItem variant="card" index={0}>
+        <ScreenTransitionScope>
+          <TransitionItem variant="card" index={0}>
           <EmptyState
             icon="notifications-outline"
             title="Sign in to see notifications"
             actionLabel="Sign in"
             onAction={() => router.push(routes.onboarding() as never)}
           />
-        </TransitionItem>
+          </TransitionItem>
+        </ScreenTransitionScope>
       </SafeAreaView>
     );
   }
@@ -204,7 +207,8 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: 'Notifications' }} />
-      <TransitionItem variant="header" index={0}>
+      <ScreenTransitionScope>
+        <TransitionItem variant="header" index={0}>
         <View style={styles.header}>
           <Text style={styles.title}>Notifications</Text>
           {unreadCount > 0 ? (
@@ -267,6 +271,7 @@ export default function NotificationsScreen() {
           scrollEventThrottle={16}
         />
       )}
+      </ScreenTransitionScope>
     </SafeAreaView>
   );
 }

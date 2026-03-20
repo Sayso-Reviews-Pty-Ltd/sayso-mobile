@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View, type ListRenderItem, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import type { EventSpecialListItemDto } from '@sayso/contracts';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { Text } from '../../../components/Typography';
 import { HomeSearchBar } from '../../tabs/home/HomeSearchBar';
 import { APP_PAGE_GUTTER } from '../../../styles/layout';
@@ -45,8 +46,9 @@ function FeedListHeader({
   filteredCount,
 }: HeaderProps) {
   return (
-    <View>
-      <TransitionItem variant="header" index={0}>
+    <ScreenTransitionScope>
+      <View>
+        <TransitionItem variant="header" index={0}>
         <View style={s.hero}>
           <Text style={s.heroTitle}>Events & Specials</Text>
           <Text style={s.heroSubtitle}>{subtitle}</Text>
@@ -93,7 +95,8 @@ function FeedListHeader({
           <Text style={s.countText}>{countText}</Text>
         </TransitionItem>
       ) : null}
-    </View>
+      </View>
+    </ScreenTransitionScope>
   );
 }
 

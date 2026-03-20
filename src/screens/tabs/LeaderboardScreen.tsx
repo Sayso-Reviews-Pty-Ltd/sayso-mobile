@@ -29,6 +29,7 @@ import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
 import { routes } from '../../navigation/routes';
 import { TransitionItem } from '../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 
 const INITIAL_VISIBLE = 5;
 
@@ -162,14 +163,15 @@ export default function LeaderboardScreen() {
         />
       </View>
 
-      <ScrollView
-        ref={scrollRef}
-        style={s.scroll}
-        contentContainerStyle={s.scrollContent}
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
+      <ScreenTransitionScope>
+        <ScrollView
+          ref={scrollRef}
+          style={s.scroll}
+          contentContainerStyle={s.scrollContent}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
         {/* Hero */}
         <TransitionItem variant="header" index={0}>
           <View style={s.hero}>
@@ -351,7 +353,8 @@ export default function LeaderboardScreen() {
             </View>
           </View>
         </TransitionItem>
-      </ScrollView>
+        </ScrollView>
+      </ScreenTransitionScope>
 
     </SafeAreaView>
   );

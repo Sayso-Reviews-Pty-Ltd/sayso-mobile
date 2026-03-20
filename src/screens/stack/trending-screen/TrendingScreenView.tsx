@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { ScrollToTopFab } from '../../../components/ScrollToTopFab';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { TrendingMapView } from '../TrendingMapView';
 import { businessDetailColors, businessDetailSpacing } from '../../../components/business-detail/styles';
 import type { TrendingScreenViewProps } from './types';
@@ -30,9 +31,10 @@ function TrendingScreenViewComponent({
 }: TrendingScreenViewProps) {
   return (
     <View style={styles.container}>
-      {isMapMode && listHeader}
+      <ScreenTransitionScope>
+        {isMapMode && listHeader}
 
-      {isMapMode ? (
+        {isMapMode ? (
         <TransitionItem variant="card" index={5} style={styles.mapTransition}>
           <View style={styles.mapWrap}>
             <TrendingMapView businesses={mapBusinesses} userLocation={userLocation} />
@@ -60,6 +62,7 @@ function TrendingScreenViewComponent({
       )}
 
       {!isMapMode ? <ScrollToTopFab visible={showBackToTop} onPress={onScrollToTop} /> : null}
+      </ScreenTransitionScope>
     </View>
   );
 }

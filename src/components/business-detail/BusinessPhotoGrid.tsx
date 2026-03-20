@@ -57,7 +57,14 @@ export function BusinessPhotoGrid({ businessName, photos }: Props) {
                 accessibilityRole="button"
                 accessibilityLabel={`Open photo ${index + 1}`}
               >
-                <Image source={{ uri: photo }} style={styles.gridImage} contentFit="cover" />
+                <Image
+                  source={{ uri: photo }}
+                  style={styles.gridImage}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  recyclingKey={photo}
+                  transition={150}
+                />
               </Pressable>
             ))}
           </View>
@@ -109,7 +116,13 @@ export function BusinessPhotoGrid({ businessName, photos }: Props) {
             ) : null}
 
             {normalizedPhotos[activeIndex] ? (
-              <Image source={{ uri: normalizedPhotos[activeIndex] }} style={styles.modalImage} contentFit="contain" />
+              <Image
+                source={{ uri: normalizedPhotos[activeIndex] }}
+                style={styles.modalImage}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+                recyclingKey={normalizedPhotos[activeIndex]}
+              />
             ) : null}
 
             {normalizedPhotos.length > 0 ? (

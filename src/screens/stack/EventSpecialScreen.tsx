@@ -36,6 +36,7 @@ import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvali
 import { useRelatedEventSpecials } from '../../hooks/useRelatedEventSpecials';
 import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import { TransitionItem } from '../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 import { useAuthSession } from '../../hooks/useSession';
 import { apiFetch } from '../../lib/api';
 import { ENV } from '../../lib/env';
@@ -356,14 +357,15 @@ export default function EventSpecialScreen({ routeType }: Props) {
         />
       </View>
 
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
+      <ScreenTransitionScope>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
         <View style={styles.mainColumn}>
           <TransitionItem variant="card" index={0}>
             <EventSpecialHero item={item} rating={effectiveRating} />
@@ -450,7 +452,8 @@ export default function EventSpecialScreen({ routeType }: Props) {
             </TransitionItem>
           </>
         ) : null}
-      </ScrollView>
+        </ScrollView>
+      </ScreenTransitionScope>
 
     </SafeAreaView>
   );

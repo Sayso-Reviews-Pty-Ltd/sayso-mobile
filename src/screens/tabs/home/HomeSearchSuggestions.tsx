@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../../components/Typography';
 import { apiFetch } from '../../../lib/api';
@@ -110,9 +110,10 @@ type Props = {
   query: string;
   onSelect: (businessId: string) => void;
   onSelectQuery?: (q: string) => void;
+  onClose?: () => void;
 };
 
-export function HomeSearchSuggestions({ query, onSelect, onSelectQuery }: Props) {
+export function HomeSearchSuggestions({ query, onSelect, onSelectQuery, onClose }: Props) {
   const { facets, businesses, loading } = useSuggestions(query);
   const hasContent = facets.length > 0 || businesses.length > 0;
 
@@ -124,6 +125,15 @@ export function HomeSearchSuggestions({ query, onSelect, onSelectQuery }: Props)
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerLabel}>Suggestions</Text>
+        {onClose ? (
+          <Pressable
+            accessibilityLabel="Close suggestions"
+            onPress={onClose}
+            style={({ pressed }) => [styles.closeButton, pressed ? styles.closeButtonPressed : null]}
+          >
+            <Ionicons name="close-outline" size={18} color="rgba(45,45,45,0.68)" />
+          </Pressable>
+        ) : null}
       </View>
 
       {/* Facet suggestions — category / location (Algolia only) */}
@@ -180,7 +190,10 @@ export function HomeSearchSuggestions({ query, onSelect, onSelectQuery }: Props)
       {/* View all — closes the dropdown and shows full search results */}
       <Pressable
         style={({ pressed }) => [styles.viewAllRow, pressed && styles.viewAllRowPressed]}
-        onPress={() => onSelectQuery?.(query)}
+        onPress={() => {
+          Keyboard.dismiss();
+          onSelectQuery?.(query);
+        }}
         accessibilityLabel="View all search results"
       >
         <Text style={styles.viewAllText}>View all results</Text>
@@ -204,10 +217,27 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(45,45,45,0.06)',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(45,45,45,0.08)',
+  },
+  closeButton: {
+    width: 42,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(45,45,45,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.75)',
+  },
+  closeButtonPressed: {
+    backgroundColor: 'rgba(45,45,45,0.08)',
+    borderColor: 'rgba(45,45,45,0.22)',
   },
   headerLabel: {
     fontSize: 11,

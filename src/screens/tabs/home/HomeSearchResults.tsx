@@ -206,11 +206,13 @@ export function HomeSearchResults({
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
+    backgroundColor: homeTokens.offWhite,
   },
   content: {
     paddingHorizontal: APP_PAGE_GUTTER,
     paddingTop: 16,
     paddingBottom: 32,
+    backgroundColor: homeTokens.offWhite,
   },
   header: {
     paddingBottom: 16,

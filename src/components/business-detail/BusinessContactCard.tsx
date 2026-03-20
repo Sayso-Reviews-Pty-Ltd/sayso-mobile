@@ -6,6 +6,7 @@ import { businessDetailColors, businessDetailSpacing } from './styles';
 import { normalizePhoneDigits } from './utils';
 import { apiFetch } from '../../lib/api';
 import { CARD_SHADOW_MD } from '../../styles/overlayShadow';
+import { NAVBAR_BG_COLOR } from '../../styles/colors';
 
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -229,12 +230,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.36)',
-    backgroundColor: 'rgba(229,224,229,0.8)',
+    backgroundColor: NAVBAR_BG_COLOR,
     paddingVertical: 10,
     alignItems: 'center',
   },
   contactNumberButtonText: {
-    color: businessDetailColors.charcoal,
+    color: businessDetailColors.white,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
   },
   whatsappButton: {
     borderRadius: 999,
-    backgroundColor: businessDetailColors.coral,
+    backgroundColor: NAVBAR_BG_COLOR,
     paddingVertical: 10,
     alignItems: 'center',
   },

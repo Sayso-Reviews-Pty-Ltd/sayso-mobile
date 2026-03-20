@@ -12,6 +12,7 @@ import { LoadMoreButton } from '../../components/feed/LoadMoreButton';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
 import { TransitionItem } from '../../components/motion/TransitionItem';
+import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 import { EventsSpecialsFeedView, eventsSpecialsFeedStyles as s, type ListItem } from './events-specials-feed/EventsSpecialsFeedView';
 
 const REQUEST_LIMIT = 20;
@@ -154,19 +155,23 @@ export function EventsSpecialsFeedScreen({ subtitle, onScrollY }: Props) {
   const renderItem = useCallback<ListRenderItem<ListItem>>(({ item, index }) => {
     if ('_section' in item) {
       return (
-        <TransitionItem variant="header" index={index} animate={index < VISIBLE_CHUNK_SIZE}>
+        <ScreenTransitionScope>
+          <TransitionItem variant="header" index={index} animate={index < VISIBLE_CHUNK_SIZE}>
           <View style={[s.sectionHeader, index > 0 && s.sectionHeaderGap]}>
             <Text style={s.sectionTitle}>{item.title}</Text>
           </View>
-        </TransitionItem>
+          </TransitionItem>
+        </ScreenTransitionScope>
       );
     }
     return (
-      <TransitionItem variant="listItem" index={index} animate={index < VISIBLE_CHUNK_SIZE}>
-        <View style={s.cardWrap}>
-          <EventCard item={item} />
-        </View>
-      </TransitionItem>
+      <ScreenTransitionScope>
+        <TransitionItem variant="listItem" index={index} animate={index < VISIBLE_CHUNK_SIZE}>
+          <View style={s.cardWrap}>
+            <EventCard item={item} />
+          </View>
+        </TransitionItem>
+      </ScreenTransitionScope>
     );
   }, []);
 

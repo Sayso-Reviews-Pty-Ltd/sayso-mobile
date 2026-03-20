@@ -1,5 +1,5 @@
 import { enableScreens } from 'react-native-screens';
-import { Stack, usePathname } from 'expo-router';
+import { Stack } from 'expo-router';
 import { View } from 'react-native';
 
 enableScreens(true);
@@ -15,11 +15,14 @@ import { useFonts as useLocalFonts } from 'expo-font';
 import { Providers } from '../src/providers/Providers';
 import { RootGuard } from '../src/components/RootGuard';
 import { rootStackScreenOptions } from '../src/navigation/screenOptions';
-import { TransitionScopeProvider } from '../src/components/motion/TransitionScope';
 import { NAVBAR_BG_COLOR } from '../src/styles/colors';
 
+// TransitionScopeProvider has been moved to individual screens via
+// ScreenTransitionScope, which uses useFocusEffect for per-screen isolation.
+// Each screen now independently replays its spring-in on every focus event
+// (forward nav, back nav, tab switch) without affecting sibling screens.
+
 export default function RootLayout() {
-  const pathname = usePathname();
   const [urbanistLoaded] = useFonts({
     Urbanist_400Regular,
     Urbanist_500Medium,
@@ -34,9 +37,8 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: NAVBAR_BG_COLOR }}>
-    <Providers>
-      <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
-      <TransitionScopeProvider routeKey={pathname}>
+      <Providers>
+        <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
         <RootGuard>
           <Stack screenOptions={rootStackScreenOptions}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -46,8 +48,7 @@ export default function RootLayout() {
             <Stack.Screen name="role-unsupported" options={{ headerShown: false }} />
           </Stack>
         </RootGuard>
-      </TransitionScopeProvider>
-    </Providers>
+      </Providers>
     </View>
   );
 }

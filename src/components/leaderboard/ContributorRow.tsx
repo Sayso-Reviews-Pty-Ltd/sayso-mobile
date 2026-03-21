@@ -67,6 +67,7 @@ export function ContributorRow({ reviewer, rank }: Props) {
       }}
       onPress={() => router.push(href as never)}
       accessibilityRole="button"
+      accessibilityLabel={`${reviewer.username ?? reviewer.name}, rank ${rank}, ${reviewer.reviewCount} reviews`}
     >
       <View style={s.left}>
         <LinearGradient

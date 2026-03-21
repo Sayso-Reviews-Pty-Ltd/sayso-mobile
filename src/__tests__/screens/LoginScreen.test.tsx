@@ -4,6 +4,13 @@ import LoginScreen from '../../screens/modals/LoginScreen';
 import { useAuthSession } from '../../hooks/useSession';
 import { supabase } from '../../lib/supabase';
 
+// navigator.onLine is checked by the login controller before calling
+// signInWithPassword. Ensure it is true so the guard doesn't short-circuit.
+Object.defineProperty(global.navigator, 'onLine', {
+  get: () => true,
+  configurable: true,
+});
+
 // ─── Module mocks ──────────────────────────────────────────────────────────────
 
 const mockRouterPush = jest.fn();
@@ -45,12 +52,20 @@ jest.mock('../../lib/supabase', () => ({
     auth: {
       signUp: jest.fn(),
       getSession: jest.fn().mockResolvedValue({ data: { session: null } }),
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+      signOut: jest.fn().mockResolvedValue({}),
     },
   },
 }));
 
 jest.mock('../../hooks/useSession', () => ({
   useAuthSession: jest.fn(),
+}));
+
+jest.mock('../../lib/api', () => ({
+  apiFetch: jest.fn().mockResolvedValue({ available: true }),
 }));
 
 jest.mock('../../navigation/routes', () => ({
@@ -205,7 +220,7 @@ describe('LoginScreen — login mode (default)', () => {
     expect(mockSignInWithPassword).not.toHaveBeenCalled();
   });
 
-  it('shows "Signing in…" while submission is in progress', async () => {
+  it('shows "Verifying" while submission is in progress', async () => {
     mockSignInWithPassword.mockImplementation(() => new Promise(() => {})); // never resolves
     renderLogin();
 
@@ -217,7 +232,7 @@ describe('LoginScreen — login mode (default)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Signing in…')).toBeTruthy();
+      expect(screen.getByText('Verifying')).toBeTruthy();
     });
   });
 
@@ -230,10 +245,10 @@ describe('LoginScreen — login mode (default)', () => {
 
     act(() => { fireEvent.press(screen.getByText('Sign in')); });
 
-    await waitFor(() => expect(screen.getByText('Signing in…')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Verifying')).toBeTruthy());
 
     // Second press while submitting should be a no-op
-    act(() => { fireEvent.press(screen.getByText('Signing in…')); });
+    act(() => { fireEvent.press(screen.getByText('Verifying')); });
     expect(mockSignInWithPassword).toHaveBeenCalledTimes(1);
   });
 
@@ -251,7 +266,7 @@ describe('LoginScreen — login mode (default)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid login credentials')).toBeTruthy();
+      expect(screen.getByText('Incorrect email or password.')).toBeTruthy();
     });
   });
 
@@ -283,7 +298,7 @@ describe('LoginScreen — login mode (default)', () => {
     });
 
     await waitFor(() => {
-      // Button label reverts from "Signing in…" back to "Sign in"
+      // Button label reverts from "Verifying" back to "Sign in"
       expect(screen.getByText('Sign in')).toBeTruthy();
     });
   });
@@ -300,7 +315,7 @@ describe('LoginScreen — login mode (default)', () => {
     renderLogin();
     // Back button wraps the chevron icon (mocked as Text with testID="icon-chevron-back-outline")
     fireEvent.press(screen.getByTestId('icon-chevron-back-outline'));
-    expect(mockRouterPush).toHaveBeenCalledWith('/onboarding');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/onboarding');
   });
 
   // ── Google sign-in ───────────────────────────────────────────────────────────
@@ -400,7 +415,7 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
     const input = screen.getByPlaceholderText('e.g. johndoe');
     fireEvent.changeText(input, 'ab');
     fireEvent(input, 'blur');
-    expect(screen.getByText('At least 3 characters')).toBeTruthy();
+    expect(screen.getByText('Username must be at least 3 characters')).toBeTruthy();
   });
 
   it('shows "Max 20 characters" for username exceeding limit', () => {
@@ -408,7 +423,7 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
     const input = screen.getByPlaceholderText('e.g. johndoe');
     fireEvent.changeText(input, 'a'.repeat(21));
     fireEvent(input, 'blur');
-    expect(screen.getByText('Max 20 characters')).toBeTruthy();
+    expect(screen.getByText("Username can't exceed 20 characters")).toBeTruthy();
   });
 
   it('shows "Letters, numbers and underscores only" for invalid characters', () => {
@@ -462,34 +477,44 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
-  it('shows "Creating account…" while registration is in progress', async () => {
+  it('shows "Updating…" while registration is in progress', async () => {
+    jest.useFakeTimers();
     mockSignUp.mockImplementation(() => new Promise(() => {}));
     renderLogin({ defaultMode: 'register' });
 
     fireEvent.changeText(screen.getByPlaceholderText('e.g. johndoe'), 'johndoe');
     fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'john@test.com');
     fireEvent.changeText(screen.getByPlaceholderText('Create a password'), 'StrongPass123');
-
-    // The consent Pressable has testID="consent-toggle"
     fireEvent.press(screen.getByTestId('consent-toggle'));
+
+    // Flush the 300ms username debounce and the resulting apiFetch promise
+    await act(async () => {
+      jest.advanceTimersByTime(400);
+    });
 
     act(() => { fireEvent.press(screen.getByText('Create account')); });
 
     await waitFor(() => {
-      expect(screen.getByText('Creating account…')).toBeTruthy();
+      expect(screen.getByText('Updating…')).toBeTruthy();
     });
     expect(mockSignUp).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 
   it('shows an error banner when supabase.auth.signUp returns an error', async () => {
+    jest.useFakeTimers();
     mockSignUp.mockResolvedValueOnce({ error: new Error('Email address already in use') });
     renderLogin({ defaultMode: 'register' });
 
     fireEvent.changeText(screen.getByPlaceholderText('e.g. johndoe'), 'johndoe');
     fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'taken@test.com');
     fireEvent.changeText(screen.getByPlaceholderText('Create a password'), 'StrongPass123');
-
     fireEvent.press(screen.getByTestId('consent-toggle'));
+
+    // Flush the 300ms username debounce and the resulting apiFetch promise
+    await act(async () => {
+      jest.advanceTimersByTime(400);
+    });
 
     await act(async () => {
       fireEvent.press(screen.getByText('Create account'));
@@ -498,5 +523,6 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
     await waitFor(() => {
       expect(screen.getByText('Email address already in use')).toBeTruthy();
     });
+    jest.useRealTimers();
   });
 });

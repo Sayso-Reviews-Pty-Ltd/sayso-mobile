@@ -12,10 +12,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../../components/Typography';
 import { BusinessCard } from '../../../components/BusinessCard';
+import { EmptyState } from '../../../components/EmptyState';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { homeTokens } from './HomeTokens';
 import { APP_PAGE_GUTTER } from '../../../styles/layout';
 import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
+import { haptics } from '../../../lib/haptics';
+import { track } from '../../../lib/telemetry';
 
 type Props = {
   query: string;
@@ -33,6 +36,36 @@ type Props = {
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   listRef?: Ref<FlatList<BusinessListItemDto>>;
 };
+
+// ─── Contextual empty state ───────────────────────────────────────────────────
+function SearchEmptyState({
+  query,
+  hasFilters,
+  onClearFilters,
+}: {
+  query: string;
+  hasFilters: boolean;
+  onClearFilters: () => void;
+}) {
+  if (hasFilters) {
+    return (
+      <EmptyState
+        icon="options-outline"
+        title="No results match your filters"
+        message="Try adjusting your distance or minimum rating."
+        actionLabel="Clear filters"
+        onAction={onClearFilters}
+      />
+    );
+  }
+  return (
+    <EmptyState
+      icon="search-outline"
+      title={`No results for "${query.trim()}"`}
+      message="Try a different search term or explore a nearby area."
+    />
+  );
+}
 
 const ratingOptions = [
   { label: '4+', value: 4 },
@@ -70,7 +103,7 @@ export function HomeSearchResults({
   // Merge the external listRef with our internal ref
   const mergedRef = useCallback(
     (node: FlatList<BusinessListItemDto> | null) => {
-      (internalRef as React.MutableRefObject<FlatList<BusinessListItemDto> | null>).current = node;
+      (internalRef as { current: FlatList<BusinessListItemDto> | null }).current = node;
       if (typeof listRef === 'function') {
         (listRef as (node: FlatList<BusinessListItemDto> | null) => void)(node);
       } else if (listRef) {
@@ -131,7 +164,11 @@ export function HomeSearchResults({
                   <TouchableOpacity
                     key={`distance-${value}`}
                     style={[styles.filterChip, distanceKm === value ? styles.filterChipActive : null]}
-                    onPress={() => onSetDistanceKm(distanceKm === value ? null : value)}
+                    onPress={() => {
+                      haptics.selection();
+                      track('discovery.filter_applied', { filter: 'distance' });
+                      onSetDistanceKm(distanceKm === value ? null : value);
+                    }}
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.filterChipText, distanceKm === value ? styles.filterChipTextActive : null]}>
@@ -149,7 +186,11 @@ export function HomeSearchResults({
                   <TouchableOpacity
                     key={`rating-${value}`}
                     style={[styles.filterChip, minRating === value ? styles.filterChipActive : null]}
-                    onPress={() => onSetMinRating(minRating === value ? null : value)}
+                    onPress={() => {
+                      haptics.selection();
+                      track('discovery.filter_applied', { filter: 'rating' });
+                      onSetMinRating(minRating === value ? null : value);
+                    }}
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.filterChipText, minRating === value ? styles.filterChipTextActive : null]}>
@@ -172,11 +213,11 @@ export function HomeSearchResults({
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyText}>
-              No matches found for &ldquo;{query.trim()}&rdquo;. Try adjusting your spelling or filters.
-            </Text>
-          </View>
+          <SearchEmptyState
+            query={query}
+            hasFilters={hasFilters}
+            onClearFilters={onClearFilters}
+          />
         )
       }
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -295,22 +336,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: homeTokens.coral,
     marginTop: 12,
-  },
-  // ─── Empty state ─────────────────────────────────────────────────────────────
-  emptyBox: {
-    marginTop: 24,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(45,45,45,0.10)',
-    backgroundColor: homeTokens.white,
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    ...CARD_SHADOW_MD,
-  },
-  emptyText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: 'rgba(45,45,45,0.70)',
   },
   // ─── Back to top ─────────────────────────────────────────────────────────────
   backToTopBtn: {

@@ -8,13 +8,13 @@ const sharedHeaderStyles = {
   headerBackTitleStyle: { fontFamily: 'Urbanist_500Medium' },
 };
 
+// TODO: re-enable statusBarColor/statusBarStyle/statusBarTranslucent/navigationBarColor
+// once dev build is ready — these require UIViewControllerBasedStatusBarAppearance
+// in Info.plist which Expo Go ignores.
+
 export const rootStackScreenOptions = {
   ...sharedHeaderStyles,
   animation: 'none',
-  navigationBarColor: NAVBAR_BG_COLOR,
-  statusBarColor: NAVBAR_BG_COLOR,
-  statusBarStyle: 'light',
-  statusBarTranslucent: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;
 
@@ -24,10 +24,6 @@ export const sharedStackScreenOptions = {
   headerShadowVisible: false,
   headerStyle: { backgroundColor: NAVBAR_BG_COLOR },
   headerTintColor: '#FFFFFF',
-  navigationBarColor: NAVBAR_BG_COLOR,
-  statusBarColor: NAVBAR_BG_COLOR,
-  statusBarStyle: 'light',
-  statusBarTranslucent: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;
 
@@ -37,10 +33,6 @@ export const fullScreenModalScreenOptions = {
   animation: 'none',
   headerShown: false,
   headerShadowVisible: false,
-  navigationBarColor: NAVBAR_BG_COLOR,
-  statusBarColor: NAVBAR_BG_COLOR,
-  statusBarStyle: 'light',
-  statusBarTranslucent: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;
 
@@ -49,9 +41,5 @@ export const sheetModalScreenOptions = {
   presentation: Platform.OS === 'web' ? 'card' : 'modal',
   animation: 'none',
   headerShadowVisible: false,
-  navigationBarColor: NAVBAR_BG_COLOR,
-  statusBarColor: NAVBAR_BG_COLOR,
-  statusBarStyle: 'light',
-  statusBarTranslucent: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;

@@ -98,7 +98,7 @@ describe('ReviewCard', () => {
     });
 
     render(<ReviewCard review={makeReview()} />);
-    fireEvent.press(screen.getByLabelText('Mark review as helpful'));
+    fireEvent.press(screen.getByLabelText('Mark as helpful'));
     expect(toggle).toHaveBeenCalledTimes(1);
   });
 

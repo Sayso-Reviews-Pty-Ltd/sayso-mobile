@@ -195,7 +195,7 @@ function HomeScreenViewComponent({
 
       {showSuggestions ? (
         <View
-          style={[styles.suggestionsOverlay, { top: headerHeight - 4 }]}
+          style={[styles.suggestionsOverlay, { top: headerHeight + 8 }]}
           pointerEvents="box-none"
         >
           <HomeSearchSuggestions

@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { haptics } from '../lib/haptics';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { routes } from '../navigation/routes';
 import { fetchBusinessDetail, getBusinessDetailQueryKey } from '../hooks/useBusinessDetail';
@@ -82,7 +82,7 @@ function BusinessCardComponent({ business, style }: Props) {
   }, [businessIdentifier, href, router]);
 
   const handleNavigate = useCallback(() => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.tap();
     markRouteTransitionStart(`business:${businessIdentifier}`);
     router.push(href as never);
   }, [businessIdentifier, href, router]);
@@ -92,8 +92,9 @@ function BusinessCardComponent({ business, style }: Props) {
       style={({ pressed }) => [styles.card, cardShadowStyle, style, pressed ? styles.cardPressed : null]}
       onPress={handleNavigate}
       onPressIn={handlePressIn}
+      accessibilityLabel={`${business.name}, ${displayCategoryLabel ?? 'business'}, ${hasRating ? `${displayRating} stars` : 'no rating yet'}`}
+      accessibilityHint="Opens business details"
       accessibilityRole="button"
-      accessibilityLabel={`View ${business.name} details`}
     >
       <LinearGradient colors={CARD_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardGradient}>
         <View style={styles.media}>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import * as Haptics from 'expo-haptics';
+import { haptics } from '../../lib/haptics';
 import {
   Alert,
   InteractionManager,
@@ -49,7 +49,7 @@ import { TransitionItem } from '../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 import { apiFetch } from '../../lib/api';
 import { ENV } from '../../lib/env';
-import { markFirstContentful, markInteractive } from '../../lib/perf/perfMarkers';
+import { markFirstContentful, markInteractive, markScreenReady } from '../../lib/perf/perfMarkers';
 import { routes } from '../../navigation/routes';
 import { businessDetailColors } from '../../components/business-detail/styles';
 import { styles } from './business-screen/businessScreenStyles';
@@ -114,6 +114,12 @@ export default function BusinessScreen({ initialTab }: Props) {
     }
   }, [business, isLoading]);
 
+  useEffect(() => {
+    if (!isLoading && business != null) {
+      markScreenReady('business-detail');
+    }
+  }, [business, isLoading]);
+
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
@@ -153,7 +159,7 @@ export default function BusinessScreen({ initialTab }: Props) {
     }
     if (saveBusy) return;
 
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+    haptics.confirm();
     setSaveBusy(true);
     try {
       if (savedBusinessIds.has(business.id)) {

@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
 import type { SavedBusinessDto, SavedBusinessesResponseDto } from '@sayso/contracts';
 import { useAuthSession } from './useSession';
+import { haptics } from '../lib/haptics';
+import { track } from '../lib/telemetry';
 
 export function useSavedBusinesses() {
   const { user, isLoading } = useAuthSession();
@@ -19,6 +21,29 @@ export function useUnsaveBusiness() {
   return useMutation({
     mutationFn: (businessId: string) =>
       apiFetch(`/api/user/saved?business_id=${businessId}`, { method: 'DELETE' }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['saved-businesses'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['saved-businesses'] });
+      haptics.confirm();
+    },
+    onError: () => {
+      haptics.error();
+      track('ux.save_place_failed');
+    },
+  });
+}
+
+export function useSaveBusiness() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (businessId: string) =>
+      apiFetch('/api/user/saved', { method: 'POST', body: JSON.stringify({ business_id: businessId }) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['saved-businesses'] });
+      haptics.confirm();
+    },
+    onError: () => {
+      haptics.error();
+      track('ux.save_place_failed');
+    },
   });
 }

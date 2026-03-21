@@ -1,6 +1,8 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from './Typography';
+import { haptics } from '../lib/haptics';
+import { NAVBAR_BG_COLOR } from '../styles/colors';
 
 type Props = {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -11,13 +13,18 @@ type Props = {
 };
 
 export function EmptyState({ icon = 'search', title, message, actionLabel, onAction }: Props) {
+  function handleAction() {
+    haptics.tap();
+    onAction?.();
+  }
+
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={52} color="#D1D5DB" />
+      <Ionicons name={icon} size={52} color="rgba(45,45,45,0.25)" />
       <Text style={styles.title}>{title}</Text>
       {message ? <Text style={styles.message}>{message}</Text> : null}
       {actionLabel && onAction ? (
-        <TouchableOpacity style={styles.button} onPress={onAction}>
+        <TouchableOpacity style={styles.button} onPress={handleAction} activeOpacity={0.8}>
           <Text style={styles.buttonText}>{actionLabel}</Text>
         </TouchableOpacity>
       ) : null}
@@ -35,27 +42,27 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#374151',
+    color: '#2D2D2D',
     marginTop: 16,
     textAlign: 'center',
   },
   message: {
     fontSize: 14,
-    color: '#9CA3AF',
+    lineHeight: 20,
+    color: 'rgba(45,45,45,0.60)',
     marginTop: 8,
     textAlign: 'center',
-    lineHeight: 20,
   },
   button: {
     marginTop: 20,
-    backgroundColor: '#111827',
+    backgroundColor: NAVBAR_BG_COLOR,
     borderRadius: 999,
     paddingHorizontal: 24,
     paddingVertical: 12,
   },
   buttonText: {
-    color: '#FFF',
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: '700',
     fontSize: 14,
   },
 });

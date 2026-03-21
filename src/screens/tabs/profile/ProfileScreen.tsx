@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { haptics } from '../../../lib/haptics';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { ConfirmationDialog } from '../../../components/profile/ConfirmationDialog';
@@ -8,6 +9,8 @@ import { EditProfileModal } from '../../../components/profile/EditProfileModal';
 import { routes } from '../../../navigation/routes';
 import { OFF_WHITE } from './constants';
 import { useProfileScreenController } from './useProfileScreenController';
+import { getPrestigeInfo } from '../../../lib/prestige';
+import { track } from '../../../lib/telemetry';
 import {
   ProfileAccountActionsSection,
   ProfileBadgesSection,
@@ -15,6 +18,7 @@ import {
   ProfileEmptyState,
   ProfileHeroCard,
   ProfilePreferencesSection,
+  ProfilePrestigeBanner,
   ProfileSavedBusinessesSection,
   ProfileSkeleton,
   ProfileStatsGrid,
@@ -22,6 +26,14 @@ import {
 
 export default function ProfileScreen() {
   const controller = useProfileScreenController();
+  const prestige = getPrestigeInfo(controller.reviewsCount);
+
+  useEffect(() => {
+    if (!controller.profileQuery.isLoading && controller.user) {
+      track('prestige.profile_viewed', { tier: prestige.tier });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [controller.profileQuery.isLoading, controller.user]);
 
   if (!controller.user) {
     return (
@@ -58,14 +70,19 @@ export default function ProfileScreen() {
                   bio={controller.profile?.bio}
                   heroMeta={controller.heroMeta}
                   reviewsCount={controller.reviewsCount}
+                  prestige={prestige}
                   onEditProfile={() => {
-                    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                    haptics.tap();
                     controller.setIsEditOpen(true);
                   }}
                 />
               </TransitionItem>
 
               <TransitionItem variant="card" index={1}>
+                <ProfilePrestigeBanner reviewCount={controller.reviewsCount} />
+              </TransitionItem>
+
+              <TransitionItem variant="card" index={2}>
                 <ProfileStatsGrid
                   helpfulVotesCount={controller.helpfulVotesCount}
                   reviewsCount={controller.reviewsCount}
@@ -76,14 +93,14 @@ export default function ProfileScreen() {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={2}>
+              <TransitionItem variant="card" index={3}>
                 <ProfileSavedBusinessesSection
                   savedBusinesses={controller.savedBusinesses}
                   onViewAll={() => controller.router.push(routes.saved() as never)}
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={3}>
+              <TransitionItem variant="card" index={4}>
                 <ProfileBadgesSection
                   badges={controller.earnedBadges}
                   isLoading={controller.badgesQuery.isLoading}
@@ -91,7 +108,7 @@ export default function ProfileScreen() {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={4}>
+              <TransitionItem variant="card" index={5}>
                 <ProfileContributionsSection
                   reviews={controller.userReviews}
                   isLoading={controller.reviewSectionLoading}
@@ -110,14 +127,14 @@ export default function ProfileScreen() {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={5}>
+              <TransitionItem variant="card" index={6}>
                 <ProfilePreferencesSection
                   locationStatus={controller.locationStatus}
                   onRequestLocationPermission={controller.requestLocationPermission}
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={6}>
+              <TransitionItem variant="card" index={7}>
                 <ProfileAccountActionsSection
                   onSignOut={controller.handleSignOut}
                   onChangePassword={() =>

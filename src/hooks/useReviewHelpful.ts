@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../providers/AuthProvider';
+import { haptics } from '../lib/haptics';
 
 export function useReviewHelpful(reviewId: string, initialCount = 0) {
   const { user } = useAuth();
@@ -23,9 +24,11 @@ export function useReviewHelpful(reviewId: string, initialCount = 0) {
     try {
       const method = isHelpful ? 'DELETE' : 'POST';
       await apiFetch(`/api/reviews/${reviewId}/helpful`, { method });
+      haptics.confirm();
     } catch {
       setCount(prev.count);
       setIsHelpful(prev.isHelpful);
+      haptics.error();
     } finally {
       setLoading(false);
     }

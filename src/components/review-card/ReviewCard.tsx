@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import { haptics } from '../../lib/haptics';
 import { Text } from '../Typography';
 import { useAuth } from '../../providers/AuthProvider';
 import { useReviewHelpful } from '../../hooks/useReviewHelpful';
@@ -104,7 +104,7 @@ function Stars({ rating }: { rating: number }) {
             <Ionicons testID="star-filled" name="star" size={16} color={C.white} />
           </LinearGradient>
         ) : (
-          <Ionicons key={i} testID="star-empty" name="star" size={20} color={C.charcoal30} />
+          <Ionicons key={i} testID="star-empty" name="star" size={16} color={C.charcoal30} />
         )
       ))}
     </View>
@@ -165,7 +165,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
   const validImages = review.images?.filter(Boolean) ?? [];
 
   const handleToggleHelpful = () => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.confirm();
     toggle();
   };
 
@@ -175,6 +175,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.card}
+      accessibilityLabel={`Review by ${review.user?.name ?? 'reviewer'}, ${review.rating} stars`}
     >
       <View style={styles.row}>
         {/* Avatar */}
@@ -252,7 +253,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
               nestedScrollEnabled={Platform.OS === 'android'}
             >
               {validImages.map((uri, i) => (
-                <ReviewImage key={i} uri={uri} onPress={() => setPreviewUri(uri)} />
+                <ReviewImage key={uri} uri={uri} onPress={() => setPreviewUri(uri)} />
               ))}
             </ScrollView>
           ) : null}
@@ -267,7 +268,8 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
               ]}
               onPress={user ? handleToggleHelpful : undefined}
               disabled={loading}
-              accessibilityLabel={user ? 'Mark review as helpful' : 'Sign in to mark as helpful'}
+              accessibilityLabel={isHelpful ? 'Mark as not helpful' : 'Mark as helpful'}
+              accessibilityRole="button"
             >
               <Ionicons
                 name={isHelpful ? 'heart' : 'heart-outline'}

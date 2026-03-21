@@ -61,9 +61,9 @@ export function PercentileChipsSection({
           return (
             <View key={metric.key} style={styles.chip}>
               {metric.icon ? (
-                <Ionicons name={metric.icon} size={24} color={color} />
+                <Ionicons name={metric.icon} size={24} color={businessDetailColors.coral} />
               ) : (
-                <Text style={[styles.customIcon, { color }]}>{metric.customIcon}</Text>
+                <Text style={[styles.customIcon, { color: businessDetailColors.coral }]}>{metric.customIcon}</Text>
               )}
               <Text style={styles.chipLabel}>{metric.label}</Text>
               <Text style={[styles.chipValue, { color: isEmpty ? 'rgba(45,45,45,0.25)' : businessDetailColors.charcoal }]}>
@@ -75,7 +75,7 @@ export function PercentileChipsSection({
       </View>
 
       <View style={styles.footerRow}>
-        <Ionicons name="checkmark-circle-outline" size={12} color={businessDetailColors.sage} />
+        <Ionicons name="checkmark-circle-outline" size={12} color={businessDetailColors.coral} />
         <Text style={styles.footer}>Community verified metrics from verified reviews</Text>
       </View>
     </View>

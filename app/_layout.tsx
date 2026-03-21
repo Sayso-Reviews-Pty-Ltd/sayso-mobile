@@ -38,7 +38,8 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: NAVBAR_BG_COLOR }}>
       <Providers>
-        <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
+        {/* TODO: re-enable once dev build is ready — Expo Go ignores Info.plist */}
+        {/* <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} /> */}
         <RootGuard>
           <Stack screenOptions={rootStackScreenOptions}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

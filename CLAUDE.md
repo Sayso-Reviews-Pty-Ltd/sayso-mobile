@@ -35,12 +35,14 @@
 ## Code Quality
 
 ### 300 LOC Rule
-- **No file may exceed 300 lines of code**
+- **No file may ever exceed 300 lines of code — this is a hard limit, not a guideline**
+- Claude must check line counts before and after every edit — if a file will exceed 300 LOC, split it first
 - If a file approaches 300 LOC, split it before adding more logic
 - Extract components, hooks, utilities, or constants into separate files
 - Large screens must be decomposed into smaller sub-components in their own files
 - This rule applies to all file types: `.ts`, `.tsx`, `.js`, `.jsx`
 - The QA Agent must flag any file exceeding 300 LOC as a `FAIL`
+- **Claude itself must refuse to produce or edit a file that would result in > 300 LOC**
 
 ---
 

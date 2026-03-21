@@ -87,6 +87,7 @@ export function BusinessRow({ business, rank }: Props) {
       }}
       onPress={() => router.push(href as never)}
       accessibilityRole="button"
+      accessibilityLabel={`${business.name}, rank ${rank}, ${reviewCount} reviews, ${rating > 0 ? `${rating.toFixed(1)} stars` : 'no rating'}`}
     >
       <View style={s.left}>
         <LinearGradient

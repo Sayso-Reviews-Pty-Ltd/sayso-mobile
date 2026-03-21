@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import type { NotificationDto } from '@sayso/contracts';
+import { haptics } from '../../lib/haptics';
+import { track } from '../../lib/telemetry';
 import {
   useNotificationsList,
   useMarkAllRead,
@@ -143,7 +144,7 @@ export default function NotificationsScreen() {
 
   const handleNotificationPress = useCallback(
     (notification: NotificationWithEntity) => {
-      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+      haptics.tap();
       // Mark as read only if not already read.
       if (!notification.read_at) {
         markOneRead.mutate(notification.id);
@@ -174,7 +175,7 @@ export default function NotificationsScreen() {
         <Pressable
           key={chip.id}
           style={[styles.chip, activeFilter === chip.id && styles.chipActive]}
-          onPress={() => { try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {} setActiveFilter(chip.id); }}
+          onPress={() => { haptics.selection(); setActiveFilter(chip.id); }}
           accessibilityRole="button"
           accessibilityState={{ selected: activeFilter === chip.id }}
         >
@@ -205,14 +206,14 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} accessibilityLabel="Notifications">
       <Stack.Screen options={{ title: 'Notifications' }} />
       <ScreenTransitionScope>
         <TransitionItem variant="header" index={0}>
         <View style={styles.header}>
           <Text style={styles.title}>Notifications</Text>
           {unreadCount > 0 ? (
-            <TouchableOpacity onPress={() => { try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {} markAllRead.mutate(); }} disabled={markAllRead.isPending}>
+            <TouchableOpacity onPress={() => { haptics.confirm(); markAllRead.mutate(undefined, { onError: () => track('ux.notification_action_failed', { action: 'mark_all_read' }) }); }} disabled={markAllRead.isPending}>
               <Text style={styles.markRead}>Mark all read</Text>
             </TouchableOpacity>
           ) : null}
@@ -241,8 +242,8 @@ export default function NotificationsScreen() {
         <TransitionItem variant="card" index={1}>
           <EmptyState
             icon="notifications-outline"
-            title="No notifications yet"
-            message="We'll let you know when something happens."
+            title="All caught up"
+            message="You'll see reviews, badges, and activity here."
           />
         </TransitionItem>
       ) : (

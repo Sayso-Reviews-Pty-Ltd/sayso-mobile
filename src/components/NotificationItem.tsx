@@ -4,6 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, cancelAnimation
 import { Ionicons } from '@expo/vector-icons';
 import type { NotificationDto } from '@sayso/contracts';
 import { CARD_BG_COLOR, NAVBAR_BG_COLOR } from '../styles/colors';
+import { haptics } from '../lib/haptics';
 import { businessDetailColors } from './business-detail/styles';
 import { Text } from './Typography';
 import { APP_PAGE_GUTTER } from '../styles/layout';
@@ -95,11 +96,13 @@ export function NotificationItem({ notification, onPress, onDismiss }: Props) {
       snapBack();
       return;
     }
+    haptics.tap();
     onPress?.();
   };
 
   const handleDelete = async () => {
     if (!onDismiss) return;
+    haptics.tap();
     try {
       await onDismiss();
       // On success query invalidation removes the item — no manual animation needed.
@@ -129,7 +132,12 @@ export function NotificationItem({ notification, onPress, onDismiss }: Props) {
         style={[styles.slide, { backgroundColor: itemBg }, slideStyle]}
         {...panResponder.panHandlers}
       >
-        <Pressable style={styles.pressable} onPress={handlePress}>
+        <Pressable
+          style={styles.pressable}
+          onPress={handlePress}
+          accessibilityRole="button"
+          accessibilityLabel={notification.title}
+        >
           <View style={styles.iconWrap}>
             <Ionicons
               testID={`icon-${notification.type}`}

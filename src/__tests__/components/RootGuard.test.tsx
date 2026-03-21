@@ -9,6 +9,7 @@ import { useProfile } from '../../providers/ProfileProvider';
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
   usePathname: jest.fn(),
+  useRootNavigationState: jest.fn(() => ({ key: 'root' })),
 }));
 
 jest.mock('../../providers/AuthProvider', () => ({
@@ -212,14 +213,17 @@ describe('RootGuard', () => {
     });
   });
 
-  it('prevents skipping ahead in onboarding (step 0 trying to access step 2)', async () => {
+  it('redirects authenticated user to /home on first load (initial routing guard)', async () => {
+    // The auth-hardening initial routing guard sends any authenticated user to
+    // /home on first mount before onboarding state is evaluated, preventing
+    // deep-link jumps into onboarding steps.
     const { replace } = setup({
       session: { user: { id: '1' } },
       profileState: { ...FULLY_ONBOARDED, isOnboardingComplete: false, onboardingStep: null },
       pathname: '/deal-breakers',
     });
     await waitFor(() => {
-      expect(replace).toHaveBeenCalledWith('/interests');
+      expect(replace).toHaveBeenCalledWith('/home');
     });
   });
 

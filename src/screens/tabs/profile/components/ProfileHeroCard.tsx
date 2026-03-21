@@ -5,6 +5,7 @@ import { Text } from '../../../../components/Typography';
 import { APP_PAGE_GUTTER } from '../../../../styles/layout';
 import { CHARCOAL, CORAL } from '../constants';
 import { ProfileSectionCard } from './ProfileSectionCard';
+import type { PrestigeInfo } from '../../../../lib/prestige';
 
 type HeroMeta = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -19,6 +20,7 @@ type Props = {
   heroMeta: HeroMeta[];
   reviewsCount: number;
   onEditProfile: () => void;
+  prestige?: PrestigeInfo;
 };
 
 export function ProfileHeroCard({
@@ -29,6 +31,7 @@ export function ProfileHeroCard({
   heroMeta,
   reviewsCount,
   onEditProfile,
+  prestige,
 }: Props) {
   return (
     <ProfileSectionCard style={styles.heroCard}>
@@ -47,6 +50,13 @@ export function ProfileHeroCard({
             <View style={styles.topReviewerPill}>
               <Ionicons name="ribbon-outline" size={12} color="#7D9B76" />
               <Text style={styles.topReviewerText}>Top Reviewer</Text>
+            </View>
+          ) : null}
+          {prestige ? (
+            <View style={[styles.prestigePill, { backgroundColor: prestige.color + '22' }]}>
+              <Text style={[styles.prestigePillText, { color: prestige.color }]}>
+                {prestige.label}
+              </Text>
             </View>
           ) : null}
         </View>
@@ -137,6 +147,17 @@ const styles = StyleSheet.create({
   topReviewerText: {
     fontSize: 11,
     color: '#7D9B76',
+    fontWeight: '700',
+  },
+  prestigePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  prestigePillText: {
+    fontSize: 11,
     fontWeight: '700',
   },
   heroBio: {

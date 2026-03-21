@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNotifications } from '../../src/hooks/useNotifications';
 import { StackPageHeader } from '../../src/components/StackPageHeader';
 import { NAVBAR_BG_COLOR } from '../../src/styles/colors';
+import { haptics } from '../../src/lib/haptics';
 
 export default function TabsLayout() {
   const { unreadCount } = useNotifications();
@@ -14,6 +15,9 @@ export default function TabsLayout() {
   return (
     <View style={styles.root}>
       <Tabs
+        screenListeners={{
+          tabPress: () => haptics.selection(),
+        }}
         screenOptions={{
           headerShown: false,
           headerStyle: { backgroundColor: NAVBAR_BG_COLOR },

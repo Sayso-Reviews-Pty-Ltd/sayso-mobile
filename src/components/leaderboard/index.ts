@@ -3,3 +3,4 @@ export { ContributorRow } from './ContributorRow';
 export { BusinessPodium } from './BusinessPodium';
 export { BusinessRow } from './BusinessRow';
 export { InterestFilter, INTEREST_LABELS } from './InterestFilter';
+export { LeaderboardMilestoneBanner } from './LeaderboardMilestoneBanner';

@@ -95,6 +95,27 @@ export interface UserPreferencesResponseDto {
   dealbreakers: UserPreferenceDto[];
 }
 
+// ─── Prestige ─────────────────────────────────────────────────────────────────
+
+export type PrestigeTier =
+  | 'scout'
+  | 'rookie'
+  | 'contributor'
+  | 'regular'
+  | 'expert'
+  | 'elite'
+  | 'legend';
+
+export interface UserPrestigeDto {
+  tier: PrestigeTier;
+  reviewCount: number;
+  helpfulVotesReceived: number;
+  /** Consecutive weeks with at least one review */
+  streak?: number;
+}
+
+// ─── Featured Business ────────────────────────────────────────────────────────
+
 export interface FeaturedBusinessDto extends BusinessListItemDto {
   alt?: string;
   category: string;
@@ -126,6 +147,8 @@ export interface FeaturedBusinessDto extends BusinessListItemDto {
     rating?: number | null;
     createdAt?: string | null;
   } | null;
+  /** Rank change since last period. Positive = moved up, negative = moved down, 0 = stable. */
+  rankMovement?: number;
 }
 
 export interface FeaturedBusinessesResponseDto {
@@ -153,6 +176,8 @@ export interface TopReviewerDto {
   trophyBadge?: 'gold' | 'silver' | 'bronze' | 'rising-star' | 'community-favorite';
   badgesCount?: number;
   location: string;
+  /** Rank change since last period. Positive = moved up, negative = moved down, 0 = stable. */
+  rankMovement?: number;
 }
 
 export interface TopReviewersResponseDto {

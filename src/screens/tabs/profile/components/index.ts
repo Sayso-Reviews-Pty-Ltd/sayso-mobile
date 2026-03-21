@@ -4,6 +4,7 @@ export { ProfileContributionsSection } from './ProfileContributionsSection';
 export { ProfileEmptyState } from './ProfileEmptyState';
 export { ProfileHeroCard } from './ProfileHeroCard';
 export { ProfilePreferencesSection } from './ProfilePreferencesSection';
+export { ProfilePrestigeBanner } from './ProfilePrestigeBanner';
 export { ProfileSavedBusinessesSection } from './ProfileSavedBusinessesSection';
 export { ProfileSkeleton } from './ProfileSkeleton';
 export { ProfileStatsGrid } from './ProfileStatsGrid';

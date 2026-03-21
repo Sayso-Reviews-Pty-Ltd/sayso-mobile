@@ -3,6 +3,8 @@ import { FlatList, ScrollView, type NativeScrollEvent, type NativeSyntheticEvent
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import type { BusinessListItemDto, TopReviewerDto } from '@sayso/contracts';
+import { markScreenReady } from '../../lib/perf/perfMarkers';
+import { track } from '../../lib/telemetry';
 import { useEventsSpecialsPreview } from '../../hooks/useEventsSpecialsPreview';
 import { useFeaturedBusinesses } from '../../hooks/useFeaturedBusinesses';
 import { useForYouBusinesses } from '../../hooks/useForYou';
@@ -95,6 +97,18 @@ export default function HomeScreen() {
       setLocationDenied(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
+
+  useEffect(() => {
+    if (!forYou.isLoading && forYou.businesses.length > 0) {
+      markScreenReady('home');
+    }
+  }, [forYou.isLoading, forYou.businesses.length]);
+
+  useEffect(() => {
+    if (debouncedQuery.length >= 2) {
+      track('discovery.search_executed', { queryLength: debouncedQuery.length });
+    }
   }, [debouncedQuery]);
 
   const handleRefresh = async () => {

@@ -21,6 +21,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   userInterfaceStyle: 'light',
   backgroundColor: '#722F37',
+  androidStatusBar: {
+    backgroundColor: '#722F37',
+    barStyle: 'light-content',
+    translucent: false,
+  },
   androidNavigationBar: {
     backgroundColor: '#722F37',
     barStyle: 'light-content',
@@ -29,6 +34,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     bundleIdentifier:
       process.env.BUNDLE_IDENTIFIER ?? 'co.sayso.mobile',
+    infoPlist: {
+      UIViewControllerBasedStatusBarAppearance: true,
+    },
     // Universal links — lets web URLs open the app directly on iOS.
     // Requires Associated Domains entitlement in Apple Developer console.
     associatedDomains: [

@@ -48,21 +48,23 @@ export function EventSpecialReviewsSection({
     <View style={styles.section}>
       <Text style={styles.sectionHeading}>{title}</Text>
 
-      <ReviewsList
-        reviews={normalized}
-        loading={isLoading}
-        error={error}
-        emptyMessage={emptyMessage}
-        realtimeTarget={{ type: 'event', id: targetId }}
-        onUpdate={onRefresh}
-        emptyStateAction={{ label: 'Write First Review', onPress: onPressWriteReview }}
-      />
+      <View style={styles.reviewsContainer}>
+        <ReviewsList
+          reviews={normalized}
+          loading={isLoading}
+          error={error}
+          emptyMessage={emptyMessage}
+          realtimeTarget={{ type: 'event', id: targetId }}
+          onUpdate={onRefresh}
+          emptyStateAction={{ label: 'Write First Review', onPress: onPressWriteReview }}
+        />
 
-      {reviews.length > 0 && (
-        <Pressable style={styles.writeButton} onPress={onPressWriteReview}>
-          <Text style={styles.writeButtonText}>Write Review</Text>
-        </Pressable>
-      )}
+        {reviews.length > 0 && (
+          <Pressable style={styles.writeButton} onPress={onPressWriteReview}>
+            <Text style={styles.writeButtonText}>Write Review</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -71,6 +73,15 @@ const styles = StyleSheet.create({
   section: {
     marginHorizontal: businessDetailSpacing.pageGutter,
     gap: 16,
+  },
+  reviewsContainer: {
+    backgroundColor: businessDetailColors.cardBg,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: businessDetailColors.borderSoft,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 10,
   },
   sectionHeading: {
     color: businessDetailColors.charcoal,

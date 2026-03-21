@@ -14,7 +14,7 @@ import { SkeletonBlock } from '../../components/SkeletonBlock';
 import { Text } from '../../components/Typography';
 import { BusinessPageHeader } from '../../components/business-detail/BusinessPageHeader';
 import { businessDetailSpacing, businessDetailColors } from '../../components/business-detail/styles';
-import { CARD_BG_COLOR } from '../../styles/colors';
+import { CARD_BG_COLOR, NAVBAR_BG_COLOR } from '../../styles/colors';
 import {
   ContributorPodium,
   ContributorRow,
@@ -404,7 +404,7 @@ const s = StyleSheet.create({
     maxWidth: 320,
   },
 
-  // Tabs — white/80 container with border, sage active (mirrors web Tabs.tsx)
+  // Tabs — white/80 container with border, navbar-bg active
   tabContainer: {
     paddingHorizontal: businessDetailSpacing.pageGutter,
     marginBottom: 12,
@@ -425,7 +425,7 @@ const s = StyleSheet.create({
     borderRadius: 999,
   },
   tabActive: {
-    backgroundColor: CARD_BG_COLOR,
+    backgroundColor: NAVBAR_BG_COLOR,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,

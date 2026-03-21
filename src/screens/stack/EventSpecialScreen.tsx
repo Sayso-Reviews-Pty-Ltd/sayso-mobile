@@ -8,7 +8,8 @@ import {
   Share,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '../../components/EmptyState';
 import {
@@ -53,6 +54,7 @@ function isUnauthorizedError(message: string | null) {
 }
 
 export default function EventSpecialScreen({ routeType }: Props) {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuthSession();
@@ -312,8 +314,10 @@ export default function EventSpecialScreen({ routeType }: Props) {
 
   if (detailQuery.isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         <Stack.Screen options={{ headerShown: false }} />
+        <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
+        <View style={[styles.topChrome, { height: insets.top }]} />
         <EventSpecialSkeleton />
       </SafeAreaView>
     );
@@ -328,8 +332,10 @@ export default function EventSpecialScreen({ routeType }: Props) {
         : detailQuery.error ?? 'Please try again later.';
 
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         <Stack.Screen options={{ headerShown: false }} />
+        <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
+        <View style={[styles.topChrome, { height: insets.top }]} />
         <EmptyState
           icon="calendar"
           title={routeType === 'special' ? 'Special not found' : 'Event not found'}
@@ -344,8 +350,10 @@ export default function EventSpecialScreen({ routeType }: Props) {
   const effectiveRating = ratings.rating;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
+      <View style={[styles.topChrome, { height: insets.top }]} />
 
       <View style={[styles.stickyHeader, { backgroundColor: NAVBAR_BG_COLOR }]}>
         <EventSpecialPageHeader

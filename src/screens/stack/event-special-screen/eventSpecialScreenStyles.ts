@@ -6,6 +6,9 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: businessDetailColors.page,
   },
+  topChrome: {
+    backgroundColor: businessDetailColors.coral,
+  },
   stickyHeader: {
     paddingHorizontal: businessDetailSpacing.pageGutter,
     paddingTop: 14,

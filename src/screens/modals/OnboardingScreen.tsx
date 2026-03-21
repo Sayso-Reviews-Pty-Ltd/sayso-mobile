@@ -43,8 +43,6 @@ export default function OnboardingScreen() {
   const ctaY = useRef(new Animated.Value(GRID)).current;
   const ctaOpacity = useRef(new Animated.Value(0)).current;
 
-  const loginOpacity = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
     const easeOut = Easing.out(Easing.cubic);
 
@@ -96,14 +94,8 @@ export default function OnboardingScreen() {
           useNativeDriver: true,
         }),
       ]),
-      Animated.timing(loginOpacity, {
-        toValue: 1,
-        duration: 180,
-        easing: easeOut,
-        useNativeDriver: true,
-      }),
     ]).start();
-  }, [ctaOpacity, ctaScale, ctaY, headerOpacity, headerY, loginOpacity]);
+  }, [ctaOpacity, ctaScale, ctaY, headerOpacity, headerY]);
 
   const handleGetStarted = () => {
     router.replace(routes.home() as never);
@@ -162,7 +154,7 @@ export default function OnboardingScreen() {
               <Text style={styles.getStartedTxt}>Get Started</Text>
             </Pressable>
 
-            <Animated.View style={[styles.authRow, { opacity: loginOpacity }]}>
+            <View style={styles.authRow}>
               <Pressable
                 style={({ pressed }) => [styles.logInBtn, pressed && styles.logInBtnPressed]}
                 onPress={handleLogIn}
@@ -177,7 +169,7 @@ export default function OnboardingScreen() {
                   <Text style={styles.authLogIn}>Log In</Text>
                 </LinearGradient>
               </Pressable>
-            </Animated.View>
+            </View>
           </Animated.View>
         </View>
 

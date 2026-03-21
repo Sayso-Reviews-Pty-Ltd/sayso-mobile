@@ -4,7 +4,8 @@ Expo Router + React Native app for the Sayso consumer mobile experience.
 
 ## Current State
 
-- Core user flows are implemented for auth, onboarding, feed/discovery, saved items, profile, notifications, DMs, reviews, and event/special detail screens.
+- Core user flows are implemented: auth, onboarding, feed/discovery, saved items, profile, notifications, DMs, reviews, and event/special detail screens.
+- Auth flows are hardened: PKCE exchange abort-on-timeout, double-submit race guards, onboarding resume across session expiry, already-used/expired link disambiguation, and profile-fetch subscription model.
 - Role gating is active. `business_owner` and `admin` accounts are redirected to `/role-unsupported`.
 - Release readiness work is tracked in `docs/release/ship-readiness-plan-2026-03-16.md`.
 
@@ -25,22 +26,22 @@ Before cloning, make sure you have:
 - **npm 9+** (check with `npm -v`)
 - **Expo CLI** — install globally if needed: `npm install -g expo-cli`
 - Access to the **Sayso Supabase project** — get credentials from the team
-- Access to the **sayso_web** monorepo sibling (contracts package lives there)
+- Access to the **sayso_web** sibling repo (contracts package lives there)
 - An iOS simulator, Android emulator, or physical device with Expo Go installed
 
 ### Monorepo Layout
 
-This repo is designed to sit alongside `sayso_web` as a sibling directory:
+This repo is designed to sit alongside `sayso-web` as a sibling directory:
 
 ```
 workspace/
   sayso-mobile/      ← this repo
-  sayso_web/
+  sayso-web/
     packages/
       contracts/     ← shared type contracts, required locally
 ```
 
-The `@sayso/contracts` package is resolved via a local file path (`file:../../sayso_web/packages/contracts`). Make sure the sibling repo is cloned and its packages are built before running `npm install` here.
+The `@sayso/contracts` package is resolved via a local path alias (`./src/contracts/index.ts`) — no build step required. The sibling repo must be cloned before running `npm install`.
 
 ### Step-by-Step Setup
 
@@ -91,10 +92,10 @@ npm test
 ### Known Gotchas
 
 - **`EXPO_NO_DEPENDENCY_VALIDATION=1`** is set in `npm run start` and `npm run web`. This suppresses Expo's peer dependency warnings caused by version mismatches in the monorepo setup — it is intentional and expected.
-- **`@sayso/contracts` must exist locally.** If `npm install` fails with a file path resolution error, ensure `sayso_web` is cloned at the sibling path and its packages have been installed.
-- **Supabase env vars are required for auth.** If they are missing, the app will log warnings at startup and authentication will not work correctly.
-- **API base URL normalisation.** If you set `EXPO_PUBLIC_API_BASE_URL` to `https://sayso.co.za`, the app automatically normalises it to `https://www.sayso.co.za` internally.
-- **MapLibre requires a native build.** Map features will not work in Expo Go — you need `npm run android` or `npm run ios` for a full native build.
+- **`@sayso/contracts` is a local alias.** It resolves to `./src/contracts/index.ts` in both TypeScript and Jest — no sibling build step is needed, but the file must exist.
+- **Supabase env vars are required for auth.** If they are missing, the app will log warnings at startup and authentication will not work.
+- **API base URL normalisation.** `https://sayso.co.za` is automatically normalised to `https://www.sayso.co.za` internally.
+- **MapLibre requires a native build.** Map features will not work in Expo Go — use `npm run android` or `npm run ios` for a full native build.
 
 ---
 
@@ -151,12 +152,14 @@ Copy `.env.example` to `.env` and set values.
 | Framework | Expo SDK 54 |
 | Runtime | React Native 0.81 / React 19 |
 | Language | TypeScript (strict mode) |
-| Routing | Expo Router |
+| Routing | Expo Router v6 (file-based) |
 | Auth + DB | Supabase JS v2 |
 | Data fetching | TanStack Query v5 |
+| Animations | React Native Reanimated 4 |
 | Push notifications | Expo Notifications |
 | Maps | MapLibre React Native (native runtime) |
-| Search | Algolia (optional path) |
+| Search | Algolia v5 (optional path) |
+| Secure storage | Expo SecureStore (Keychain / EncryptedSharedPreferences) |
 
 ---
 
@@ -164,96 +167,190 @@ Copy `.env.example` to `.env` and set values.
 
 ```
 sayso-mobile/
-├── app/                    # Expo Router file-based routes
-│   ├── (tabs)/             # Bottom tab routes (home, leaderboard, saved, profile)
-│   ├── (stack)/            # Stack routes (business detail, event detail, etc.)
-│   ├── (modals)/           # Modal routes (auth, onboarding, review writing)
-│   ├── auth/               # Auth callback and error handling
-│   ├── _layout.tsx         # Root layout (providers, global guard)
-│   ├── index.tsx           # Entry redirect
-│   └── role-unsupported.tsx
+├── app/                          # Expo Router file-based routes (thin re-exports)
+│   ├── (tabs)/                   # Bottom tab routes
+│   ├── (stack)/                  # Stack routes
+│   ├── (modals)/                 # Modal and auth routes
+│   ├── auth/                     # OAuth callback
+│   ├── _layout.tsx               # Root layout — providers, fonts, status bar
+│   ├── index.tsx                 # Entry redirect
+│   └── role-unsupported.tsx      # Business owner / admin rejection screen
 ├── src/
-│   ├── components/         # Shared UI components (see design system rules)
-│   ├── hooks/              # React Query data hooks, one per resource type
-│   ├── lib/                # Core utilities: API client, Supabase, query client, env
-│   ├── navigation/         # Navigation helpers and typed link utilities
-│   ├── providers/          # React context providers (auth, profile, notifications, etc.)
-│   ├── screens/            # Screen-level components, organised by route group
-│   ├── security/           # Runtime hardening scaffold
-│   └── styles/             # Design tokens: colors, spacing, radii, shadows
+│   ├── components/               # Shared UI components
+│   ├── hooks/                    # React Query data hooks, one per resource
+│   ├── lib/                      # Core utilities: API client, Supabase, env, Algolia
+│   ├── navigation/               # Route builders and screen options
+│   ├── providers/                # React context providers
+│   ├── screens/                  # Screen implementations, organised by route group
+│   ├── security/                 # Runtime hardening scaffold
+│   └── styles/                   # Design tokens: colours, spacing, radii, shadows
 ├── docs/
-│   ├── release/            # Ship readiness plan and release notes
-│   └── security/           # Native hardening docs and backend checklist
-├── assets/                 # Static images and fonts
-├── plugins/                # Expo config plugins
-├── app.config.ts           # Expo app configuration (schemes, deep links, EAS)
+│   ├── release/                  # Ship readiness plan and release notes
+│   └── security/                 # Native hardening docs and backend checklist
+├── assets/                       # Static images and fonts
+├── plugins/                      # Expo config plugins
+├── app.config.ts                 # Expo app config (schemes, deep links, EAS)
 ├── babel.config.js
 ├── jest.config.ts
 └── tsconfig.json
 ```
 
-### Key Files to Know
+---
+
+## Screen Architecture
+
+Route files in `app/` are thin — they re-export screens from `src/screens/`. All logic lives in `src/`.
+
+Large screens are decomposed into feature subdirectories:
+
+```
+src/screens/
+├── tabs/
+│   ├── home/                     # Home feed sub-components
+│   ├── home-screen/              # HomeScreenView + styles
+│   └── profile/                  # ProfileScreen + controller hook + sub-components
+├── modals/
+│   ├── login/                    # LoginScreen + controller hook + AuthForm component
+│   ├── forgot-password/          # ForgotPasswordScreen + styles
+│   ├── reset-password/           # ResetPasswordScreen + controller hook + sub-components
+│   ├── verify-email/             # VerifyEmailScreen + styles
+│   └── write-review/             # WriteReviewScreen + sub-components
+├── stack/
+│   ├── achievements/
+│   ├── deal-breakers/
+│   ├── dm/
+│   ├── for-you-screen/
+│   └── trending-screen/
+└── shared/                       # EventsSpecialsFeedScreen, StaticContentScreen
+```
+
+### Controller Hook Pattern
+
+Screens with non-trivial logic extract state and handlers into a co-located `use<Screen>Controller.ts` hook. The screen component is responsible only for rendering. Example:
+
+```
+src/screens/modals/reset-password/
+├── ResetPasswordScreen.tsx           # Renders only
+├── useResetPasswordController.ts     # All state, effects, handlers
+├── ResetPasswordScreen.styles.ts     # Styles
+├── constants.ts
+├── helpers.ts
+├── types.ts
+└── components/
+    ├── ResetPasswordForm.tsx
+    ├── ResetPasswordHeader.tsx
+    ├── ResetPasswordInvalidState.tsx
+    ├── ResetPasswordSuccessState.tsx
+    ├── ResetPasswordLoadingState.tsx
+    └── ResetPasswordBackButton.tsx
+```
+
+### 300 LOC Rule
+
+No file may exceed 300 lines. If a file approaches the limit, split it before adding more logic. This applies to all `.ts` and `.tsx` files.
+
+---
+
+## Key Files
 
 | File | Purpose |
 |---|---|
-| `src/lib/api.ts` | Centralised API client with retry logic and error handling |
-| `src/lib/supabase.ts` | Supabase client singleton |
-| `src/lib/queryClient.ts` | TanStack Query client config |
+| `src/lib/api.ts` | Centralised API client with retry logic and `ApiError` class |
+| `src/lib/supabase.ts` | Supabase client singleton with `SecureStore` session adapter |
+| `src/lib/queryClient.ts` | TanStack Query client config (staleTime, gcTime, retry) |
 | `src/lib/env.ts` | Typed env var access with validation warnings |
-| `src/providers/AuthProvider.tsx` | Session management, auth state |
+| `src/providers/AuthProvider.tsx` | Session management; exposes `signInWithPassword`, `signInWithGoogle`, `signOut` |
+| `src/providers/ProfileProvider.tsx` | User profile state; fetches on `SIGNED_IN` via `onAuthStateChange` subscription |
 | `src/providers/Providers.tsx` | Composes all providers for the app root |
-| `src/components/RootGuard.tsx` | Route protection: auth gating, role gating, onboarding gating |
+| `src/components/RootGuard.tsx` | Auth gating, role gating, onboarding step-gating, and onboarding resume |
+| `src/navigation/routes.ts` | Typed route builder functions |
 | `src/styles/colors.ts` | Design token: all colour values |
 | `src/styles/layout.ts` | Design token: spacing scale and layout constants |
+| `src/contracts/index.ts` | API response DTOs shared with the web project |
 
 ---
 
-## Design System
+## Providers
 
-All UI work must follow the rules in `CLAUDE.md`. A summary for new developers:
-
-**Grid:** All layout aligns to an **8pt base grid** (4pt for fine adjustments). Use only these spacing values: `4 | 8 | 12 | 16 | 20 | 24 | 32 | 40 | 48 | 64`.
-
-**Tokens:** Colours, spacing, typography, radii, and shadows all come from `src/styles/`. Do not hardcode values — pull from the token files.
-
-**Components:** Before building something new, check `src/components/` first. Reuse or extend what exists. Shared UI patterns live there and should not be duplicated.
-
-**No creative deviation:** Do not introduce new colours, gradients, shadows, or decorative elements that aren't already in the design system. When in doubt, match what already exists elsewhere in the codebase.
+| Provider | Responsibility |
+|---|---|
+| `AuthProvider` | Supabase session + auth methods |
+| `ProfileProvider` | User profile; re-fetches on every `SIGNED_IN` event |
+| `NotificationsProvider` | Unread count, push badge management, realtime updates |
+| `FiltersProvider` | Search/filter state |
+| `ScrollToTopProvider` | Global scroll-to-top signal for tab press |
+| `SecurityProvider` | Runtime integrity checks, cert pinning |
 
 ---
 
-## Route Surface (Expo Router)
+## Auth Flow
+
+```
+app/index.tsx
+  └── RootGuard (src/components/RootGuard.tsx)
+        ├── No session          → /onboarding
+        ├── Unverified email    → /verify-email
+        ├── Onboarding step     → /onboarding/<step>  (resumes from AsyncStorage on re-auth)
+        ├── Unsupported role    → /role-unsupported
+        └── Verified consumer   → /(tabs)/home
+```
+
+**Auth screens** (all in `app/(modals)/`):
+
+| Route | Screen |
+|---|---|
+| `/onboarding` | Onboarding intro — RootGuard is sole redirect authority |
+| `/login` | Email/password + Google OAuth |
+| `/register` | New account sign-up |
+| `/forgot-password` | Request password reset email |
+| `/reset-password` | PKCE exchange + password update form |
+| `/verify-email` | Resend verification, check verification status |
+| `/change-password` | Authenticated password change (re-verifies current password) |
+| `/auth/callback` | OAuth + magic link callback handler |
+| `/auth/auth-code-error` | PKCE failure landing page |
+
+**Key hardening details:**
+
+- `RootGuard` is the single source of truth for session-based redirects. Screens do not redirect authenticated users — `OnboardingScreen` carries a comment at the removed call site to enforce this.
+- `ProfileProvider` uses an `onAuthStateChange` subscription (not a mount effect) so profile state is always fresh after re-authentication.
+- The reset-password exchange uses `Promise.race` with a `timedOut` flag. If the timeout wins, `supabase.auth.signOut()` is called fire-and-forget to invalidate any partial session, and the in-flight exchange result is discarded.
+- `isAuthSettling` (a ref, not state) in `useLoginController` prevents a second `signInWithPassword` call before the first `SIGNED_IN` subscription event fires.
+- Onboarding progress is written to `AsyncStorage` (`onboarding_resume`) before redirecting an unauthenticated user away from a mid-flow step, and consumed by `RootGuard` after re-authentication.
+
+---
+
+## Route Surface
 
 **Tabs:**
-- `/home`
-- `/leaderboard`
-- `/saved`
-- `/profile`
+- `/home`, `/leaderboard`, `/saved`, `/profile`
 
 **Stack routes:**
-- `/trending`, `/for-you`, `/events`, `/events-specials`
+- `/trending`, `/for-you`, `/events-specials`
 - `/business/[id]`, `/event/[id]`, `/special/[id]`
-- `/reviewer/[id]`, `/profile/[username]`
 - `/notifications`, `/dm`, `/dm/[threadId]`
+- `/achievements`, `/deal-breakers`
+- `/profile/[username]`, `/reviewer/[id]`
 - Static pages: `/about`, `/contact`, `/privacy`, `/terms`
 
-**Modal/auth routes:**
+**Modal / auth routes:**
 - `/onboarding`, `/onboarding/select-account-type`, `/complete`
-- `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`
+- `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/change-password`
 - `/auth/callback`, `/auth/auth-code-error`
 - `/write-review/[type]/[id]`
 
 ---
 
-## Auth, Deep Linking, and Role Guarding
+## Design System
 
-- App scheme is `sayso`.
-- OAuth callback route is `/auth/callback`.
-- Universal/App Links are configured in `app.config.ts` for `https://sayso.co.za` and `https://www.sayso.co.za`.
-- Root guard behaviour:
-  - Unauthenticated users are funnelled to onboarding/auth routes.
-  - Onboarding progression is step-gated.
-  - Unsupported roles (`business_owner`, `admin`) are redirected to `/role-unsupported`.
+All UI work must follow the rules in `CLAUDE.md`. Summary for new developers:
+
+**Grid:** All layout aligns to an **8pt base grid** (4pt for fine adjustments). Use only these spacing values: `4 | 8 | 12 | 16 | 20 | 24 | 32 | 40 | 48 | 64`.
+
+**Tokens:** Colours, spacing, typography, radii, and shadows all come from `src/styles/`. Do not hardcode values.
+
+**Components:** Before building something new, check `src/components/` first. Reuse or extend what exists.
+
+**No creative deviation:** Do not introduce new colours, gradients, shadows, or decorative elements not already in the design system.
 
 ---
 
@@ -261,7 +358,7 @@ All UI work must follow the rules in `CLAUDE.md`. A summary for new developers:
 
 - Unread count is provided globally via `NotificationsProvider`.
 - Push token registration posts to `/api/user/push-tokens`.
-- Realtime notification updates are subscribed via Supabase channels.
+- Realtime notification updates subscribe via Supabase channels.
 - DM notification quick-reply action is wired when native notifications are available.
 
 ---
@@ -272,21 +369,32 @@ Tests use **Jest** with `jest-expo` preset and **React Native Testing Library**.
 
 ```bash
 npm test                  # run all tests
-npm run test:watch        # watch mode for development
+npm run test:watch        # watch mode
 npm run test:coverage     # generate coverage report
 npm run test:ci           # CI mode (serial, non-interactive)
 ```
 
-Test files live in `src/__tests__/` and follow the pattern `**/*.test.ts(x)`. Coverage is collected from `src/lib/`, `src/hooks/`, and `src/components/`.
+Test files live in `src/__tests__/` mirroring the `src/` structure:
 
-The `moduleNameMapper` in `jest.config.ts` resolves `@sayso/contracts` to the local TypeScript source, so the sibling repo must be present for tests to run.
+```
+src/__tests__/
+├── setup.ts                # Mocks: React Query, Supabase, SecureStore, icons, Reanimated
+├── hooks/                  # Hook tests (useChangePassword, useBusinessReviews, etc.)
+├── lib/                    # Utility tests (api, calendar, distance, routes)
+├── navigation/             # Route builder tests
+├── screens/                # Screen integration tests (ChangePasswordScreen, etc.)
+└── components/             # Component tests
+```
+
+Coverage is collected from `src/lib/`, `src/hooks/`, and `src/components/`. The `@sayso/contracts` alias resolves to `./src/contracts/index.ts` in Jest — no sibling build step needed.
 
 ---
 
 ## Security and Hardening
 
 - Mobile API requests use centralised error handling and retry behaviour (`src/lib/api.ts`).
-- Runtime hardening scaffold exists in `src/security/`.
+- Supabase tokens are stored in the platform secure enclave via `expo-secure-store`.
+- Runtime hardening scaffold: `src/security/` (integrity checks, jailbreak detection, cert pinning).
 - See:
   - `docs/security/native-hardening-scaffold.md`
   - `docs/security/backend-handoff-checklist.md`

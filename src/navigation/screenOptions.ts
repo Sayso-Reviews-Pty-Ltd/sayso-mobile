@@ -12,6 +12,9 @@ export const rootStackScreenOptions = {
   ...sharedHeaderStyles,
   animation: 'none',
   navigationBarColor: NAVBAR_BG_COLOR,
+  statusBarColor: NAVBAR_BG_COLOR,
+  statusBarStyle: 'light',
+  statusBarTranslucent: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;
 
@@ -22,6 +25,9 @@ export const sharedStackScreenOptions = {
   headerStyle: { backgroundColor: NAVBAR_BG_COLOR },
   headerTintColor: '#FFFFFF',
   navigationBarColor: NAVBAR_BG_COLOR,
+  statusBarColor: NAVBAR_BG_COLOR,
+  statusBarStyle: 'light',
+  statusBarTranslucent: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;
 
@@ -32,6 +38,9 @@ export const fullScreenModalScreenOptions = {
   headerShown: false,
   headerShadowVisible: false,
   navigationBarColor: NAVBAR_BG_COLOR,
+  statusBarColor: NAVBAR_BG_COLOR,
+  statusBarStyle: 'light',
+  statusBarTranslucent: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;
 
@@ -41,5 +50,8 @@ export const sheetModalScreenOptions = {
   animation: 'none',
   headerShadowVisible: false,
   navigationBarColor: NAVBAR_BG_COLOR,
+  statusBarColor: NAVBAR_BG_COLOR,
+  statusBarStyle: 'light',
+  statusBarTranslucent: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;

@@ -125,13 +125,39 @@ function PodiumItem({ business, rank }: { business: FeaturedBusinessDto; rank: 1
         <Text style={s.reviewCount}>({reviewCount})</Text>
       </View>
 
-      <LinearGradient
-        colors={pillarColors}
-        locations={pillarLocs}
-        style={[s.pillar, { height: pH }]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-      />
+      {/* Podium pillar — stacked gradients match web .podium-metal CSS */}
+      <View style={[s.pillar, { height: pH }]}>
+        {/* Base metallic colour gradient */}
+        <LinearGradient
+          colors={pillarColors}
+          locations={pillarLocs}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        />
+        {/* Top white highlight: approximates radial-gradient + linear white overlay */}
+        <LinearGradient
+          colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)']}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.55 }}
+        />
+        {/* Diagonal sheen sweep: approximates ::after at 115deg */}
+        <LinearGradient
+          colors={['transparent', 'rgba(255,255,255,0.20)', 'transparent']}
+          locations={[0, 0.32, 0.58]}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        {/* Bottom dark vignette: approximates inset 0 -16px 30px rgba(0,0,0,0.14) */}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.14)']}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0, y: 0.65 }}
+          end={{ x: 0, y: 1 }}
+        />
+      </View>
     </Pressable>
   );
 }
@@ -220,6 +246,7 @@ const s = StyleSheet.create({
     width: '100%',
     borderTopLeftRadius: 6,
     borderTopRightRadius: 6,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.14,

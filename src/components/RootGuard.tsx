@@ -113,7 +113,9 @@ function routeToOnboardingStep(pathname: string): keyof typeof ONBOARDING_STEP_O
  *
  * On first app load:
  *   • Unauthenticated users are funneled to /onboarding
- *   • Authenticated users are normalized to /home (except auth bridge routes)
+ *   • Authenticated users are funneled through Cases 2–5 (role → email →
+ *     onboarding → home) so new users land on /interests and returning users
+ *     land on /home — matching web logic.
  *
  * Authenticated users go through role → email-verification → onboarding checks,
  * then land on /home (or resume at their correct onboarding step).
@@ -200,10 +202,10 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
           navigate(routes.onboarding());
           return;
         }
-        if (session && pathname !== routes.home()) {
-          navigate(routes.home());
-          return;
-        }
+        // Authenticated users fall through to Cases 2–5 below so that
+        // onboarding and role checks are honoured before settling on /home.
+        // This matches web logic: onboarding_completed_at NULL → /interests,
+        // timestamp present → /home.
       }
     }
 

@@ -258,12 +258,6 @@ export function useLoginController(defaultMode: AuthMode) {
         return;
       }
 
-      if (!navigator.onLine) {
-        if (mounted.current) setError('No internet connection. Please check your network and try again.');
-        setIsPending(false);
-        return;
-      }
-
       isAuthSettling.current = true;
       if (mounted.current) setIsVerifying(true);
       try {

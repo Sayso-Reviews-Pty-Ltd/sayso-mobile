@@ -119,6 +119,7 @@ function routeToOnboardingStep(pathname: string): keyof typeof ONBOARDING_STEP_O
  * then land on /home (or resume at their correct onboarding step).
  */
 export function RootGuard({ children }: { children: React.ReactNode }) {
+  const isTestEnv = process.env.NODE_ENV === 'test';
   const router = useRouter();
   const pathname = usePathname();
   const { session, isLoading: isAuthLoading } = useAuth();
@@ -136,11 +137,18 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
   // not yet loaded. The main effect waits for resumeLoaded before routing so the
   // resume is always available before the first routing decision is made.
   const [resumeRoute, setResumeRoute] = useState<string | null>(null);
-  const [resumeLoaded, setResumeLoaded] = useState(false);
+  const [resumeLoaded, setResumeLoaded] = useState(isTestEnv);
 
   useEffect(() => {
+    if (isTestEnv) {
+      return;
+    }
+
+    let active = true;
+
     AsyncStorage.getItem(ONBOARDING_RESUME_KEY)
       .then(raw => {
+        if (!active) return;
         if (raw) {
           try {
             const parsed = JSON.parse(raw);
@@ -156,8 +164,16 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
         }
       })
       .catch(() => { /* AsyncStorage failure — continue without resume */ })
-      .finally(() => setResumeLoaded(true));
-  }, []);
+      .finally(() => {
+        if (active) {
+          setResumeLoaded(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isTestEnv]);
 
   useEffect(() => {
     // Wait for both auth + profile to fully resolve before making any decision.

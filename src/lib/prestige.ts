@@ -3,8 +3,10 @@
 // Pure functions — no network calls. Used on profile, leaderboard, and
 // post-action share moments.
 
+import type { PrestigeTier } from '../contracts';
+
 // Re-export from contracts so consumers have a single import source.
-export type { PrestigeTier } from '../contracts';
+export type { PrestigeTier };
 
 export type PrestigeInfo = {
   tier: PrestigeTier;

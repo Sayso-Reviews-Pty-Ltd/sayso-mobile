@@ -1,10 +1,27 @@
 import { notifyManager } from '@tanstack/react-query';
 import { act } from '@testing-library/react-native';
+import { InteractionManager } from 'react-native';
 
 // Wrap every React Query notification in act() so state updates are
 // tracked by React's test renderer, eliminating "not wrapped in act" warnings.
 notifyManager.setNotifyFunction((fn) => {
   act(fn);
+});
+
+jest.spyOn(InteractionManager, 'runAfterInteractions').mockImplementation((task: unknown) => {
+  if (typeof task === 'function') {
+    task();
+  }
+  return { cancel: jest.fn() } as any;
+});
+
+afterEach(() => {
+  try {
+    jest.clearAllTimers();
+  } catch {
+    // Ignore when real timers are active
+  }
+  jest.useRealTimers();
 });
 
 jest.mock('expo-haptics', () => ({

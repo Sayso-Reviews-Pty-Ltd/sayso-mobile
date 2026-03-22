@@ -117,11 +117,17 @@ const mockApiFetch = apiFetch as unknown as jest.Mock;
 
 const mockRouterBack = jest.fn();
 const mockRouterReplace = jest.fn();
+const activeQueryClients: QueryClient[] = [];
 
 function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  const client = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false, gcTime: 0 },
+    },
   });
+  activeQueryClients.push(client);
+  return client;
 }
 
 function renderScreen() {
@@ -155,6 +161,13 @@ function setupDefaults() {
   // Default: deal-breakers + any other API calls return empty
   mockApiFetch.mockResolvedValue({ dealBreakers: [] });
 }
+
+afterEach(() => {
+  for (const client of activeQueryClients) {
+    client.clear();
+  }
+  activeQueryClients.length = 0;
+});
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 

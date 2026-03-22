@@ -7,8 +7,16 @@ export function useNonCriticalReady() {
   const [nonCriticalReady, setNonCriticalReady] = useState(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setNonCriticalReady(true));
-    return () => task.cancel();
+    let active = true;
+    const task = InteractionManager.runAfterInteractions(() => {
+      if (active) {
+        setNonCriticalReady(true);
+      }
+    });
+    return () => {
+      active = false;
+      task.cancel();
+    };
   }, []);
 
   return nonCriticalReady;
@@ -33,6 +41,7 @@ export function useWriteReviewPromptRotation({
     const interval = setInterval(() => {
       setPromptIndex((index) => (index + 1) % WRITING_PROMPTS.length);
     }, 4000);
+    (interval as unknown as { unref?: () => void }).unref?.();
 
     return () => clearInterval(interval);
   }, [reviewTextLength, setPromptIndex, textFocused]);

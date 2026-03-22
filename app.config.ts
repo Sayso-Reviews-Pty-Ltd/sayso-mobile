@@ -63,6 +63,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
 
   plugins: [
+    './plugins/with-transport-security',
     'expo-router',
     [
       'expo-notifications',

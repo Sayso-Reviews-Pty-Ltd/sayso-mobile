@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Text } from '../Typography';
+import { LoadMoreButton } from '../feed/LoadMoreButton';
 import { ReviewsList } from '../review-card/ReviewsList';
 import type { ReviewCardData } from '../review-card/ReviewCard';
 import { useBusinessReviews } from '../../hooks/useBusinessReviews';
@@ -206,8 +207,10 @@ const styles = StyleSheet.create({
   },
   loadMoreButton: {
     alignItems: 'center',
-    paddingVertical: 10,
-    marginVertical: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 16,
   },
   toggleButton: {
     flexDirection: 'row',

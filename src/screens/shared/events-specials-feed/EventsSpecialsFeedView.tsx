@@ -256,7 +256,7 @@ const s = StyleSheet.create({
     marginBottom: 16,
   },
   skeletonStack: { gap: 12, paddingTop: 4 },
-  loadMoreWrap: { paddingVertical: 4, gap: 6 },
+  loadMoreWrap: { marginTop: 16, marginBottom: 16, gap: 6 },
   loadMoreError: {
     fontSize: 13,
     lineHeight: 18,

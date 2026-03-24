@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as ExpoLinking from 'expo-linking';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -103,6 +104,9 @@ export default function VerifyEmailScreen() {
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
         email: pendingEmail,
+        options: {
+          emailRedirectTo: ExpoLinking.createURL('/auth/callback'),
+        },
       });
 
       if (resendError) throw resendError;

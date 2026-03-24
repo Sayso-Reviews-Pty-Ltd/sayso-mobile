@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { EmptyState } from '../../../components/EmptyState';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
-import { Text } from '../../../components/Typography';
 import { SkeletonBusinessCard } from '../../../components/feed/SkeletonBusinessCard';
+import { LoadMoreButton } from '../../../components/feed/LoadMoreButton';
 import { TrendingScreenView } from './TrendingScreenView';
 import { ActiveFilterBadges } from './ActiveFilterBadges';
 import { TrendingFilters } from './TrendingFilters';
@@ -120,11 +120,7 @@ export function TrendingListShell({
     }
 
     if (hasMore) {
-      return (
-        <Pressable style={styles.loadMoreBtn} onPress={handleLoadMore}>
-          <Text style={styles.loadMoreText}>Load More</Text>
-        </Pressable>
-      );
+      return <LoadMoreButton onPress={handleLoadMore} />;
     }
 
     return <View style={styles.footerSpacer} />;

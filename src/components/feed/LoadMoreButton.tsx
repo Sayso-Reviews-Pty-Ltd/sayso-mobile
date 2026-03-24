@@ -1,13 +1,14 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import { Text } from '../Typography';
 
 type Props = {
   onPress: () => void;
   disabled?: boolean;
   label?: string;
+  style?: ViewStyle;
 };
 
-export function LoadMoreButton({ onPress, disabled = false, label = 'Load More' }: Props) {
+export function LoadMoreButton({ onPress, disabled = false, label = 'Load More', style }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -16,6 +17,7 @@ export function LoadMoreButton({ onPress, disabled = false, label = 'Load More' 
         styles.button,
         disabled ? styles.disabled : null,
         pressed && !disabled ? styles.pressed : null,
+        style,
       ]}
     >
       <Text style={styles.label}>{label}</Text>
@@ -25,17 +27,19 @@ export function LoadMoreButton({ onPress, disabled = false, label = 'Load More' 
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 48,
+    marginTop: 16,
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'rgba(114, 47, 55, 0.18)',
     backgroundColor: 'rgba(114, 47, 55, 0.09)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
   },
   pressed: {
-    opacity: 0.92,
+    opacity: 0.85,
   },
   disabled: {
     opacity: 0.55,

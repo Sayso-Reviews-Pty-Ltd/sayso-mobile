@@ -501,6 +501,37 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
     jest.useRealTimers();
   });
 
+  it('passes emailRedirectTo when creating an account', async () => {
+    jest.useFakeTimers();
+    mockSignUp.mockResolvedValueOnce({ error: null });
+    renderLogin({ defaultMode: 'register' });
+
+    fireEvent.changeText(screen.getByPlaceholderText('e.g. johndoe'), 'johndoe');
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'john@test.com');
+    fireEvent.changeText(screen.getByPlaceholderText('Create a password'), 'StrongPass123');
+    fireEvent.press(screen.getByTestId('consent-toggle'));
+
+    // Flush the 300ms username debounce and the resulting apiFetch promise
+    await act(async () => {
+      jest.advanceTimersByTime(400);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Create account'));
+    });
+
+    expect(mockSignUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'john@test.com',
+        password: 'StrongPass123',
+        options: expect.objectContaining({
+          emailRedirectTo: 'sayso://auth/callback',
+        }),
+      })
+    );
+    jest.useRealTimers();
+  });
+
   it('shows an error banner when supabase.auth.signUp returns an error', async () => {
     jest.useFakeTimers();
     mockSignUp.mockResolvedValueOnce({ error: new Error('Email address already in use') });

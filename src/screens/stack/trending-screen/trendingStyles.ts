@@ -147,20 +147,6 @@ export const styles = StyleSheet.create({
     gap: 12,
     paddingTop: 4,
   },
-  loadMoreBtn: {
-    marginVertical: 4,
-    paddingVertical: 12,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(45,55,72,0.12)',
-  },
-  loadMoreText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: businessDetailColors.charcoal,
-  },
   footerSpacer: {
     height: 24,
   },

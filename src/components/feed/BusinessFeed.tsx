@@ -266,7 +266,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   loadMoreWrap: {
-    paddingVertical: 4,
+    marginTop: 16,
+    marginBottom: 16,
     gap: 6,
   },
   loadMoreError: {

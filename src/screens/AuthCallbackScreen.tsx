@@ -150,6 +150,8 @@ export default function AuthCallbackScreen() {
         }
 
         // Check if onboarding is complete
+        // Signup email verification also lands here (type=signup) and should
+        // continue via onboarding-aware routing, not a forced login redirect.
         const isOnboardingComplete = Boolean(profileData?.onboarding_completed_at) || Boolean(profileData?.onboarding_complete);
 
         if (isOnboardingComplete) {

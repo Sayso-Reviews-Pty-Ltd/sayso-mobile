@@ -23,7 +23,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        // Stale/invalid refresh token — clear it and treat as signed out
+        supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
       setSession(data.session ?? null);
       setUser(data.session?.user ?? null);
       setIsLoading(false);
@@ -31,7 +37,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
       setSession(nextSession ?? null);
       setUser(nextSession?.user ?? null);
       setIsLoading(false);

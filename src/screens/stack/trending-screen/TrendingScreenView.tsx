@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { ScrollToTopFab } from '../../../components/ScrollToTopFab';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { TrendingMapView } from '../TrendingMapView';
@@ -25,8 +24,6 @@ function TrendingScreenViewComponent({
   isRefetching,
   handleRefresh,
   handleScroll,
-  onScrollToTop,
-  showBackToTop,
   listRef,
 }: TrendingScreenViewProps) {
   return (
@@ -35,33 +32,31 @@ function TrendingScreenViewComponent({
         {isMapMode && listHeader}
 
         {isMapMode ? (
-        <TransitionItem variant="card" index={5} style={styles.mapTransition}>
-          <View style={styles.mapWrap}>
-            <TrendingMapView businesses={mapBusinesses} userLocation={userLocation} />
-          </View>
-        </TransitionItem>
-      ) : (
-        <FlatList
-          ref={listRef}
-          data={isLoading ? [] : visibleBusinesses}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          ItemSeparatorComponent={ItemSeparator}
-          ListHeaderComponent={listHeader}
-          ListEmptyComponent={listEmpty}
-          ListFooterComponent={listFooter}
-          contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
-          onScroll={handleScroll}
-          scrollEventThrottle={32}
-          showsVerticalScrollIndicator={false}
-          initialNumToRender={8}
-          windowSize={5}
-          removeClippedSubviews
-        />
-      )}
-
-      {!isMapMode ? <ScrollToTopFab visible={showBackToTop} onPress={onScrollToTop} /> : null}
+          <TransitionItem variant="card" index={5} style={styles.mapTransition}>
+            <View style={styles.mapWrap}>
+              <TrendingMapView businesses={mapBusinesses} userLocation={userLocation} />
+            </View>
+          </TransitionItem>
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={isLoading ? [] : visibleBusinesses}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            ItemSeparatorComponent={ItemSeparator}
+            ListHeaderComponent={listHeader}
+            ListEmptyComponent={listEmpty}
+            ListFooterComponent={listFooter}
+            contentContainerStyle={styles.list}
+            refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
+            onScroll={handleScroll}
+            scrollEventThrottle={32}
+            showsVerticalScrollIndicator={false}
+            initialNumToRender={8}
+            windowSize={5}
+            removeClippedSubviews
+          />
+        )}
       </ScreenTransitionScope>
     </View>
   );

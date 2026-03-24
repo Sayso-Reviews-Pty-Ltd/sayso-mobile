@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Text } from '../../components/Typography';
 import { TransitionItem } from '../../components/motion/TransitionItem';
@@ -45,14 +44,6 @@ export default function SavedScreen() {
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={styles.container}>
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        <LinearGradient
-          colors={['rgba(125,155,118,0.10)', OFF_WHITE, 'rgba(114,47,55,0.05)']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-
       <StackPageHeader navigation={{ canGoBack: () => false, goBack: () => {} }} showBackButton={false} />
 
       <ScreenTransitionScope>

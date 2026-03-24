@@ -61,7 +61,6 @@ export function TrendingListShell({
     isSearching,
     mapBusinesses,
     searchIsFetching,
-    showBackToTop,
     userLocation,
     visibleBusinesses,
   } = state;
@@ -187,8 +186,6 @@ export function TrendingListShell({
         isRefetching={isRefetching}
         handleRefresh={handleRefresh}
         handleScroll={handleScroll}
-        onScrollToTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
-        showBackToTop={showBackToTop}
         listRef={listRef}
       />
     </ScreenTransitionScope>

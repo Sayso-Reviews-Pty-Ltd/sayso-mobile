@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SCROLL_TO_TOP_BOTTOM_OFFSET, SCROLL_TO_TOP_SIDE_OFFSET } from '../styles/layout';
 
 type ScrollToTopController = {
   id: string;
@@ -14,12 +15,6 @@ type ScrollToTopContextValue = {
 };
 
 const ScrollToTopContext = createContext<ScrollToTopContextValue | null>(null);
-
-const FAB_BOTTOM_OFFSET = Platform.select({
-  ios: 108,
-  android: 96,
-  default: 96,
-}) ?? 96;
 
 export function ScrollToTopProvider({ children }: { children: ReactNode }) {
   const [controller, setControllerState] = useState<ScrollToTopController | null>(null);
@@ -70,8 +65,8 @@ export function useScrollToTopController() {
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    right: 16,
-    bottom: FAB_BOTTOM_OFFSET,
+    right: SCROLL_TO_TOP_SIDE_OFFSET,
+    bottom: SCROLL_TO_TOP_BOTTOM_OFFSET,
     width: 44,
     height: 44,
     borderRadius: 999,

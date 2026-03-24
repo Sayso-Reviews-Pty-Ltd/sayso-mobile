@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import {
   FlatList,
-  Pressable,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -15,10 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import type { BusinessListItemDto, PaginatedBusinessFeedResponseDto } from '@sayso/contracts';
 import { BusinessFeed } from '../../../components/feed/BusinessFeed';
-import { BusinessCard } from '../../../components/BusinessCard';
 import { EmptyState } from '../../../components/EmptyState';
 import { SkeletonBusinessCard } from '../../../components/feed/SkeletonBusinessCard';
-import { ScrollToTopFab } from '../../../components/ScrollToTopFab';
 import { HeaderDmBellActions } from '../../../components/HeaderDmBellActions';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
@@ -31,14 +28,11 @@ const VISIBLE_CHUNK_SIZE = 12;
 type Props = {
   userId: string | null;
   isSearching: boolean;
-  showBackToTop: boolean;
   listRef: React.RefObject<FlatList<BusinessListItemDto> | null>;
   keyExtractor: (item: BusinessListItemDto) => string;
   renderItem: ListRenderItem<BusinessListItemDto>;
   searchResults: BusinessListItemDto[];
   searchLoading: boolean;
-  searchError: boolean;
-  debouncedQuery: string;
   heroSection: React.ReactElement;
   resultsHeader: React.ReactElement;
   searchEmpty: React.ReactElement;
@@ -55,14 +49,11 @@ type Props = {
 function ForYouRouteViewComponent({
   userId,
   isSearching,
-  showBackToTop,
   listRef,
   keyExtractor,
   renderItem,
   searchResults,
   searchLoading,
-  searchError,
-  debouncedQuery,
   heroSection,
   resultsHeader,
   searchEmpty,
@@ -81,32 +72,32 @@ function ForYouRouteViewComponent({
         <Stack.Screen options={{ title: 'For You' }} />
         <ScreenTransitionScope>
           <View style={styles.guestHeader}>
-          <TransitionItem variant="header" index={0} style={styles.headerCopy}>
-            <View>
-              <Text style={styles.heroTitle}>Curated Just For You</Text>
-              <Text style={styles.heroDesc}>Personalized discovery starts after sign-in.</Text>
-            </View>
-          </TransitionItem>
-          <TransitionItem variant="card" index={1}>
-            <HeaderDmBellActions />
-          </TransitionItem>
-        </View>
+            <TransitionItem variant="header" index={0} style={styles.headerCopy}>
+              <View>
+                <Text style={styles.heroTitle}>Curated Just For You</Text>
+                <Text style={styles.heroDesc}>Personalized discovery starts after sign-in.</Text>
+              </View>
+            </TransitionItem>
+            <TransitionItem variant="card" index={1}>
+              <HeaderDmBellActions />
+            </TransitionItem>
+          </View>
 
-        <TransitionItem variant="card" index={2}>
-          <LinearGradient
-            colors={[homeTokens.coral, homeTokens.coralDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.guestCard}
-          >
-            <Text style={styles.guestTitle}>Create an account to unlock personalised recommendations.</Text>
-            <TouchableOpacity style={styles.guestPrimary} onPress={onPressOnboarding} activeOpacity={0.88}>
-              <Text style={styles.guestPrimaryText}>Create Account</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.guestSecondary} onPress={onPressOnboarding} activeOpacity={0.88}>
-              <Text style={styles.guestSecondaryText}>Sign In</Text>
-            </TouchableOpacity>
-          </LinearGradient>
+          <TransitionItem variant="card" index={2}>
+            <LinearGradient
+              colors={[homeTokens.coral, homeTokens.coralDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.guestCard}
+            >
+              <Text style={styles.guestTitle}>Create an account to unlock personalised recommendations.</Text>
+              <TouchableOpacity style={styles.guestPrimary} onPress={onPressOnboarding} activeOpacity={0.88}>
+                <Text style={styles.guestPrimaryText}>Create Account</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.guestSecondary} onPress={onPressOnboarding} activeOpacity={0.88}>
+                <Text style={styles.guestSecondaryText}>Sign In</Text>
+              </TouchableOpacity>
+            </LinearGradient>
           </TransitionItem>
         </ScreenTransitionScope>
       </SafeAreaView>
@@ -119,22 +110,21 @@ function ForYouRouteViewComponent({
         <Stack.Screen options={{ title: 'For You', headerRight: () => <HeaderDmBellActions /> }} />
         <ScreenTransitionScope>
           <View style={styles.fullFlex}>
-          <FlatList
-            ref={listRef}
-            data={searchLoading ? [] : searchResults}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            ItemSeparatorComponent={ItemSeparator}
-            ListHeaderComponent={resultsHeader}
-            ListEmptyComponent={searchEmpty}
-            ListFooterComponent={<View style={styles.footerSpacer} />}
-            contentContainerStyle={styles.list}
-            onScroll={handleSearchScroll}
-            scrollEventThrottle={32}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          />
-          <ScrollToTopFab visible={showBackToTop} onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })} />
+            <FlatList
+              ref={listRef}
+              data={searchLoading ? [] : searchResults}
+              keyExtractor={keyExtractor}
+              renderItem={renderItem}
+              ItemSeparatorComponent={ItemSeparator}
+              ListHeaderComponent={resultsHeader}
+              ListEmptyComponent={searchEmpty}
+              ListFooterComponent={<View style={styles.footerSpacer} />}
+              contentContainerStyle={styles.list}
+              onScroll={handleSearchScroll}
+              scrollEventThrottle={32}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            />
           </View>
         </ScreenTransitionScope>
       </SafeAreaView>
@@ -145,49 +135,48 @@ function ForYouRouteViewComponent({
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: 'For You', headerRight: () => <HeaderDmBellActions /> }} />
       <ScreenTransitionScope>
-
-      {preferencesLoading ? (
-        <View style={styles.loadingList}>
-          <View style={styles.loadingHeader}>{heroSection}</View>
-          <TransitionItem variant="card" index={3}>
-            <View style={styles.personalizingPill}>
-              <Ionicons name="sparkles-outline" size={13} color={homeTokens.coral} />
-              <Text style={styles.personalizingText}>Personalizing your feed...</Text>
-            </View>
-          </TransitionItem>
-          {Array.from({ length: 5 }, (_, index) => (
-            <SkeletonBusinessCard key={`for-you-loading-${index}`} />
-          ))}
-        </View>
-      ) : preferencesError ? (
-        <>
-          <View style={styles.loadingHeader}>{heroSection}</View>
-          <EmptyState icon="wifi-outline" title="Couldn't load personalised picks right now." message={preferencesError} />
-        </>
-      ) : !hasPreferences ? (
-        <>
-          <View style={styles.loadingHeader}>{heroSection}</View>
-          <EmptyState
-            icon="sparkles-outline"
-            title="Curated from your interests"
-            message="Based on what you selected, no matches in this feed yet."
+        {preferencesLoading ? (
+          <View style={styles.loadingList}>
+            <View style={styles.loadingHeader}>{heroSection}</View>
+            <TransitionItem variant="card" index={3}>
+              <View style={styles.personalizingPill}>
+                <Ionicons name="sparkles-outline" size={13} color={homeTokens.coral} />
+                <Text style={styles.personalizingText}>Personalizing your feed...</Text>
+              </View>
+            </TransitionItem>
+            {Array.from({ length: 5 }, (_, index) => (
+              <SkeletonBusinessCard key={`for-you-loading-${index}`} />
+            ))}
+          </View>
+        ) : preferencesError ? (
+          <>
+            <View style={styles.loadingHeader}>{heroSection}</View>
+            <EmptyState icon="wifi-outline" title="Couldn't load personalised picks right now." message={preferencesError} />
+          </>
+        ) : !hasPreferences ? (
+          <>
+            <View style={styles.loadingHeader}>{heroSection}</View>
+            <EmptyState
+              icon="sparkles-outline"
+              title="Curated from your interests"
+              message="Based on what you selected, no matches in this feed yet."
+            />
+          </>
+        ) : (
+          <BusinessFeed
+            feedKey="for-you"
+            queryKey={['for-you', userId, preferenceIds, REQUEST_LIMIT]}
+            horizontalPadding={homeTokens.pageGutter}
+            listHeaderTop={heroSection}
+            onScrollY={handleScrollY}
+            errorTitle="Couldn't load personalised picks right now."
+            emptyTitle="Curated from your interests"
+            emptyMessage="Based on what you selected, no matches in this feed yet."
+            requestLimit={REQUEST_LIMIT}
+            visibleChunkSize={VISIBLE_CHUNK_SIZE}
+            fetchPage={fetchForYouPage}
           />
-        </>
-      ) : (
-        <BusinessFeed
-          feedKey="for-you"
-          queryKey={['for-you', userId, preferenceIds, REQUEST_LIMIT]}
-          horizontalPadding={homeTokens.pageGutter}
-          listHeaderTop={heroSection}
-          onScrollY={handleScrollY}
-          errorTitle="Couldn't load personalised picks right now."
-          emptyTitle="Curated from your interests"
-          emptyMessage="Based on what you selected, no matches in this feed yet."
-          requestLimit={REQUEST_LIMIT}
-          visibleChunkSize={VISIBLE_CHUNK_SIZE}
-          fetchPage={fetchForYouPage}
-        />
-      )}
+        )}
       </ScreenTransitionScope>
     </SafeAreaView>
   );

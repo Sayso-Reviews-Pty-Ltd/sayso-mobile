@@ -1,9 +1,7 @@
 import type { ReactNode } from 'react';
-import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Animated, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { ONBOARDING_GRADIENTS } from './onboardingTheme';
 import { useOnboardingAnimations } from './useOnboardingAnimations';
 import { useTypingTitle } from './useTypingTitle';
 import { OnboardingProgressBar } from './OnboardingProgressBar';
@@ -66,13 +64,6 @@ export function OnboardingLayout({
 
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={ONBOARDING_GRADIENTS.page}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
       {overlay}
 
       <OnboardingProgressBar

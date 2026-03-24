@@ -13,7 +13,6 @@ export const ONBOARDING_TOKENS = {
 } as const;
 
 export const ONBOARDING_GRADIENTS = {
-  page: ['rgba(157,171,155,0.10)', '#E5E0E5', 'rgba(114,47,55,0.05)'],
   actionPrimary: ['#722F37', 'rgba(114,47,55,0.9)'],
   actionSecondary: ['#9DAB9B', 'rgba(157,171,155,0.9)'],
   cardPrimary: ['#722F37', 'rgba(114,47,55,0.9)'],

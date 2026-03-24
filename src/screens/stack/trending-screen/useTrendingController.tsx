@@ -10,6 +10,7 @@ import { useNavigation } from 'expo-router';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { businessDetailColors } from '../../../components/business-detail/styles';
 import { useBusinessSearch } from '../../../hooks/useBusinessSearch';
+import { useGlobalScrollToTop } from '../../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../../hooks/useRealtimeQueryInvalidation';
 import { useTrending } from '../../../hooks/useTrending';
 import { NAVBAR_BG_COLOR } from '../../../styles/colors';
@@ -225,6 +226,22 @@ export function useTrendingController() {
     [applyScrollState]
   );
 
+  const handleScrollToTop = useCallback(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, []);
+
+  useGlobalScrollToTop({
+    visible: showBackToTop,
+    enabled: !isMapMode,
+    onScrollToTop: handleScrollToTop,
+  });
+
+  useEffect(() => {
+    if (isMapMode) {
+      setShowBackToTop(false);
+    }
+  }, [isMapMode]);
+
   useEffect(() => {
     return () => {
       if (scrollRafRef.current != null) {
@@ -249,7 +266,6 @@ export function useTrendingController() {
     isSearching,
     mapBusinesses,
     searchIsFetching: searchQuery.isFetching,
-    showBackToTop,
     userLocation,
     visibleBusinesses,
   };

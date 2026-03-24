@@ -14,6 +14,7 @@ import { Text } from '../../components/Typography';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { apiFetch } from '../../lib/api';
 import { routes } from '../../navigation/routes';
+import { useProfile } from '../../providers/ProfileProvider';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PARTICLE_COUNT = 180;
@@ -149,6 +150,7 @@ const PARTICLE_SHAPES: ParticleShape[] = ['square', 'circle', 'rect'];
 
 export default function CompleteScreen() {
   const router = useRouter();
+  const { refreshProfile } = useProfile();
   const reducedMotion = useReducedMotion();
   const [selectedDealbreakers, setSelectedDealbreakers] = useState<string[]>([]);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -191,9 +193,12 @@ export default function CompleteScreen() {
     } catch {
       // Best effort completion: still move to home to avoid trapping users.
     } finally {
+      // Flush the stale profile state so RootGuard sees isOnboardingComplete: true
+      // before evaluating /home — prevents a redirect loop back to /complete.
+      try { await refreshProfile(); } catch {}
       router.replace(routes.home() as never);
     }
-  }, [router]);
+  }, [refreshProfile, router]);
 
   useEffect(() => {
     try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}

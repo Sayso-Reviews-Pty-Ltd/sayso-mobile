@@ -18,7 +18,6 @@ export type TrendingControllerState = {
   isSearching: boolean;
   mapBusinesses: BusinessListItemDto[];
   searchIsFetching: boolean;
-  showBackToTop: boolean;
   userLocation: { lat: number; lng: number } | null;
   visibleBusinesses: BusinessListItemDto[];
 };

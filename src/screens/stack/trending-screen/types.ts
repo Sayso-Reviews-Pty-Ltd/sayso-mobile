@@ -20,7 +20,5 @@ export type TrendingScreenViewProps = {
   isRefetching: boolean;
   handleRefresh: () => void;
   handleScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  onScrollToTop: () => void;
-  showBackToTop: boolean;
   listRef: React.RefObject<import('react-native').FlatList<BusinessListItemDto> | null>;
 };

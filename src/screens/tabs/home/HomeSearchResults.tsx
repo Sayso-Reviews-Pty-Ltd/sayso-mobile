@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
+import { useCallback, useRef, type Ref } from 'react';
 import {
-  Animated,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -9,7 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../../components/Typography';
 import { BusinessCard } from '../../../components/BusinessCard';
 import { EmptyState } from '../../../components/EmptyState';
@@ -97,8 +95,6 @@ export function HomeSearchResults({
 }: Props) {
   const hasFilters = minRating != null || distanceKm != null;
   const internalRef = useRef<FlatList<BusinessListItemDto>>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [backToTopVisible, setBackToTopVisible] = useState(false);
 
   // Merge the external listRef with our internal ref
   const mergedRef = useCallback(
@@ -113,17 +109,8 @@ export function HomeSearchResults({
     [listRef]
   );
 
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: backToTopVisible ? 1 : 0,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
-  }, [backToTopVisible, fadeAnim]);
-
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      setBackToTopVisible(event.nativeEvent.contentOffset.y > 300);
       onScroll?.(event);
     },
     [onScroll]
@@ -131,115 +118,99 @@ export function HomeSearchResults({
 
   return (
     <View style={styles.wrapper}>
-      <Animated.FlatList
+      <FlatList
         ref={mergedRef}
-      data={isLoading ? [] : results}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <BusinessCard business={item} />}
-      ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.content}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          {/* Title row — matches web flex row: title left, clear filters right */}
-          <View style={styles.titleRow}>
-            <View style={styles.titleColumn}>
-              <Text style={styles.modeLabel}>Search Mode</Text>
-              <Text style={styles.title}>Results for &ldquo;{query.trim()}&rdquo;</Text>
+        data={isLoading ? [] : results}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <BusinessCard business={item} />}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            {/* Title row — matches web flex row: title left, clear filters right */}
+            <View style={styles.titleRow}>
+              <View style={styles.titleColumn}>
+                <Text style={styles.modeLabel}>Search Mode</Text>
+                <Text style={styles.title}>Results for &ldquo;{query.trim()}&rdquo;</Text>
+              </View>
+              {hasFilters ? (
+                <TouchableOpacity onPress={onClearFilters} activeOpacity={0.8} style={styles.clearButton}>
+                  <Text style={styles.clearButtonText}>Clear filters</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
-            {hasFilters ? (
-              <TouchableOpacity onPress={onClearFilters} activeOpacity={0.8} style={styles.clearButton}>
-                <Text style={styles.clearButtonText}>Clear filters</Text>
-              </TouchableOpacity>
+
+            {/* Filter groups — Distance then Rating, each with label above pills */}
+            <View style={styles.filters}>
+              <View>
+                <Text style={styles.filterLabel}>Distance</Text>
+                <View style={styles.filterPills}>
+                  {distanceOptions.map(({ label, value }) => (
+                    <TouchableOpacity
+                      key={`distance-${value}`}
+                      style={[styles.filterChip, distanceKm === value ? styles.filterChipActive : null]}
+                      onPress={() => {
+                        haptics.selection();
+                        track('discovery.filter_applied', { filter: 'distance' });
+                        onSetDistanceKm(distanceKm === value ? null : value);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.filterChipText, distanceKm === value ? styles.filterChipTextActive : null]}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View>
+                <Text style={styles.filterLabel}>Rating</Text>
+                <View style={styles.filterPills}>
+                  {ratingOptions.map(({ label, value }) => (
+                    <TouchableOpacity
+                      key={`rating-${value}`}
+                      style={[styles.filterChip, minRating === value ? styles.filterChipActive : null]}
+                      onPress={() => {
+                        haptics.selection();
+                        track('discovery.filter_applied', { filter: 'rating' });
+                        onSetMinRating(minRating === value ? null : value);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.filterChipText, minRating === value ? styles.filterChipTextActive : null]}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            {locationDenied && distanceKm != null ? (
+              <Text style={styles.notice}>Location permission is off, so distance filtering could not be applied.</Text>
             ) : null}
           </View>
-
-          {/* Filter groups — Distance then Rating, each with label above pills */}
-          <View style={styles.filters}>
-            <View>
-              <Text style={styles.filterLabel}>Distance</Text>
-              <View style={styles.filterPills}>
-                {distanceOptions.map(({ label, value }) => (
-                  <TouchableOpacity
-                    key={`distance-${value}`}
-                    style={[styles.filterChip, distanceKm === value ? styles.filterChipActive : null]}
-                    onPress={() => {
-                      haptics.selection();
-                      track('discovery.filter_applied', { filter: 'distance' });
-                      onSetDistanceKm(distanceKm === value ? null : value);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.filterChipText, distanceKm === value ? styles.filterChipTextActive : null]}>
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+        }
+        ListEmptyComponent={
+          isLoading ? null : error ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
-
-            <View>
-              <Text style={styles.filterLabel}>Rating</Text>
-              <View style={styles.filterPills}>
-                {ratingOptions.map(({ label, value }) => (
-                  <TouchableOpacity
-                    key={`rating-${value}`}
-                    style={[styles.filterChip, minRating === value ? styles.filterChipActive : null]}
-                    onPress={() => {
-                      haptics.selection();
-                      track('discovery.filter_applied', { filter: 'rating' });
-                      onSetMinRating(minRating === value ? null : value);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.filterChipText, minRating === value ? styles.filterChipTextActive : null]}>
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          </View>
-
-          {locationDenied && distanceKm != null ? (
-            <Text style={styles.notice}>Location permission is off, so distance filtering could not be applied.</Text>
-          ) : null}
-        </View>
-      }
-      ListEmptyComponent={
-        isLoading ? null : error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : (
-          <SearchEmptyState
-            query={query}
-            hasFilters={hasFilters}
-            onClearFilters={onClearFilters}
-          />
-        )
-      }
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      onScroll={handleScroll}
-      scrollEventThrottle={16}
-    />
-
-    {/* Back to top — fades in after 300px of scroll */}
-    <Animated.View
-      style={[styles.backToTopBtn, { opacity: fadeAnim }]}
-      pointerEvents={backToTopVisible ? 'auto' : 'none'}
-    >
-      <TouchableOpacity
-        onPress={() => internalRef.current?.scrollToOffset({ offset: 0, animated: true })}
-        activeOpacity={0.88}
-        accessibilityLabel="Back to top"
-        style={styles.backToTopInner}
-      >
-        <Ionicons name="arrow-up-outline" size={16} color={homeTokens.white} />
-        <Text style={styles.backToTopText}>Top</Text>
-      </TouchableOpacity>
-    </Animated.View>
+          ) : (
+            <SearchEmptyState
+              query={query}
+              hasFilters={hasFilters}
+              onClearFilters={onClearFilters}
+            />
+          )
+        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      />
     </View>
   );
 }
@@ -336,34 +307,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: homeTokens.coral,
     marginTop: 12,
-  },
-  // ─── Back to top ─────────────────────────────────────────────────────────────
-  backToTopBtn: {
-    position: 'absolute',
-    bottom: 24,
-    alignSelf: 'center',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  backToTopInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: homeTokens.coral,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  backToTopText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: homeTokens.white,
   },
   // ─── Error state ─────────────────────────────────────────────────────────────
   errorBox: {

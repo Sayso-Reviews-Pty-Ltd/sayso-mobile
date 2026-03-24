@@ -1,6 +1,5 @@
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
 import { StackPageHeader } from '../../../components/StackPageHeader';
 import { styles } from './screenStyles';
@@ -17,16 +16,6 @@ export default function WriteReviewScreen() {
   return (
     <SafeAreaView edges={['left', 'right', 'bottom']} style={styles.safeArea}>
       <View style={styles.safeAreaInner}>
-        {!controller.isBusinessReview ? (
-          <LinearGradient
-            colors={['rgba(125,155,118,0.12)', controller.C.offWhite, 'rgba(114,47,55,0.06)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-            pointerEvents="none"
-          />
-        ) : null}
-
         <Stack.Screen
           options={{
             headerShown: true,

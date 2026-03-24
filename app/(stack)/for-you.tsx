@@ -11,6 +11,7 @@ import { Text } from '../../src/components/Typography';
 import { useAuthSession } from '../../src/hooks/useSession';
 import { useUserPreferences } from '../../src/hooks/useUserPreferences';
 import { useBusinessSearch } from '../../src/hooks/useBusinessSearch';
+import { useGlobalScrollToTop } from '../../src/hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../src/hooks/useRealtimeQueryInvalidation';
 import { apiFetch } from '../../src/lib/api';
 import { routes } from '../../src/navigation/routes';
@@ -141,6 +142,22 @@ export default function ForYouRoute() {
     [handleScrollY]
   );
 
+  const handleScrollToTop = useCallback(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, []);
+
+  useGlobalScrollToTop({
+    visible: showBackToTop,
+    enabled: isSearching,
+    onScrollToTop: handleScrollToTop,
+  });
+
+  useEffect(() => {
+    if (!isSearching) {
+      setShowBackToTop(false);
+    }
+  }, [isSearching]);
+
   const fetchForYouPage = useCallback(
     (cursor: string | null) => {
       const params = new URLSearchParams();
@@ -247,14 +264,11 @@ export default function ForYouRoute() {
     <ForYouRouteView
       userId={user?.id ?? null}
       isSearching={isSearching}
-      showBackToTop={showBackToTop}
       listRef={listRef}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       searchResults={searchResults}
       searchLoading={searchQuery.isLoading}
-      searchError={searchQuery.isError}
-      debouncedQuery={debouncedQuery}
       heroSection={heroSection}
       resultsHeader={resultsHeader}
       searchEmpty={searchEmpty}

@@ -11,13 +11,13 @@ import {
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { BusinessListItemDto, PaginatedBusinessFeedResponseDto } from '@sayso/contracts';
 import { BusinessCard } from '../BusinessCard';
-import { ScrollToTopFab } from '../ScrollToTopFab';
 import { EmptyState } from '../EmptyState';
 import { Text } from '../Typography';
 import { FeedFooter } from './FeedFooter';
 import { LoadMoreButton } from './LoadMoreButton';
 import { SkeletonBusinessCard } from './SkeletonBusinessCard';
 import { TransitionItem } from '../motion/TransitionItem';
+import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { APP_PAGE_GUTTER } from '../../styles/layout';
 
 const DEFAULT_VISIBLE_CHUNK_SIZE = 12;
@@ -156,6 +156,12 @@ export function BusinessFeed({
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, []);
 
+  useGlobalScrollToTop({
+    visible: showBackToTop,
+    enabled: true,
+    onScrollToTop: handleBackToTop,
+  });
+
   const footer = useMemo(() => {
     if (query.isFetchingNextPage) {
       return (
@@ -230,8 +236,6 @@ export function BusinessFeed({
         scrollEventThrottle={32}
         showsVerticalScrollIndicator={false}
       />
-
-      <ScrollToTopFab visible={showBackToTop} onPress={handleBackToTop} />
     </View>
   );
 }

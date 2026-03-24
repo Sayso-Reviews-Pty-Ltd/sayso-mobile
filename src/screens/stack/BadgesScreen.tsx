@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Image,
+  type ImageSourcePropType,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
@@ -10,12 +11,12 @@ import {
   View,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { BADGE_MAPPINGS, BADGE_GROUPS, type BadgeMappingItem } from '../../lib/badgeMappings';
+import { BADGE_MAPPINGS, BADGE_GROUPS, type BadgeGroup, type BadgeMappingItem } from '../../lib/badgeMappings';
 import { getBadgeImage } from '../../lib/badgeImages';
 import { Text } from '../../components/Typography';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
+import { useAllUserBadges, type UserBadgeDto } from '../../hooks/useUserBadges';
 
 const GRID = 8;
 
@@ -56,12 +57,92 @@ const GROUP_COLORS: Record<string, string> = {
   community: '#F472B6',
 };
 
-function BadgeCard({ badge }: { badge: BadgeMappingItem }) {
-  const groupColor = GROUP_COLORS[badge.badgeGroup] ?? C.wine;
+interface BadgeLibraryItem {
+  id: string;
+  name: string;
+  description: string;
+  howToEarn: string;
+  badgeGroup: BadgeGroup;
+  imageKey: string;
+  iconPath: string | null;
+}
+
+const RULE_COPY: Record<string, string> = {
+  review_count: 'reviews',
+  category_review_count: 'reviews in this category',
+  distinct_category_count: 'different categories',
+  photo_count: 'reviews with photos',
+  helpful_votes_total: 'helpful votes given',
+  helpful_votes_received: 'helpful votes received',
+  streak_days: 'consecutive days of reviewing',
+  weekly_streak: 'consecutive weeks of reviewing',
+  loyal_reviewer: 'reviews for one business',
+};
+
+function normalizeGroup(group: string | null | undefined, fallback: BadgeGroup = 'explorer'): BadgeGroup {
+  return BADGE_GROUPS.includes(group as BadgeGroup) ? (group as BadgeGroup) : fallback;
+}
+
+function buildRuleHowToEarn(ruleType: string | null | undefined, threshold: number | null | undefined): string | null {
+  if (!ruleType || typeof threshold !== 'number' || threshold <= 0) return null;
+  const action = RULE_COPY[ruleType];
+  if (!action) return null;
+  return `Complete ${threshold} ${action}.`;
+}
+
+function mapBadgeDefinition(mapping: BadgeMappingItem): BadgeLibraryItem {
+  return {
+    id: mapping.id,
+    name: mapping.name,
+    description: mapping.description,
+    howToEarn: mapping.howToEarn,
+    badgeGroup: mapping.badgeGroup,
+    imageKey: mapping.imageKey,
+    iconPath: null,
+  };
+}
+
+function mapApiBadgeToLibraryItem(badge: UserBadgeDto): BadgeLibraryItem {
+  const mapped = BADGE_MAPPINGS[badge.id];
+  const mappedDefinition = mapped ? mapBadgeDefinition(mapped) : null;
+
+  const name = typeof badge.name === 'string' && badge.name.trim().length > 0
+    ? badge.name.trim()
+    : mappedDefinition?.name ?? 'Badge';
+  const description = typeof badge.description === 'string' && badge.description.trim().length > 0
+    ? badge.description.trim()
+    : mappedDefinition?.description ?? '';
+  const howToEarn = (typeof badge.how_to_earn === 'string' && badge.how_to_earn.trim().length > 0
+    ? badge.how_to_earn.trim()
+    : null) ?? (typeof badge.howToEarn === 'string' && badge.howToEarn.trim().length > 0
+    ? badge.howToEarn.trim()
+    : null) ?? mappedDefinition?.howToEarn
+    ?? buildRuleHowToEarn(badge.rule_type, badge.threshold)
+    ?? 'Complete this badge objective to unlock it.';
+
+  return {
+    id: badge.id,
+    name,
+    description,
+    howToEarn,
+    badgeGroup: normalizeGroup(badge.badge_group, mappedDefinition?.badgeGroup ?? 'explorer'),
+    imageKey: mappedDefinition?.imageKey ?? 'default',
+    iconPath: badge.icon_path ?? null,
+  };
+}
+
+function resolveBadgeImageSource(badge: BadgeLibraryItem): ImageSourcePropType {
+  if (badge.iconPath && badge.iconPath.trim().length > 0) {
+    return { uri: badge.iconPath };
+  }
+  return getBadgeImage(badge.imageKey);
+}
+
+function BadgeCard({ badge }: { badge: BadgeLibraryItem }) {
 
   return (
     <View style={styles.badgeCard}>
-      <Image source={getBadgeImage(badge.imageKey)} style={styles.badgeCardImg} />
+      <Image source={resolveBadgeImageSource(badge)} style={styles.badgeCardImg} />
       <View style={styles.badgeCardContent}>
         <Text style={styles.badgeCardName}>{badge.name}</Text>
         <Text style={styles.badgeCardDesc} numberOfLines={2}>{badge.description}</Text>
@@ -74,7 +155,7 @@ function BadgeCard({ badge }: { badge: BadgeMappingItem }) {
   );
 }
 
-function BadgeSection({ groupKey, badges }: { groupKey: string; badges: BadgeMappingItem[] }) {
+function BadgeSection({ groupKey, badges }: { groupKey: string; badges: BadgeLibraryItem[] }) {
   const label = GROUP_LABELS[groupKey] ?? groupKey;
   const icon = GROUP_ICONS[groupKey] ?? 'ribbon-outline';
   const color = GROUP_COLORS[groupKey] ?? C.wine;
@@ -101,8 +182,8 @@ function BadgeSection({ groupKey, badges }: { groupKey: string; badges: BadgeMap
 
 export default function BadgesScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
+  const { data: backendBadges = [] } = useAllUserBadges();
 
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollTopVisibleRef = useRef(false);
@@ -120,52 +201,57 @@ export default function BadgesScreen() {
   useGlobalScrollToTop({ visible: showScrollTop, enabled: true, onScrollToTop: handleScrollToTop });
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setScrollTopVisible(e.nativeEvent.contentOffset.y > 300);
+    setScrollTopVisible(e.nativeEvent.contentOffset.y > 220);
   }, [setScrollTopVisible]);
 
+  const badgeCatalog = useMemo<BadgeLibraryItem[]>(() => {
+    // Prefer backend badges so the library mirrors server-side award rules.
+    if (backendBadges.length === 0) {
+      return Object.values(BADGE_MAPPINGS).map(mapBadgeDefinition);
+    }
+
+    const deduped = new Map<string, BadgeLibraryItem>();
+    backendBadges.forEach((badge) => {
+      if (!badge?.id || deduped.has(badge.id)) return;
+      deduped.set(badge.id, mapApiBadgeToLibraryItem(badge));
+    });
+    return Array.from(deduped.values());
+  }, [backendBadges]);
+
   const badgesByGroup = useMemo(() => {
-    const groups: Record<string, BadgeMappingItem[]> = {
+    const groups: Record<BadgeGroup, BadgeLibraryItem[]> = {
       explorer: [],
       specialist: [],
       milestone: [],
       community: [],
     };
-    Object.values(BADGE_MAPPINGS).forEach((badge) => {
-      if (groups[badge.badgeGroup]) {
-        groups[badge.badgeGroup].push(badge);
-      }
+    badgeCatalog.forEach((badge) => {
+      groups[badge.badgeGroup].push(badge);
     });
     return groups;
-  }, []);
+  }, [badgeCatalog]);
 
-  const filteredBadges = useMemo<BadgeMappingItem[] | null>(() => {
+  const filteredBadges = useMemo<BadgeLibraryItem[] | null>(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return null;
-    return Object.values(BADGE_MAPPINGS).filter(
+    return badgeCatalog.filter(
       (badge) =>
         badge.name.toLowerCase().includes(q) ||
         badge.description.toLowerCase().includes(q) ||
         badge.howToEarn.toLowerCase().includes(q)
     );
-  }, [searchQuery]);
+  }, [searchQuery, badgeCatalog]);
 
   return (
     <View style={[styles.root, { backgroundColor: C.page }]}>
-      <Stack.Screen options={{ headerShown: false }} />
-
-      {/* Back button */}
-      <View style={[styles.backBtnWrap, { top: insets.top + GRID * 1.5 }]}>
-        <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back-outline" size={22} color={C.charcoal} />
-        </Pressable>
-      </View>
+      <Stack.Screen options={{ title: 'Badges' }} />
 
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + GRID * 8, paddingBottom: insets.bottom + GRID * 4 },
+          { paddingTop: GRID * 3, paddingBottom: GRID * 14 },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -255,21 +341,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: GRID * 2,
     gap: GRID * 3,
-  },
-  backBtnWrap: {
-    position: 'absolute',
-    left: GRID * 2,
-    zIndex: 20,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.62)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: C.charcoal08,
   },
 
   pageHeader: {

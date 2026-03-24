@@ -8,6 +8,10 @@ export interface UserBadgeDto {
   description?: string | null;
   icon_path?: string | null;
   badge_group?: string | null;
+  rule_type?: string | null;
+  threshold?: number | null;
+  how_to_earn?: string | null;
+  howToEarn?: string | null;
   earned?: boolean;
   awarded_at?: string | null;
 }

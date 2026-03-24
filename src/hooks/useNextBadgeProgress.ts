@@ -52,9 +52,8 @@ export function useNextBadgeProgress() {
   const nearestBadges = useMemo<BadgeProgressItem[]>(() => {
     if (!badges || !stats) return [];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (badges as any[])
-      .filter((b) => !b.earned && b.threshold != null && b.rule_type)
+    return badges
+      .filter((b) => !b.earned && b.threshold != null && b.rule_type != null)
       .map((b) => {
         const ruleType = b.rule_type as BadgeRuleType;
         let current = 0;

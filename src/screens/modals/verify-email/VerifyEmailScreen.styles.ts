@@ -1,12 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { C } from './constants';
+import { APP_PAGE_GUTTER } from '../../../styles/layout';
 
 export const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-  scroll: { paddingHorizontal: 18 },
+  scroll: { paddingHorizontal: APP_PAGE_GUTTER },
 
-  backWrap: { position: 'absolute', left: 16, zIndex: 20 },
+  backWrap: { position: 'absolute', left: APP_PAGE_GUTTER, zIndex: 20 },
   backBtn: {
     width: 40,
     height: 40,

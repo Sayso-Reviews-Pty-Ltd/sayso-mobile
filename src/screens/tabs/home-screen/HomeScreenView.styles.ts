@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: homeTokens.pageGutter,
     paddingVertical: 8,
     position: 'relative',
     zIndex: 1,

@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
     backgroundColor: businessDetailColors.page,
   },
   stickyHeader: {
-    paddingHorizontal: 20,
+    paddingHorizontal: businessDetailSpacing.pageGutter,
     paddingTop: 14,
     paddingBottom: 16,
     shadowColor: '#000',

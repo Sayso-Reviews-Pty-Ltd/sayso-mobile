@@ -138,6 +138,7 @@ function ForYouRouteViewComponent({
       <ScreenTransitionScope>
         <LoadingCrossfade
           loading={preferencesLoading}
+          fillContainer
           skeleton={
             <View style={styles.loadingList}>
               <View style={styles.loadingHeader}>{heroSection}</View>

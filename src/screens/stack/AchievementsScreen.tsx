@@ -44,6 +44,7 @@ export default function AchievementsScreen() {
       <ScreenTransitionScope>
         <LoadingCrossfade
           loading={isLoading}
+          fillContainer
           skeleton={
             <ScrollView
               contentContainerStyle={[

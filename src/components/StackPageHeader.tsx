@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BusinessPageHeader, type BusinessHeaderRightAction } from './business-detail/BusinessPageHeader';
 import { NAVBAR_BG_COLOR } from '../styles/colors';
+import { APP_PAGE_GUTTER } from '../styles/layout';
 
 type Props = {
   navigation: { canGoBack: () => boolean; goBack: () => void };
@@ -46,7 +47,7 @@ export function StackPageHeader({ navigation, options, onPressBack, showBackButt
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: NAVBAR_BG_COLOR,
-    paddingHorizontal: 20,
+    paddingHorizontal: APP_PAGE_GUTTER,
     paddingBottom: 20,
   },
 });

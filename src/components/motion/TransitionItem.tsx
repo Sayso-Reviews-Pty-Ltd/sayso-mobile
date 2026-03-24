@@ -54,6 +54,7 @@ export function TransitionItem({
   const phase = (scope?.phase ?? (isFocused ? 'enter' : 'exit')) as MotionPhase;
   const maxIndex = scope?.maxIndex ?? index;
   const shouldAnimate = animate && !disableOnVirtualized;
+  const initialTargets = getMotionPhaseTargets(motionRole, phase, reducedMotionEnabled);
 
   // Three independent shared values rather than a single 0→1 progress scalar.
   //
@@ -63,9 +64,9 @@ export function TransitionItem({
   //     and lets opacity lead slightly so the eye catches motion, not appearance.
   //   - translateY and scale are both physical dimensions — the same spring config
   //     drives both, so they settle together and feel coherent.
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(spec.translateY);
-  const scale = useSharedValue(spec.scaleFrom);
+  const opacity = useSharedValue(shouldAnimate ? initialTargets.opacityFrom : 1);
+  const translateY = useSharedValue(shouldAnimate ? initialTargets.translateYFrom : 0);
+  const scale = useSharedValue(shouldAnimate ? initialTargets.scaleFrom : 1);
 
   useEffect(() => {
     if (__DEV__ && !scope) {

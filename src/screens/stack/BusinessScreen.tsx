@@ -282,7 +282,11 @@ export default function BusinessScreen({ initialTab }: Props) {
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar barStyle="light-content" backgroundColor={businessDetailColors.coral} />
       <View style={[styles.topChrome, { height: insets.top }]} />
-      <LoadingCrossfade loading={isLoading} skeleton={<BusinessScreenSkeleton />}>
+      <LoadingCrossfade
+        loading={isLoading}
+        skeleton={<BusinessScreenSkeleton />}
+        fillContainer
+      >
         {business ? (
           <>
             <View style={[styles.stickyHeader, { backgroundColor: businessDetailColors.coral }]}>

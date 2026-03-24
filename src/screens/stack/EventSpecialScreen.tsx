@@ -344,7 +344,11 @@ export default function EventSpecialScreen({ routeType }: Props) {
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
       <View style={[styles.topChrome, { height: insets.top }]} />
-      <LoadingCrossfade loading={detailQuery.isLoading} skeleton={<EventSpecialSkeleton />}>
+      <LoadingCrossfade
+        loading={detailQuery.isLoading}
+        skeleton={<EventSpecialSkeleton />}
+        fillContainer
+      >
         {item ? (
           <>
             <View style={[styles.stickyHeader, { backgroundColor: NAVBAR_BG_COLOR }]}>

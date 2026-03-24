@@ -109,6 +109,7 @@ export default function DMInboxScreen() {
 
       <LoadingCrossfade
         loading={isLoading}
+        fillContainer
         skeleton={
           <View style={styles.skeletonList}>
             {[0, 1, 2, 3, 4].map((index) => (

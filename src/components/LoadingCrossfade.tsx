@@ -10,6 +10,7 @@ type Props = {
   skeleton: ReactNode;
   children: ReactNode;
   durationMs?: number;
+  fillContainer?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -24,6 +25,7 @@ export function LoadingCrossfade({
   skeleton,
   children,
   durationMs = 180,
+  fillContainer = false,
   style,
 }: Props) {
   const reducedMotion = useReducedMotion();
@@ -78,12 +80,15 @@ export function LoadingCrossfade({
   const overlayNode = overlay === 'skeleton' ? skeleton : overlay === 'content' ? children : null;
 
   return (
-    <View style={[styles.container, style]}>
-      <Animated.View style={incomingStyle}>
+    <View style={[styles.container, fillContainer ? styles.fill : null, style]}>
+      <Animated.View style={[fillContainer ? styles.fill : null, incomingStyle]}>
         {incoming}
       </Animated.View>
       {overlayNode ? (
-        <Animated.View pointerEvents="none" style={[styles.overlay, overlayStyle]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.overlay, fillContainer ? styles.fill : null, overlayStyle]}
+        >
           {overlayNode}
         </Animated.View>
       ) : null}
@@ -95,8 +100,10 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
   },
+  fill: {
+    flex: 1,
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
   },
 });
-

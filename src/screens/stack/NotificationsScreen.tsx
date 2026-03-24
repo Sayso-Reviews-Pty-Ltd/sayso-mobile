@@ -223,6 +223,7 @@ export default function NotificationsScreen() {
 
       <LoadingCrossfade
         loading={isLoading}
+        fillContainer
         skeleton={
           <View style={{ paddingHorizontal: APP_PAGE_GUTTER, paddingVertical: 16 }}>
             {[1, 2, 3].map((item, index) => (

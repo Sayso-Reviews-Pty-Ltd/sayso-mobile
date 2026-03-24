@@ -7,6 +7,7 @@ import type { UserBadgeDto } from '../../../../hooks/useUserBadges';
 import { badgeImageSource } from '../helpers';
 import { CORAL, CHARCOAL } from '../constants';
 import { ProfileSectionCard } from './ProfileSectionCard';
+import { NextBadgeNudge } from './NextBadgeNudge';
 
 type Props = {
   badges: UserBadgeDto[];
@@ -72,6 +73,17 @@ export function ProfileBadgesSection({ badges, isLoading, onViewAll }: Props) {
           })}
         </View>
       )}
+
+      <View style={styles.nudgeDivider} />
+
+      <View style={styles.nudgeHeader}>
+        <View style={styles.sectionIconCircle}>
+          <Ionicons name="lock-closed-outline" size={14} color="rgba(45,45,45,0.84)" />
+        </View>
+        <Text style={styles.sectionTitle}>Progress to next</Text>
+      </View>
+
+      <NextBadgeNudge />
     </ProfileSectionCard>
   );
 }
@@ -166,5 +178,16 @@ const styles = StyleSheet.create({
     color: 'rgba(45,45,45,0.7)',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  nudgeDivider: {
+    height: 1,
+    backgroundColor: 'rgba(45,45,45,0.08)',
+    marginVertical: 16,
+  },
+  nudgeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
   },
 });

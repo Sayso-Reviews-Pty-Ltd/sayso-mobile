@@ -5,6 +5,7 @@ import { APP_PAGE_GUTTER } from '../../../../styles/layout';
 import { CHARCOAL } from '../constants';
 import { getPrestigeInfo, getNextMilestonePrompt } from '../../../../lib/prestige';
 import { ProfileSectionCard } from './ProfileSectionCard';
+import { XPBar } from './XPBar';
 
 type Props = {
   reviewCount: number;
@@ -42,6 +43,10 @@ export function ProfilePrestigeBanner({ reviewCount }: Props) {
       <Text style={styles.prompt}>
         {prompt ?? "You've reached Legend!"}
       </Text>
+
+      <View style={styles.divider} />
+
+      <XPBar />
     </ProfileSectionCard>
   );
 }
@@ -91,5 +96,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(45,45,45,0.65)',
     fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(45,45,45,0.08)',
+    marginVertical: 12,
   },
 });

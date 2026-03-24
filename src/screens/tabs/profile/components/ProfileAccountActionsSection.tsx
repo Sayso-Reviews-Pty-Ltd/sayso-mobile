@@ -4,16 +4,29 @@ import { Text } from '../../../../components/Typography';
 import { CHARCOAL, CORAL } from '../constants';
 import { ProfileSectionCard } from './ProfileSectionCard';
 
+function maskEmail(email: string): string {
+  const atIdx = email.indexOf('@');
+  if (atIdx <= 0) return email;
+  const local = email.slice(0, atIdx);
+  const domain = email.slice(atIdx);
+  const visible = local[0] ?? '';
+  return `${visible}***${domain}`;
+}
+
 type Props = {
   onSignOut: () => void;
   onChangePassword: () => void;
+  onChangeEmail: () => void;
   onDeleteAccount: () => void;
+  currentEmail: string;
 };
 
 export function ProfileAccountActionsSection({
   onSignOut,
   onChangePassword,
+  onChangeEmail,
   onDeleteAccount,
+  currentEmail,
 }: Props) {
   return (
     <ProfileSectionCard>
@@ -48,6 +61,21 @@ export function ProfileAccountActionsSection({
           <Pressable
             style={[styles.accountActionButton, styles.accountActionButtonPrimary]}
             onPress={onChangePassword}
+          >
+            <Text style={styles.accountActionButtonPrimaryText}>Change</Text>
+          </Pressable>
+        </View>
+
+        <View style={[styles.accountActionRow, styles.accountActionRowBordered]}>
+          <View style={styles.accountActionInfo}>
+            <Text style={styles.accountActionTitle}>Change Email</Text>
+            <Text style={styles.accountActionDescription}>
+              {currentEmail ? maskEmail(currentEmail) : 'Update your account email address.'}
+            </Text>
+          </View>
+          <Pressable
+            style={[styles.accountActionButton, styles.accountActionButtonPrimary]}
+            onPress={onChangeEmail}
           >
             <Text style={styles.accountActionButtonPrimaryText}>Change</Text>
           </Pressable>

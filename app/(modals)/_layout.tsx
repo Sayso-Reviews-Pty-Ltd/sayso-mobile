@@ -22,6 +22,7 @@ export default function ModalLayout() {
           }}
         />
         <Stack.Screen name="change-password" options={fullScreenModalScreenOptions} />
+        <Stack.Screen name="change-email" options={fullScreenModalScreenOptions} />
       </Stack>
       <View pointerEvents="none" style={[styles.bottomChrome, { height: insets.bottom }]} />
     </View>

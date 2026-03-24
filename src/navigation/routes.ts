@@ -9,6 +9,7 @@ export const routes = {
   forgotPassword: () => '/forgot-password',
   resetPassword: () => '/reset-password',
   changePassword: () => '/change-password',
+  changeEmail: () => '/change-email',
   verifyEmail: () => '/verify-email',
   authCodeError: () => '/auth/auth-code-error',
   onboarding: () => '/onboarding',

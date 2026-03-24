@@ -57,12 +57,12 @@ export default function ProfileScreen() {
           scrollEventThrottle={16}
         >
           {controller.profileQuery.isLoading && !controller.profile ? (
-            <TransitionItem variant="card" index={0}>
+            <TransitionItem role="support" index={0}>
               <ProfileSkeleton />
             </TransitionItem>
           ) : (
             <>
-              <TransitionItem variant="card" index={0}>
+              <TransitionItem role="support" index={0}>
                 <ProfileHeroCard
                   avatarUrl={controller.profile?.avatar_url}
                   displayLabel={controller.displayLabel}
@@ -72,17 +72,17 @@ export default function ProfileScreen() {
                   reviewsCount={controller.reviewsCount}
                   prestige={prestige}
                   onEditProfile={() => {
-                    haptics.tap();
+                    haptics.navigation();
                     controller.setIsEditOpen(true);
                   }}
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={1}>
+              <TransitionItem role="support" index={1}>
                 <ProfilePrestigeBanner reviewCount={controller.reviewsCount} />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={2}>
+              <TransitionItem role="support" index={2}>
                 <ProfileStatsGrid
                   helpfulVotesCount={controller.helpfulVotesCount}
                   reviewsCount={controller.reviewsCount}
@@ -93,14 +93,14 @@ export default function ProfileScreen() {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={3}>
+              <TransitionItem role="support" index={3}>
                 <ProfileSavedBusinessesSection
                   savedBusinesses={controller.savedBusinesses}
                   onViewAll={() => controller.router.push(routes.saved() as never)}
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={4}>
+              <TransitionItem role="support" index={4}>
                 <ProfileBadgesSection
                   badges={controller.earnedBadges}
                   isLoading={controller.badgesQuery.isLoading}
@@ -108,7 +108,7 @@ export default function ProfileScreen() {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={5}>
+              <TransitionItem role="support" index={5}>
                 <ProfileContributionsSection
                   reviews={controller.userReviews}
                   isLoading={controller.reviewSectionLoading}
@@ -127,23 +127,27 @@ export default function ProfileScreen() {
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={6}>
+              <TransitionItem role="support" index={6}>
                 <ProfilePreferencesSection
                   locationStatus={controller.locationStatus}
                   onRequestLocationPermission={controller.requestLocationPermission}
                 />
               </TransitionItem>
 
-              <TransitionItem variant="card" index={7}>
+              <TransitionItem role="support" index={7}>
                 <ProfileAccountActionsSection
                   onSignOut={controller.handleSignOut}
                   onChangePassword={() =>
                     controller.router.push(routes.changePassword() as never)
                   }
+                  onChangeEmail={() =>
+                    controller.router.push(routes.changeEmail() as never)
+                  }
                   onDeleteAccount={() => {
                     controller.setDeleteAccountError(null);
                     controller.setIsDeleteAccountOpen(true);
                   }}
+                  currentEmail={controller.user?.email ?? ''}
                 />
               </TransitionItem>
             </>

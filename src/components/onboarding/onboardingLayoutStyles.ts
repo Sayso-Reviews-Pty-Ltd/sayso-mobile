@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import { ONBOARDING_TOKENS } from './onboardingTheme';
-import { APP_PAGE_GUTTER } from '../../styles/layout';
 
 export const styles = StyleSheet.create({
   root: {
@@ -26,7 +25,7 @@ export const styles = StyleSheet.create({
 
   backWrap: {
     position: 'absolute',
-    left: APP_PAGE_GUTTER,
+    left: 20,
     zIndex: 10,
   },
   backBtn: {
@@ -41,14 +40,11 @@ export const styles = StyleSheet.create({
   },
 
   scroll: {
-    paddingHorizontal: APP_PAGE_GUTTER,
+    paddingHorizontal: 16,
     flexGrow: 1,
   },
   mainContent: {
     flexGrow: 1,
-    width: '100%',
-    maxWidth: 560,
-    alignSelf: 'center',
   },
   header: {
     marginBottom: 16,

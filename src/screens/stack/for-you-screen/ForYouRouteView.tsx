@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react';
+import { memo } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -21,11 +21,6 @@ import { HeaderDmBellActions } from '../../../components/HeaderDmBellActions';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { Text } from '../../../components/Typography';
-import {
-  getForYouFallbackTierLabel,
-  hasSparseForYouFallback,
-  resolveDiscoveryZeroResults,
-} from '../../../lib/discoveryRecovery';
 import { homeTokens } from '../../tabs/home/HomeTokens';
 
 const REQUEST_LIMIT = 120;
@@ -46,13 +41,10 @@ type Props = {
   preferencesLoading: boolean;
   preferencesError: string | null;
   hasPreferences: boolean;
-  forYouQueryKey: readonly unknown[];
   fetchForYouPage: (cursor: string | null) => Promise<PaginatedBusinessFeedResponseDto>;
   preferenceIds: { interests: string[]; subcategories: string[]; dealbreakers: string[] };
   handleScrollY: (y: number) => void;
   onPressOnboarding: () => void;
-  onBrowseTrendingReset: () => void;
-  onUpdateInterests: () => void;
 };
 
 function ForYouRouteViewComponent({
@@ -70,43 +62,11 @@ function ForYouRouteViewComponent({
   preferencesLoading,
   preferencesError,
   hasPreferences,
-  forYouQueryKey,
   fetchForYouPage,
   preferenceIds,
   handleScrollY,
   onPressOnboarding,
-  onBrowseTrendingReset,
-  onUpdateInterests,
 }: Props) {
-  const [forYouItems, setForYouItems] = useState<BusinessListItemDto[]>([]);
-  const hasSparseFallback = hasSparseForYouFallback(forYouItems);
-  const sparseLabel = useMemo(() => {
-    const sparseTier = forYouItems.find(
-      (item) => item.fallback_tier === 'tier_3' || item.fallback_tier === 'tier_4'
-    )?.fallback_tier;
-    return getForYouFallbackTierLabel(sparseTier);
-  }, [forYouItems]);
-  const interestsRecovery = resolveDiscoveryZeroResults({
-    hasCategoryOrInterestConstraint: true,
-  });
-
-  const forYouHeader = (
-    <View>
-      {heroSection}
-      {hasSparseFallback ? (
-        <View style={styles.sparseRecoveryCard}>
-          <Text style={styles.sparseRecoveryTitle}>
-            {sparseLabel ? `Showing ${sparseLabel.toLowerCase()} right now` : 'Showing fallback picks right now'}
-          </Text>
-          <Text style={styles.sparseRecoveryMessage}>Update your interests for tighter matches.</Text>
-          <TouchableOpacity style={styles.sparseRecoveryButton} onPress={onUpdateInterests} activeOpacity={0.86}>
-            <Text style={styles.sparseRecoveryButtonText}>Update interests</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-    </View>
-  );
-
   if (!userId) {
     return (
       <SafeAreaView style={styles.container}>
@@ -205,17 +165,15 @@ function ForYouRouteViewComponent({
               <EmptyState
                 icon="sparkles-outline"
                 title="Curated from your interests"
-                message={interestsRecovery.message}
-                actionLabel={interestsRecovery.actionLabel}
-                onAction={onBrowseTrendingReset}
+                message="Based on what you selected, no matches in this feed yet."
               />
             </>
           ) : (
             <BusinessFeed
               feedKey="for-you"
-              queryKey={forYouQueryKey}
+              queryKey={['for-you', userId, preferenceIds, REQUEST_LIMIT]}
               horizontalPadding={homeTokens.pageGutter}
-              listHeaderTop={forYouHeader}
+              listHeaderTop={heroSection}
               onScrollY={handleScrollY}
               errorTitle="Couldn't load personalised picks right now."
               emptyTitle="Curated from your interests"
@@ -223,8 +181,6 @@ function ForYouRouteViewComponent({
               requestLimit={REQUEST_LIMIT}
               visibleChunkSize={VISIBLE_CHUNK_SIZE}
               fetchPage={fetchForYouPage}
-              showForYouFallbackDividers
-              onItemsChanged={setForYouItems}
             />
           )}
         </LoadingCrossfade>
@@ -344,40 +300,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: homeTokens.white,
     fontSize: 14,
-    fontWeight: '700',
-  },
-  sparseRecoveryCard: {
-    marginTop: 4,
-    marginHorizontal: homeTokens.pageGutter,
-    marginBottom: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(114,47,55,0.22)',
-    backgroundColor: 'rgba(255,255,255,0.72)',
-    padding: 14,
-    gap: 6,
-  },
-  sparseRecoveryTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: homeTokens.charcoal,
-  },
-  sparseRecoveryMessage: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: homeTokens.textSecondary,
-  },
-  sparseRecoveryButton: {
-    marginTop: 4,
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    backgroundColor: homeTokens.coral,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  sparseRecoveryButtonText: {
-    color: homeTokens.white,
-    fontSize: 12,
     fontWeight: '700',
   },
 });

@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   content: {
     flex: 1,
-    paddingHorizontal: GRID,
+    paddingHorizontal: GRID * 2,
     alignItems: 'center',
   },
   rail: {

@@ -46,8 +46,6 @@ export function HomeSearchBar({
   const placeholderProgress = useRef(new Animated.Value(0)).current;
   const placeholderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlaceholderVisible = value.length === 0;
-  const hasActiveFilters = activeFilterCount > 0;
-  const showFilterButton = value.length > 0 || hasActiveFilters;
 
   const placeholderTranslateY = useMemo(
     () =>
@@ -152,17 +150,16 @@ export function HomeSearchBar({
       </View>
       {isFetching ? <SkeletonBlock style={styles.fetchingIndicator} /> : null}
 
-      {/* Filter button — also stays visible when filters are active so state is discoverable */}
-      {showFilterButton ? (
+      {/* Filter button — visible when search is active */}
+      {value.length > 0 ? (
         <TouchableOpacity
-          style={[styles.filterButton, hasActiveFilters ? styles.filterButtonActive : null]}
+          style={styles.filterButton}
           onPress={onFilterPress}
-          activeOpacity={onFilterPress ? 0.8 : 1}
-          disabled={!onFilterPress}
-          accessibilityLabel={hasActiveFilters ? `${activeFilterCount} active search filters` : 'Search filters'}
+          activeOpacity={0.8}
+          accessibilityLabel="Search filters"
         >
-          <Ionicons name="options-outline" size={17} color={hasActiveFilters ? homeTokens.coral : homeTokens.charcoal} />
-          {hasActiveFilters ? (
+          <Ionicons name="options-outline" size={17} color={activeFilterCount > 0 ? homeTokens.coral : homeTokens.charcoal} />
+          {activeFilterCount > 0 ? (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
             </View>
@@ -241,12 +238,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 6,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  filterButtonActive: {
-    backgroundColor: 'rgba(114,47,55,0.10)',
-    borderColor: 'rgba(114,47,55,0.22)',
   },
   filterBadge: {
     position: 'absolute',

@@ -2,7 +2,6 @@ import { APP_PAGE_GUTTER } from '../../../styles/layout';
 
 export const homeTokens = {
   pageGutter: APP_PAGE_GUTTER,
-  tightSpace: 8,
   sage: '#7D9B76',
   sageDark: '#6B8A64',
   sageLight: '#8FAA88',

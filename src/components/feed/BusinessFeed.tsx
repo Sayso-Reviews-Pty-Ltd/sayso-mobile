@@ -18,7 +18,6 @@ import { LoadMoreButton } from './LoadMoreButton';
 import { SkeletonBusinessCard } from './SkeletonBusinessCard';
 import { TransitionItem } from '../motion/TransitionItem';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
-import { getForYouFallbackTierLabel } from '../../lib/discoveryRecovery';
 import { APP_PAGE_GUTTER } from '../../styles/layout';
 
 const DEFAULT_VISIBLE_CHUNK_SIZE = 12;
@@ -44,8 +43,6 @@ type Props = {
   requestLimit?: number;
   visibleChunkSize?: number;
   fetchPage: (cursor: string | null) => Promise<PaginatedBusinessFeedResponseDto>;
-  showForYouFallbackDividers?: boolean;
-  onItemsChanged?: (items: BusinessListItemDto[]) => void;
 };
 
 export function BusinessFeed({
@@ -61,8 +58,6 @@ export function BusinessFeed({
   requestLimit = DEFAULT_VISIBLE_CHUNK_SIZE,
   visibleChunkSize = DEFAULT_VISIBLE_CHUNK_SIZE,
   fetchPage,
-  showForYouFallbackDividers = false,
-  onItemsChanged,
 }: Props) {
   const listRef = useRef<FlatList<BusinessListItemDto>>(null);
   const hasRestoredScrollRef = useRef(false);
@@ -83,29 +78,6 @@ export function BusinessFeed({
     [query.data]
   );
   const visibleItems = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
-  const fallbackDividerLabelsByIndex = useMemo(() => {
-    if (!showForYouFallbackDividers) {
-      return new Map<number, string>();
-    }
-
-    const labels = new Map<number, string>();
-    const seen = new Set<string>();
-    visibleItems.forEach((item, index) => {
-      const tier = item.fallback_tier;
-      if (!tier) {
-        return;
-      }
-      if (seen.has(tier)) {
-        return;
-      }
-      seen.add(tier);
-      const label = getForYouFallbackTierLabel(tier);
-      if (label) {
-        labels.set(index, label);
-      }
-    });
-    return labels;
-  }, [showForYouFallbackDividers, visibleItems]);
   const hasNextPage = Boolean(query.hasNextPage);
   const hasBufferedItems = items.length > visibleCount;
 
@@ -131,26 +103,15 @@ export function BusinessFeed({
     }
   }, [hasBufferedItems, hasNextPage]);
 
-  useEffect(() => {
-    onItemsChanged?.(items);
-  }, [items, onItemsChanged]);
-
   const keyExtractor = useCallback((item: BusinessListItemDto) => item.id, []);
 
   const renderItem = useCallback<ListRenderItem<BusinessListItemDto>>(
     ({ item, index }) => (
-      <View>
-        {fallbackDividerLabelsByIndex.has(index) ? (
-          <View style={styles.fallbackTierDivider}>
-            <Text style={styles.fallbackTierDividerText}>{fallbackDividerLabelsByIndex.get(index)}</Text>
-          </View>
-        ) : null}
-        <TransitionItem role="listItem" index={index + 1} animate={index < visibleChunkSize}>
-          <BusinessCard business={item} />
-        </TransitionItem>
-      </View>
+      <TransitionItem role="listItem" index={index + 1} animate={index < visibleChunkSize}>
+        <BusinessCard business={item} />
+      </TransitionItem>
     ),
-    [fallbackDividerLabelsByIndex, visibleChunkSize]
+    [visibleChunkSize]
   );
 
   const handleRefresh = useCallback(() => {
@@ -318,20 +279,5 @@ const styles = StyleSheet.create({
   },
   footerSpacer: {
     height: 12,
-  },
-  fallbackTierDivider: {
-    marginBottom: 8,
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(114,47,55,0.24)',
-    backgroundColor: 'rgba(114,47,55,0.10)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  fallbackTierDividerText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#722F37',
   },
 });

@@ -9,7 +9,7 @@ import { CARD_RADIUS } from '../../../styles/radii';
 import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
-const GAP = homeTokens.tightSpace;
+const GAP = 14;
 const SKELETONS = [0, 1, 2];
 
 // Scale and opacity targets for off-center cards.

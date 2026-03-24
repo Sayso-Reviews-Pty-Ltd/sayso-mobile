@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.page },
   flex: { flex: 1 },
   scroll: {
-    paddingHorizontal: GRID,
+    paddingHorizontal: GRID * 2,
     alignItems: 'center',
   },
   rail: {

@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
   },
 
   scroll: {
-    paddingHorizontal: GRID,
+    paddingHorizontal: GRID * 2,
     alignItems: 'center',
   },
 

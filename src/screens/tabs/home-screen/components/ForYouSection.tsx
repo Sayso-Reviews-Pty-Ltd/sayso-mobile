@@ -3,11 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { CardSurface } from '../../../../components/CardSurface';
 import { Text } from '../../../../components/Typography';
-import {
-  getForYouFallbackTierLabel,
-  getHighestPriorityForYouTier,
-  resolveDiscoveryZeroResults,
-} from '../../../../lib/discoveryRecovery';
 import { HomeBusinessRow } from '../../home/HomeBusinessRow';
 import { HomeSectionHeader } from '../../home/HomeSectionHeader';
 import { homeTokens } from '../../home/HomeTokens';
@@ -18,14 +13,11 @@ type Props = {
   user: { id: string } | null;
   forYou: {
     businesses: BusinessListItemDto[];
-    hasSparseFallback: boolean;
     isLoading: boolean;
     error: string | null;
   };
   onNavigateForYou: () => void;
   onNavigateOnboarding: () => void;
-  onNavigateTrendingReset: () => void;
-  onNavigateInterestsEdit: () => void;
   ctaShadowStyle: StyleProp<ViewStyle>;
 };
 
@@ -34,16 +26,8 @@ export function ForYouSection({
   forYou,
   onNavigateForYou,
   onNavigateOnboarding,
-  onNavigateTrendingReset,
-  onNavigateInterestsEdit,
   ctaShadowStyle,
 }: Props) {
-  const categoryRecovery = resolveDiscoveryZeroResults({
-    hasCategoryOrInterestConstraint: true,
-  });
-  const highestPriorityTier = getHighestPriorityForYouTier(forYou.businesses);
-  const tierLabel = getForYouFallbackTierLabel(highestPriorityTier);
-
   return (
     <View style={styles.section}>
       <HomeSectionHeader
@@ -51,11 +35,6 @@ export function ForYouSection({
         actionLabel={user ? 'See More' : undefined}
         onPress={user ? onNavigateForYou : undefined}
       />
-      {user && tierLabel ? (
-        <View style={styles.forYouTierChip}>
-          <Text style={styles.forYouTierChipText}>{tierLabel}</Text>
-        </View>
-      ) : null}
 
       {!user ? (
         <CardSurface
@@ -104,32 +83,18 @@ export function ForYouSection({
           emptyMessage="Based on what you selected, no matches in this section yet. See more on For You or explore Trending."
         />
       ) : forYou.businesses.length > 0 ? (
-        <>
-          <HomeBusinessRow
-            items={forYou.businesses}
-            loading={false}
-            emptyTitle="Curated from your interests"
-            emptyMessage="Based on what you selected, no matches in this section yet. See more on For You or explore Trending."
-          />
-          {forYou.hasSparseFallback ? (
-            <View style={styles.messageCard}>
-              <Text style={styles.messageTitle}>Seeing fallback picks right now</Text>
-              <Text style={styles.messageText}>
-                Update your interests to improve match quality in this section.
-              </Text>
-              <TouchableOpacity style={styles.messageActionButton} onPress={onNavigateInterestsEdit} activeOpacity={0.86}>
-                <Text style={styles.messageActionButtonText}>Update interests</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-        </>
+        <HomeBusinessRow
+          items={forYou.businesses}
+          loading={false}
+          emptyTitle="Curated from your interests"
+          emptyMessage="Based on what you selected, no matches in this section yet. See more on For You or explore Trending."
+        />
       ) : (
         <View style={styles.messageCard}>
           <Text style={styles.messageTitle}>Curated from your interests</Text>
-          <Text style={styles.messageText}>{categoryRecovery.message}</Text>
-          <TouchableOpacity style={styles.messageActionButton} onPress={onNavigateTrendingReset} activeOpacity={0.86}>
-            <Text style={styles.messageActionButtonText}>{categoryRecovery.actionLabel}</Text>
-          </TouchableOpacity>
+          <Text style={styles.messageText}>
+            Based on what you selected, no matches in this section yet. See more on For You or explore Trending.
+          </Text>
         </View>
       )}
     </View>

@@ -4,7 +4,6 @@ import { EmptyState } from '../../../components/EmptyState';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { SkeletonBusinessCard } from '../../../components/feed/SkeletonBusinessCard';
 import { LoadMoreButton } from '../../../components/feed/LoadMoreButton';
-import { resolveDiscoveryZeroResults } from '../../../lib/discoveryRecovery';
 import { TrendingScreenView } from './TrendingScreenView';
 import { ActiveFilterBadges } from './ActiveFilterBadges';
 import { TrendingFilters } from './TrendingFilters';
@@ -17,8 +16,6 @@ import type { TrendingScreenViewProps } from './types';
 type Props = {
   clearRatingFilter: () => void;
   clearRadiusFilter: () => void;
-  handleClearEverything: () => void;
-  handleBrowseTrendingReset: () => void;
   handleClearFilters: () => void;
   handleClearSearch: () => void;
   handleDistanceSelect: (km: number) => void;
@@ -37,8 +34,6 @@ type Props = {
 export function TrendingListShell({
   clearRatingFilter,
   clearRadiusFilter,
-  handleClearEverything,
-  handleBrowseTrendingReset,
   handleClearFilters,
   handleClearSearch,
   handleDistanceSelect,
@@ -69,53 +64,14 @@ export function TrendingListShell({
     userLocation,
     visibleBusinesses,
   } = state;
-  const activeFilterCount = Number(filters.minRating !== null) + Number(filters.radiusKm !== null);
-  const hasSearchAndFilters = inputValue.trim().length > 0 && hasFilters;
-  const searchRecovery = resolveDiscoveryZeroResults({
-    query: debouncedQuery,
-    minRating: filters.minRating,
-    radiusKm: filters.radiusKm,
-  });
-
-  const handleSearchRecovery = () => {
-    switch (searchRecovery.action) {
-      case 'expand_radius':
-        if (searchRecovery.nextRadiusKm !== null) {
-          handleDistanceSelect(searchRecovery.nextRadiusKm);
-        }
-        break;
-      case 'clear_radius':
-        clearRadiusFilter();
-        break;
-      case 'lower_rating':
-        if (searchRecovery.nextMinRating !== null) {
-          handleRatingSelect(searchRecovery.nextMinRating);
-        }
-        break;
-      case 'clear_rating':
-        clearRatingFilter();
-        break;
-      case 'clear_search':
-        handleClearSearch();
-        break;
-      case 'browse_trending':
-        handleBrowseTrendingReset();
-        break;
-      default:
-        break;
-    }
-  };
 
   const listHeader = useMemo(
     () => (
       <View>
         <TrendingSearchHeader
-          activeFilterCount={activeFilterCount}
-          hasSearchAndFilters={hasSearchAndFilters}
           inputValue={inputValue}
           isFetching={isSearching && searchIsFetching}
           onClear={handleClearSearch}
-          onClearEverything={handleClearEverything}
           onInputChange={handleInputChange}
         />
 
@@ -131,8 +87,7 @@ export function TrendingListShell({
           <ActiveFilterBadges
             minRating={filters.minRating}
             radiusKm={filters.radiusKm}
-            clearAllLabel={hasSearchAndFilters ? 'Clear everything' : 'Clear all'}
-            onClearAll={hasSearchAndFilters ? handleClearEverything : handleClearFilters}
+            onClearAll={handleClearFilters}
             onClearRating={clearRatingFilter}
             onClearRadius={clearRadiusFilter}
           />
@@ -142,17 +97,14 @@ export function TrendingListShell({
       </View>
     ),
     [
-      activeFilterCount,
       clearRadiusFilter,
       clearRatingFilter,
-      handleClearEverything,
       filters,
       handleClearFilters,
       handleClearSearch,
       handleDistanceSelect,
       handleInputChange,
       handleRatingSelect,
-      hasSearchAndFilters,
       hasFilters,
       inputValue,
       isMapMode,
@@ -200,9 +152,7 @@ export function TrendingListShell({
         <EmptyState
           icon="search-outline"
           title={`No results for "${debouncedQuery}"`}
-          message={searchRecovery.message}
-          actionLabel={searchRecovery.actionLabel}
-          onAction={handleSearchRecovery}
+          message="Try adjusting your search or filters."
         />
       );
     }
@@ -214,15 +164,7 @@ export function TrendingListShell({
         message="Check back shortly for updated recommendations."
       />
     );
-  }, [
-    debouncedQuery,
-    handleSearchRecovery,
-    isError,
-    isLoading,
-    isSearching,
-    searchRecovery.actionLabel,
-    searchRecovery.message,
-  ]);
+  }, [debouncedQuery, isError, isLoading, isSearching]);
 
   return (
     <ScreenTransitionScope>

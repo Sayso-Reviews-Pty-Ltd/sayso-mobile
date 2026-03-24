@@ -53,7 +53,6 @@ type Props = {
   headerCollapsed: boolean;
   forYou: {
     businesses: BusinessListItemDto[];
-    hasSparseFallback: boolean;
     isLoading: boolean;
     error: string | null;
   };
@@ -88,8 +87,6 @@ type Props = {
   navigateToReviewer: (reviewer: TopReviewerDto) => void;
   onNavigateForYou: () => void;
   onNavigateTrending: () => void;
-  onNavigateTrendingReset: () => void;
-  onNavigateInterestsEdit: () => void;
   onNavigateEvents: () => void;
   onNavigateLeaderboardContributors: () => void;
   onNavigateLeaderboardBusinesses: () => void;
@@ -131,8 +128,6 @@ function HomeScreenViewComponent({
   navigateToReviewer,
   onNavigateForYou,
   onNavigateTrending,
-  onNavigateTrendingReset,
-  onNavigateInterestsEdit,
   onNavigateEvents,
   onNavigateLeaderboardContributors,
   onNavigateLeaderboardBusinesses,
@@ -237,12 +232,6 @@ function HomeScreenViewComponent({
                 setDistanceKm(null);
                 setLocationDenied(false);
               }}
-              onClearSearch={() => {
-                setSearchInput('');
-                setSearchFocused(false);
-                setDismissedSuggestionsQuery(null);
-              }}
-              onBrowseTrending={onNavigateTrendingReset}
               onRefresh={() => {
                 void handleRefresh();
               }}
@@ -268,8 +257,6 @@ function HomeScreenViewComponent({
                 forYou={forYou}
                 onNavigateForYou={onNavigateForYou}
                 onNavigateOnboarding={onNavigateOnboarding}
-                onNavigateTrendingReset={onNavigateTrendingReset}
-                onNavigateInterestsEdit={onNavigateInterestsEdit}
                 ctaShadowStyle={ctaShadowStyle}
               />
             </TransitionItem>

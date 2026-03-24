@@ -18,7 +18,6 @@ export const routes = {
   notifications: () => '/notifications',
   forYou: () => '/for-you',
   trending: () => '/trending',
-  trendingReset: () => '/trending?reset=1',
   leaderboard: (tab?: 'contributors' | 'businesses') =>
     tab ? `/leaderboard?tab=${tab}` : '/leaderboard',
   eventsSpecials: () => '/events-specials',
@@ -28,13 +27,7 @@ export const routes = {
   privacy: () => '/privacy',
   terms: () => '/terms',
   interests: () => '/interests',
-  interestsEdit: (returnTo?: string) =>
-    returnTo ? `/interests?edit=1&returnTo=${encodeURIComponent(returnTo)}` : '/interests?edit=1',
-  subcategoriesEdit: (returnTo?: string) =>
-    returnTo ? `/subcategories?edit=1&returnTo=${encodeURIComponent(returnTo)}` : '/subcategories?edit=1',
   dealBreakers: () => '/deal-breakers',
-  dealBreakersEdit: (returnTo?: string) =>
-    returnTo ? `/deal-breakers?edit=1&returnTo=${encodeURIComponent(returnTo)}` : '/deal-breakers?edit=1',
   achievements: () => '/achievements',
   badges: () => '/badges',
   dmInbox: () => '/dm',

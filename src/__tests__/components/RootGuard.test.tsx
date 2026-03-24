@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { render, waitFor } from '@testing-library/react-native';
-import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { RootGuard } from '../../components/RootGuard';
 import { useAuth } from '../../providers/AuthProvider';
 import { useProfile } from '../../providers/ProfileProvider';
@@ -9,7 +9,6 @@ import { useProfile } from '../../providers/ProfileProvider';
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
   usePathname: jest.fn(),
-  useGlobalSearchParams: jest.fn(() => ({})),
   useRootNavigationState: jest.fn(() => ({ key: 'root' })),
 }));
 
@@ -23,7 +22,6 @@ jest.mock('../../providers/ProfileProvider', () => ({
 
 const mockUseRouter = useRouter as jest.Mock;
 const mockUsePathname = usePathname as jest.Mock;
-const mockUseGlobalSearchParams = useGlobalSearchParams as jest.Mock;
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseProfile = useProfile as jest.Mock;
 
@@ -51,7 +49,6 @@ function setup({
   const replace = jest.fn();
   mockUseRouter.mockReturnValue({ replace });
   mockUsePathname.mockReturnValue(pathname);
-  mockUseGlobalSearchParams.mockReturnValue({});
   mockUseAuth.mockReturnValue({ session, isLoading: isAuthLoading });
   mockUseProfile.mockReturnValue({ profileState, isProfileLoading });
   render(<RootGuard><Text>child</Text></RootGuard>);
@@ -67,7 +64,6 @@ describe('RootGuard', () => {
     const replace = jest.fn();
     mockUseRouter.mockReturnValue({ replace });
     mockUsePathname.mockReturnValue('/home');
-    mockUseGlobalSearchParams.mockReturnValue({});
     mockUseAuth.mockReturnValue({ session: null, isLoading: true });
     mockUseProfile.mockReturnValue({ profileState: null, isProfileLoading: true });
     const { getByText } = render(<RootGuard><Text>child content</Text></RootGuard>);
@@ -217,16 +213,17 @@ describe('RootGuard', () => {
     });
   });
 
-  it('redirects authenticated incomplete-onboarding user to expected onboarding step', async () => {
-    // Incomplete users are routed to their expected onboarding step, and cannot
-    // deep-link ahead into later steps.
+  it('redirects authenticated user to /home on first load (initial routing guard)', async () => {
+    // The auth-hardening initial routing guard sends any authenticated user to
+    // /home on first mount before onboarding state is evaluated, preventing
+    // deep-link jumps into onboarding steps.
     const { replace } = setup({
       session: { user: { id: '1' } },
       profileState: { ...FULLY_ONBOARDED, isOnboardingComplete: false, onboardingStep: null },
       pathname: '/deal-breakers',
     });
     await waitFor(() => {
-      expect(replace).toHaveBeenCalledWith('/interests');
+      expect(replace).toHaveBeenCalledWith('/home');
     });
   });
 
@@ -241,30 +238,5 @@ describe('RootGuard', () => {
     await waitFor(() => {
       expect(replace).toHaveBeenCalledWith('/home');
     });
-  });
-
-  it('keeps default redirect for fully-onboarded user on onboarding route without edit flag', async () => {
-    const { replace } = setup({
-      session: { user: { id: '1' } },
-      profileState: FULLY_ONBOARDED,
-      pathname: '/interests',
-    });
-    await waitFor(() => {
-      expect(replace).toHaveBeenCalledWith('/home');
-    });
-  });
-
-  it('allows fully-onboarded user on onboarding step route when edit=1 is present', async () => {
-    const replace = jest.fn();
-    mockUseRouter.mockReturnValue({ replace });
-    mockUsePathname.mockReturnValue('/interests');
-    mockUseGlobalSearchParams.mockReturnValue({ edit: '1', returnTo: '/for-you' });
-    mockUseAuth.mockReturnValue({ session: { user: { id: '1' } }, isLoading: false });
-    mockUseProfile.mockReturnValue({ profileState: FULLY_ONBOARDED, isProfileLoading: false });
-
-    render(<RootGuard><Text>child</Text></RootGuard>);
-    await waitFor(() => {});
-
-    expect(replace).not.toHaveBeenCalledWith('/home');
   });
 });

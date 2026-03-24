@@ -181,33 +181,4 @@ export const styles = StyleSheet.create({
     color: homeTokens.textSecondary,
     marginTop: 6,
   },
-  messageActionButton: {
-    marginTop: 14,
-    alignSelf: 'flex-start',
-    borderRadius: CARD_CTA_RADIUS,
-    backgroundColor: homeTokens.coral,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  messageActionButtonText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: homeTokens.white,
-  },
-  forYouTierChip: {
-    alignSelf: 'flex-start',
-    marginHorizontal: homeTokens.pageGutter,
-    marginBottom: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(114,47,55,0.24)',
-    backgroundColor: 'rgba(114,47,55,0.10)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  forYouTierChipText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: homeTokens.coral,
-  },
 });

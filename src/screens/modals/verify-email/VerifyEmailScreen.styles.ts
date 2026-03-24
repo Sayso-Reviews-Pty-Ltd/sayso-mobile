@@ -5,7 +5,7 @@ import { APP_PAGE_GUTTER } from '../../../styles/layout';
 export const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-  scroll: { paddingHorizontal: 8 },
+  scroll: { paddingHorizontal: APP_PAGE_GUTTER },
 
   backWrap: { position: 'absolute', left: APP_PAGE_GUTTER, zIndex: 20 },
   backBtn: {

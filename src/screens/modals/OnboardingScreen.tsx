@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    paddingHorizontal: GRID,
+    paddingHorizontal: GRID * 3,
     alignItems: 'center',
     justifyContent: 'space-between',
   },

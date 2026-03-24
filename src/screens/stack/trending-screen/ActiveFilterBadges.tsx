@@ -8,7 +8,6 @@ import { styles } from './trendingStyles';
 type Props = {
   minRating: number | null;
   radiusKm: number | null;
-  clearAllLabel?: string;
   onClearAll: () => void;
   onClearRating: () => void;
   onClearRadius: () => void;
@@ -17,7 +16,6 @@ type Props = {
 export function ActiveFilterBadges({
   minRating,
   radiusKm,
-  clearAllLabel = 'Clear all',
   onClearAll,
   onClearRating,
   onClearRadius,
@@ -26,35 +24,21 @@ export function ActiveFilterBadges({
     <TransitionItem role="support" index={3}>
       <View style={styles.activeBadgesRow}>
         {minRating !== null ? (
-          <View style={styles.activeBadge}>
+          <Pressable style={styles.activeBadge} onPress={onClearRating}>
             <Text style={styles.activeBadgeText}>★ {minRating.toFixed(1)}+</Text>
-            <Pressable
-              style={styles.activeBadgeDismissButton}
-              onPress={onClearRating}
-              accessibilityRole="button"
-              accessibilityLabel={`Remove minimum rating filter ${minRating.toFixed(1)}+`}
-            >
-              <Ionicons name="close-outline" size={14} color={businessDetailColors.white} />
-            </Pressable>
-          </View>
+            <Ionicons name="close-outline" size={11} color={businessDetailColors.white} />
+          </Pressable>
         ) : null}
 
         {radiusKm !== null ? (
-          <View style={styles.activeBadge}>
+          <Pressable style={styles.activeBadge} onPress={onClearRadius}>
             <Text style={styles.activeBadgeText}>{radiusKm} km</Text>
-            <Pressable
-              style={styles.activeBadgeDismissButton}
-              onPress={onClearRadius}
-              accessibilityRole="button"
-              accessibilityLabel={`Remove distance filter ${radiusKm} kilometers`}
-            >
-              <Ionicons name="close-outline" size={14} color={businessDetailColors.white} />
-            </Pressable>
-          </View>
+            <Ionicons name="close-outline" size={11} color={businessDetailColors.white} />
+          </Pressable>
         ) : null}
 
         <Pressable style={styles.clearBadge} onPress={onClearAll}>
-          <Text style={styles.clearBadgeText}>{clearAllLabel}</Text>
+          <Text style={styles.clearBadgeText}>Clear all</Text>
         </Pressable>
       </View>
     </TransitionItem>

@@ -252,12 +252,7 @@ export default function HomeScreen() {
       refreshing={refreshing}
       handleScroll={handleScroll}
       headerCollapsed={headerCollapsed}
-      forYou={{
-        businesses: forYou.businesses,
-        hasSparseFallback: forYou.hasSparseFallback,
-        isLoading: forYou.isLoading,
-        error: forYou.error,
-      }}
+      forYou={{ businesses: forYou.businesses, isLoading: forYou.isLoading, error: forYou.error }}
       trending={{ data: trending.data, isLoading: trending.isLoading, error: trending.error instanceof Error ? trending.error : null }}
       events={{ items: events.items, isLoading: events.isLoading, error: events.error }}
       reviewers={{ reviewers: reviewers.reviewers, mode: reviewers.mode, isLoading: reviewers.isLoading, error: reviewers.error }}
@@ -268,10 +263,6 @@ export default function HomeScreen() {
       navigateToReviewer={navigateToReviewer}
       onNavigateForYou={() => router.push(routes.forYou() as never)}
       onNavigateTrending={() => router.push(routes.trending() as never)}
-      onNavigateTrendingReset={() => router.push(routes.trendingReset() as never)}
-      onNavigateInterestsEdit={() =>
-        router.push(routes.interestsEdit(routes.forYou()) as never)
-      }
       onNavigateEvents={() => router.push(routes.eventsSpecials() as never)}
       onNavigateLeaderboardContributors={() => router.push(routes.leaderboard('contributors') as never)}
       onNavigateLeaderboardBusinesses={() => router.push(routes.leaderboard('businesses') as never)}

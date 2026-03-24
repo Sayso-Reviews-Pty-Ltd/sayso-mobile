@@ -10,11 +10,9 @@ import { Text } from '../../src/components/Typography';
 import { useAuthSession } from '../../src/hooks/useSession';
 import { useUserPreferences } from '../../src/hooks/useUserPreferences';
 import { useBusinessSearch } from '../../src/hooks/useBusinessSearch';
-import { useForYouLocation } from '../../src/hooks/useForYouLocation';
 import { useGlobalScrollToTop } from '../../src/hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../src/hooks/useRealtimeQueryInvalidation';
-import { resolveDiscoveryZeroResults } from '../../src/lib/discoveryRecovery';
-import { fetchForYouFeedPage } from '../../src/lib/forYouFeed';
+import { apiFetch } from '../../src/lib/api';
 import { routes } from '../../src/navigation/routes';
 import { homeTokens } from '../../src/screens/tabs/home/HomeTokens';
 import { TransitionItem } from '../../src/components/motion/TransitionItem';
@@ -32,7 +30,6 @@ export default function ForYouRoute() {
   const navigation = useNavigation();
   const headerCollapsedRef = useRef(false);
   const { user } = useAuthSession();
-  const forYouLocation = useForYouLocation(Boolean(user));
   const preferences = useUserPreferences(Boolean(user));
 
   const [inputValue, setInputValue] = useState('');
@@ -82,19 +79,6 @@ export default function ForYouRoute() {
     preferenceIds.interests.length > 0 ||
     preferenceIds.subcategories.length > 0 ||
     preferenceIds.dealbreakers.length > 0;
-  const forYouQueryKey = useMemo(
-    () =>
-      [
-        'for-you',
-        user?.id ?? null,
-        preferenceIds,
-        forYouLocation.lat,
-        forYouLocation.lng,
-        forYouLocation.source,
-        REQUEST_LIMIT,
-      ] as const,
-    [forYouLocation.lat, forYouLocation.lng, forYouLocation.source, preferenceIds, user?.id]
-  );
 
   const handleInputChange = useCallback((text: string) => {
     setInputValue(text);
@@ -149,20 +133,25 @@ export default function ForYouRoute() {
   }, [isSearching]);
 
   const fetchForYouPage = useCallback(
-    async (cursor: string | null): Promise<PaginatedBusinessFeedResponseDto> => {
-      const response = await fetchForYouFeedPage({
-        limit: REQUEST_LIMIT,
-        cursor,
-        preferenceIds,
-        location: forYouLocation,
-      });
-      return {
-        items: response.items,
-        nextCursor: response.nextCursor,
-        meta: response.meta,
-      };
+    (cursor: string | null) => {
+      const params = new URLSearchParams();
+      params.set('limit', String(REQUEST_LIMIT));
+      params.set('feed_strategy', 'mixed');
+      if (preferenceIds.interests.length > 0) {
+        params.set('interest_ids', preferenceIds.interests.join(','));
+      }
+      if (preferenceIds.subcategories.length > 0) {
+        params.set('sub_interest_ids', preferenceIds.subcategories.join(','));
+      }
+      if (preferenceIds.dealbreakers.length > 0) {
+        params.set('dealbreakers', preferenceIds.dealbreakers.join(','));
+      }
+      if (cursor) {
+        params.set('cursor', cursor);
+      }
+      return apiFetch<PaginatedBusinessFeedResponseDto>(`/api/businesses?${params.toString()}`);
     },
-    [forYouLocation, preferenceIds]
+    [preferenceIds]
   );
 
   const keyExtractor = useCallback((item: BusinessListItemDto) => item.id, []);
@@ -216,8 +205,6 @@ export default function ForYouRoute() {
   );
 
   const searchEmpty = useMemo(() => {
-    const searchRecovery = resolveDiscoveryZeroResults({ query: debouncedQuery });
-
     if (searchQuery.isLoading) {
       return (
         <View style={styles.skeletonStack}>
@@ -236,12 +223,10 @@ export default function ForYouRoute() {
       <EmptyState
         icon="search-outline"
         title={`No results for "${debouncedQuery}"`}
-        message={searchRecovery.message}
-        actionLabel={searchRecovery.actionLabel}
-        onAction={handleClearSearch}
+        message="Try a different search term."
       />
     );
-  }, [debouncedQuery, handleClearSearch, searchQuery.isError, searchQuery.isLoading]);
+  }, [debouncedQuery, searchQuery.isError, searchQuery.isLoading]);
 
   return (
     <ForYouRouteView
@@ -259,15 +244,10 @@ export default function ForYouRoute() {
       preferencesLoading={preferences.isLoading}
       preferencesError={preferences.error}
       hasPreferences={hasPreferences}
-      forYouQueryKey={forYouQueryKey}
       fetchForYouPage={fetchForYouPage}
       preferenceIds={preferenceIds}
       handleScrollY={handleScrollY}
       onPressOnboarding={() => router.push(routes.onboarding() as never)}
-      onBrowseTrendingReset={() => router.push(routes.trendingReset() as never)}
-      onUpdateInterests={() =>
-        router.push(routes.interestsEdit(routes.forYou()) as never)
-      }
     />
   );
 }

@@ -62,7 +62,7 @@ export function StaticContentScreen({ title, sections }: Props) {
           scrollEventThrottle={16}
         >
         {sections.map((section, index) => (
-          <TransitionItem key={`${title}-${section.heading}`} variant="card" index={transitionIndex(index)}>
+          <TransitionItem key={`${title}-${section.heading}`} role="support" index={transitionIndex(index)}>
             <View style={styles.card}>
               <Text style={styles.heading}>{section.heading}</Text>
               <Text style={styles.body}>{section.body}</Text>

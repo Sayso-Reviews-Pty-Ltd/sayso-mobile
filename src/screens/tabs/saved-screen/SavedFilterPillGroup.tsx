@@ -1,6 +1,6 @@
 import { Pressable, ScrollView } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Text } from '../../../components/Typography';
+import { haptics } from '../../../lib/haptics';
 import type { FilterOption } from './savedScreenTokens';
 import { styles } from './savedScreenStyles';
 
@@ -21,7 +21,7 @@ export function SavedFilterPillGroup({ options, value, onChange, pillHorizontalP
           <Pressable
             key={`${option.label}-${String(option.value)}`}
             onPress={() => {
-              try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+              haptics.navigation();
               onChange(isActive ? null : option.value);
             }}
             style={({ pressed }) => [

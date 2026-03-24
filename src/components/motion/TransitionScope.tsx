@@ -1,9 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 
+type TransitionPhase = 'enter' | 'exit';
+
 type TransitionScopeContextValue = {
   scopeTick: number;
-  registerItem: () => void;
+  phase: TransitionPhase;
+  maxIndex: number;
+  registerItem: (index?: number) => void;
 };
 
 const TransitionScopeContext = createContext<TransitionScopeContextValue | null>(null);
@@ -22,14 +26,20 @@ export function TransitionScopeProvider({
   children: React.ReactNode;
 }) {
   const [scopeTick, setScopeTick] = useState(0);
+  const [phase] = useState<TransitionPhase>('enter');
+  const [maxIndex, setMaxIndex] = useState(0);
   const itemCountRef = useRef(0);
 
-  const registerItem = useCallback(() => {
+  const registerItem = useCallback((index?: number) => {
     itemCountRef.current += 1;
+    if (typeof index === 'number') {
+      setMaxIndex((current) => (index > current ? index : current));
+    }
   }, []);
 
   useEffect(() => {
     setScopeTick((current) => current + 1);
+    setMaxIndex(0);
   }, [routeKey]);
 
   useEffect(() => {
@@ -48,9 +58,11 @@ export function TransitionScopeProvider({
   const value = useMemo(
     () => ({
       scopeTick,
+      phase,
+      maxIndex,
       registerItem,
     }),
-    [registerItem, scopeTick]
+    [maxIndex, phase, registerItem, scopeTick]
   );
 
   return <TransitionScopeContext.Provider value={value}>{children}</TransitionScopeContext.Provider>;
@@ -79,36 +91,51 @@ export function TransitionScopeProvider({
  */
 export function ScreenTransitionScope({ children }: { children: React.ReactNode }) {
   const [scopeTick, setScopeTick] = useState(0);
+  const [phase, setPhase] = useState<TransitionPhase>('enter');
+  const [maxIndex, setMaxIndex] = useState(0);
   const itemCountRef = useRef(0);
   // Tracks whether the initial focus event (which fires concurrently with mount)
   // has been consumed. We skip it so mount animations are not double-fired.
   const hasFocusedOnce = useRef(false);
 
-  const registerItem = useCallback(() => {
+  const registerItem = useCallback((index?: number) => {
     itemCountRef.current += 1;
+    if (typeof index === 'number') {
+      setMaxIndex((current) => (index > current ? index : current));
+    }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       itemCountRef.current = 0;
+      setMaxIndex(0);
 
       if (!hasFocusedOnce.current) {
         // First call: screen is mounting. TransitionItems animate via their
         // own mount effects (scopeTick = 0). Skip here to prevent restart.
         hasFocusedOnce.current = true;
-        return;
+        return () => {
+          setPhase('exit');
+          setScopeTick((t) => t + 1);
+        };
       }
 
       // Subsequent calls: screen regained focus (back nav, tab switch).
       // Bumping the tick causes all TransitionItems in this screen to reset
       // and replay their spring-in.
+      setPhase('enter');
       setScopeTick((t) => t + 1);
+
+      return () => {
+        setPhase('exit');
+        setScopeTick((t) => t + 1);
+      };
     }, []),
   );
 
   const value = useMemo(
-    () => ({ scopeTick, registerItem }),
-    [scopeTick, registerItem],
+    () => ({ scopeTick, phase, maxIndex, registerItem }),
+    [maxIndex, phase, scopeTick, registerItem],
   );
 
   return (

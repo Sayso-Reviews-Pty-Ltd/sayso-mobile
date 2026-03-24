@@ -38,7 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (event === 'TOKEN_REFRESH_FAILED') {
+      // Supabase typings may lag newly introduced auth events.
+      if ((event as string) === 'TOKEN_REFRESH_FAILED') {
         supabase.auth.signOut();
         setSession(null);
         setUser(null);

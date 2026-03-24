@@ -183,7 +183,7 @@ export default function ForYouRoute() {
   const keyExtractor = useCallback((item: BusinessListItemDto) => item.id, []);
   const renderItem = useCallback<ListRenderItem<BusinessListItemDto>>(
     ({ item, index }) => (
-      <TransitionItem variant="listItem" index={index + 1} animate={index < VISIBLE_CHUNK_SIZE}>
+      <TransitionItem role="listItem" index={index + 1} animate={index < VISIBLE_CHUNK_SIZE}>
         <BusinessCard business={item} />
       </TransitionItem>
     ),
@@ -193,13 +193,13 @@ export default function ForYouRoute() {
   const heroSection = useMemo(
     () => (
       <View style={styles.heroSection}>
-        <TransitionItem variant="header" index={0}>
+        <TransitionItem role="hero" index={0}>
           <Text style={styles.heroTitle}>Curated Just For You</Text>
           <Text style={styles.heroDesc}>
             A personalised discovery feed for your next outing.
           </Text>
         </TransitionItem>
-        <TransitionItem variant="input" index={1}>
+        <TransitionItem role="subheading" index={1}>
           <View style={styles.searchWrap}>
             <HomeSearchBar
               value={inputValue}
@@ -209,7 +209,7 @@ export default function ForYouRoute() {
             />
           </View>
         </TransitionItem>
-        <TransitionItem variant="card" index={2}>
+        <TransitionItem role="support" index={2}>
           <HomeMoodPicker
             activeMoodQuery={inputValue}
             onSelectMood={handleInputChange}
@@ -225,7 +225,7 @@ export default function ForYouRoute() {
       <View>
         {heroSection}
         {searchQuery.data !== undefined && (
-          <TransitionItem variant="card" index={2}>
+          <TransitionItem role="support" index={2}>
             <Text style={styles.resultsCount}>
               {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for &ldquo;{debouncedQuery}&rdquo;
             </Text>

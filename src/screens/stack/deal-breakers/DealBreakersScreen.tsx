@@ -10,13 +10,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingLayout } from '../../../components/onboarding/OnboardingLayout';
 import { ONBOARDING_TOKENS } from '../../../components/onboarding/onboardingTheme';
 import { Text } from '../../../components/Typography';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 import { apiFetch } from '../../../lib/api';
+import { haptics } from '../../../lib/haptics';
 import { routes } from '../../../navigation/routes';
 import { DealBreakerCard } from './DealBreakerCard';
 import {
@@ -127,7 +127,7 @@ export default function DealBreakersScreen() {
   }, [cardMutables, reducedMotion, selected]);
 
   const toggle = useCallback((id: DealbreakerId) => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+    haptics.confirm();
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -141,7 +141,7 @@ export default function DealBreakersScreen() {
 
   const handleContinue = useCallback(async () => {
     if (!canContinue || isLoading) return;
-    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+    haptics.complete();
     setIsLoading(true);
     setError('');
     try {

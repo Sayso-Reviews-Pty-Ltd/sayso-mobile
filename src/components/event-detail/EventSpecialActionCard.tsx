@@ -1,13 +1,13 @@
 import { Alert, Linking, Pressable, Share, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import type { EventSpecialDetail } from '../../hooks/useEventSpecialDetail';
 import type { EventReminderOption } from '../../hooks/useEventReminder';
 import { apiFetch } from '../../lib/api';
 import { ENV } from '../../lib/env';
 import { buildGoogleCalendarUrl } from '../../lib/events/calendar';
 import { resolveCtaTarget } from '../../lib/events/cta';
+import { haptics } from '../../lib/haptics';
 import { routes } from '../../navigation/routes';
 import { NAVBAR_BG_COLOR } from '../../styles/colors';
 import { Text } from '../Typography';
@@ -78,12 +78,13 @@ export function EventSpecialActionCard({
         }),
       }).catch(() => undefined);
     } catch {
+      haptics.error();
       Alert.alert('Unable to open link', 'Please try again.');
     }
   };
 
   const handleShare = async () => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.navigation();
     const origin = ENV.apiBaseUrl || 'https://www.sayso.co.za';
     const targetPath = getRoutePath(routeType, item.id);
 
@@ -98,17 +99,18 @@ export function EventSpecialActionCard({
   };
 
   const handleCalendar = async () => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.navigation();
     const calendarUrl = buildGoogleCalendarUrl(item);
     try {
       await Linking.openURL(calendarUrl);
     } catch {
+      haptics.error();
       Alert.alert('Unable to open calendar', 'Please try again.');
     }
   };
 
   const handleReminderChoice = () => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.navigation();
     Alert.alert('Set reminder', 'When should we remind you?', [
       {
         text: '1 day before',
@@ -127,7 +129,7 @@ export function EventSpecialActionCard({
 
   const handleGoing = () => {
     if (rsvpBusy) return;
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+    haptics.confirm();
     onPressGoing();
   };
 

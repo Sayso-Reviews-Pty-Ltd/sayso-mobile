@@ -12,12 +12,12 @@ type Props = {
 
 export function FeedbackPulseModal({ visible, onClose, context, onRespond }: Props) {
   const handleRespond = (positive: boolean) => {
-    positive ? haptics.success() : haptics.tap();
+    positive ? haptics.complete() : haptics.navigation();
     onRespond(positive); // caller (useFeedbackPulse) owns tracking
     onClose();
   };
 
-  const handleSkip = () => { haptics.tap(); onClose(); };
+  const handleSkip = () => { haptics.navigation(); onClose(); };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleSkip}>

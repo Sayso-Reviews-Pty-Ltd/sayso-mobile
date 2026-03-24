@@ -14,14 +14,14 @@ type Props = {
 export function TrendingSearchHeader({ inputValue, isFetching, onClear, onInputChange }: Props) {
   return (
     <>
-      <TransitionItem variant="header" index={0}>
+      <TransitionItem role="hero" index={0}>
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Trending Now</Text>
           <Text style={styles.heroDesc}>See what's hot right now!</Text>
         </View>
       </TransitionItem>
 
-      <TransitionItem variant="input" index={1}>
+      <TransitionItem role="subheading" index={1}>
         <View style={styles.searchWrap}>
           <HomeSearchBar
             value={inputValue}

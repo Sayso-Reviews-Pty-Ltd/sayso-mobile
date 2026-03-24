@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import {
   useDeleteUserReview,
   useUserReviews,
@@ -14,6 +13,7 @@ import { useSavedBusinesses } from '../../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../../hooks/useSession';
 import { useUserBadges } from '../../../hooks/useUserBadges';
 import { useUserStats } from '../../../hooks/useUserStats';
+import { haptics } from '../../../lib/haptics';
 import { supabase } from '../../../lib/supabase';
 import { routes } from '../../../navigation/routes';
 import { useSecurity } from '../../../providers/SecurityProvider';
@@ -205,7 +205,7 @@ export function useProfileScreenController() {
       return;
     }
     try {
-      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+      haptics.confirm();
       await signOut();
     } catch {
       Alert.alert('Error', 'Failed to sign out.');
@@ -218,7 +218,7 @@ export function useProfileScreenController() {
       setDeleteAccountError(gate.reason || 'This action is blocked on this device.');
       return;
     }
-    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch {}
+    haptics.confirm();
     setDeleteAccountError(null);
     try {
       await deleteAccount.mutateAsync();

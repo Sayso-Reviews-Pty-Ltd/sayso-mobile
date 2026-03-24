@@ -6,13 +6,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { ONBOARDING_TOKENS } from '../../components/onboarding/onboardingTheme';
 import { Text } from '../../components/Typography';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { apiFetch } from '../../lib/api';
+import { haptics } from '../../lib/haptics';
 import { routes } from '../../navigation/routes';
 import { useProfile } from '../../providers/ProfileProvider';
 
@@ -201,7 +201,7 @@ export default function CompleteScreen() {
   }, [refreshProfile, router]);
 
   useEffect(() => {
-    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+    haptics.complete();
 
     AsyncStorage.getItem('onboarding_dealbreakers')
       .then((raw) => {

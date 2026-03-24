@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { Text, TextInput } from '../Typography';
+import { haptics } from '../../lib/haptics';
 
 export type EditProfileSavePayload = {
   username: string;
@@ -123,7 +123,7 @@ export function EditProfileModal({
   };
 
   const handleAddPhoto = () => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.navigation();
     Alert.alert('Add Photo', 'Choose an option', [
       { text: 'Take Photo', onPress: handleTakePhoto },
       { text: 'Choose from Library', onPress: handlePickFromLibrary },
@@ -132,7 +132,7 @@ export function EditProfileModal({
   };
 
   const handleRemoveAvatar = () => {
-    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch {}
+    haptics.confirm();
     setAvatarAsset(null);
     setAvatarPreview(null);
     setRemoveAvatar(true);
@@ -152,7 +152,7 @@ export function EditProfileModal({
     }
 
     setLocalError(null);
-    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+    haptics.complete();
     await onSave({
       username: normalizedUsername,
       displayName: displayName.trim(),

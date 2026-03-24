@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { useSavedBusinesses } from '../../../hooks/useSavedBusinesses';
 import { useGlobalScrollToTop } from '../../../hooks/useGlobalScrollToTop';
+import { haptics } from '../../../lib/haptics';
 import {
   ITEMS_PER_PAGE,
   type FilterOption,
@@ -82,7 +82,7 @@ export function useSavedScreenState({ width: _width, gridColumns, scrollRef, has
 
   const handlePageChange = useCallback((nextPage: number) => {
     if (nextPage === currentPage || nextPage < 1 || nextPage > totalPages) return;
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.navigation();
     if (pageChangeTimeoutRef.current) clearTimeout(pageChangeTimeoutRef.current);
     if (paginationDoneTimeoutRef.current) clearTimeout(paginationDoneTimeoutRef.current);
     setIsPaginationLoading(true);

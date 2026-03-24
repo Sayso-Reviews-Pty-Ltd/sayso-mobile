@@ -77,6 +77,18 @@ jest.mock('@expo/vector-icons', () => {
 jest.mock('react-native-reanimated', () => {
   const React = require('react');
   const { View } = require('react-native');
+  const passThrough = (value: unknown) => value;
+  const identity = (value: number) => value;
+  const interpolate = (value: number, input: number[], output: number[]) => {
+    if (input.length < 2 || output.length < 2) return output[0] ?? value;
+    const startIn = input[0];
+    const endIn = input[input.length - 1];
+    const startOut = output[0];
+    const endOut = output[output.length - 1];
+    if (endIn === startIn) return endOut;
+    const t = (value - startIn) / (endIn - startIn);
+    return startOut + t * (endOut - startOut);
+  };
 
   return {
     __esModule: true,
@@ -87,7 +99,23 @@ jest.mock('react-native-reanimated', () => {
     },
     useSharedValue: (value: unknown) => ({ value }),
     useAnimatedStyle: (updater: () => object) => updater(),
-    withSpring: (value: unknown) => value,
+    withSpring: passThrough,
+    withTiming: passThrough,
+    withDelay: (_delay: number, value: unknown) => value,
+    withSequence: (...values: unknown[]) => values[values.length - 1],
+    withRepeat: (value: unknown) => value,
+    interpolate,
+    makeMutable: (value: unknown) => ({ value }),
+    Easing: {
+      linear: identity,
+      quad: identity,
+      cubic: identity,
+      sin: identity,
+      ease: identity,
+      out: (fn: (value: number) => number) => fn,
+      inOut: (fn: (value: number) => number) => fn,
+    },
+    runOnJS: (fn: (...args: any[]) => unknown) => fn,
     cancelAnimation: jest.fn(),
   };
 });

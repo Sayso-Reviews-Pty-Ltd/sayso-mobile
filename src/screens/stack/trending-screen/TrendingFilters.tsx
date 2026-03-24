@@ -15,7 +15,7 @@ type Props = {
 
 export function TrendingFilters({ filters, onSelectDistance, onSelectRating }: Props) {
   return (
-    <TransitionItem variant="card" index={2}>
+    <TransitionItem role="support" index={2}>
       <View style={styles.filtersWrap}>
         <View style={styles.filterGroup}>
           <View style={styles.filterLabelRow}>

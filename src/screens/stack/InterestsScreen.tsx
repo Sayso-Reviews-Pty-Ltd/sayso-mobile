@@ -6,7 +6,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -14,6 +13,7 @@ import { ONBOARDING_GRADIENTS, ONBOARDING_TOKENS } from '../../components/onboar
 import { Text } from '../../components/Typography';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { apiFetch } from '../../lib/api';
+import { haptics } from '../../lib/haptics';
 import { routes } from '../../navigation/routes';
 
 const MIN = 3;
@@ -227,7 +227,7 @@ export default function InterestsScreen() {
   }, [itemMutables, reducedMotion]);
 
   const toggle = useCallback((id: InterestId) => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.navigation();
     const index = INTERESTS.findIndex((interest) => interest.id === id);
     if (index >= 0 && !reducedMotion) {
       const m = itemMutables[index];
@@ -256,7 +256,7 @@ export default function InterestsScreen() {
 
   const handleContinue = useCallback(async () => {
     if (!canContinue || isLoading) return;
-    try { void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+    haptics.complete();
     setIsLoading(true);
     setError('');
     try {

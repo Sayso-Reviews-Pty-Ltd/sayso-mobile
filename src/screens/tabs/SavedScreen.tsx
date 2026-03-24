@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { LoadingCrossfade } from '../../components/LoadingCrossfade';
 import { Text } from '../../components/Typography';
 import { TransitionItem } from '../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
@@ -56,72 +57,75 @@ export default function SavedScreen() {
           scrollEventThrottle={16}
           refreshControl={<RefreshControl refreshing={savedQuery.isRefetching} onRefresh={handleRefetch} />}
         >
-          {isLoading ? (
-            <SavedPageSkeleton columnCount={gridColumns} gridGap={gridGap} />
-          ) : errorMessage ? (
-            <TransitionItem variant="card" index={1}>
-              <View style={styles.errorWrap}>
-                <View style={styles.errorInner}>
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                  <Pressable style={styles.retryButton} onPress={handleRefetch}>
-                    <Text style={styles.retryButtonText}>Try Again</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </TransitionItem>
-          ) : (
-            <TransitionItem variant="card" index={1}>
-              <View style={styles.maxContainer}>
-                <View style={[styles.titleSection, { marginBottom: titleSectionMarginBottom }]}>
-                  <Text style={[styles.titleHeading, { fontSize: headingFontSize }]}>Your Saved Gems</Text>
-                  <Text style={styles.titleSubtitle}>
-                    {hasAnyContent
-                      ? `${totalSavedCount} ${totalSavedCount === 1 ? 'item' : 'items'} saved`
-                      : 'Businesses you bookmark will appear here'}
-                  </Text>
-                </View>
-
-                {hasAnyContent ? (
-                  <>
-                    {categories.length > 1 ? (
-                      <View style={styles.filterWrap}>
-                        <SavedFilterPillGroup
-                          options={filterOptions}
-                          value={selectedCategory}
-                          onChange={setSelectedCategory}
-                          pillHorizontalPadding={pillHorizontalPadding}
-                          pillFontSize={pillFontSize}
-                        />
-                      </View>
-                    ) : null}
-
-                    <SavedGrid
-                      businesses={filteredBusinesses}
-                      gridColumns={gridColumns}
-                      gridGap={gridGap}
-                      paginatedRows={paginatedRows}
-                      onPressExplore={() => router.push(routes.home() as never)}
-                    />
-
-                    {filteredBusinesses.length > ITEMS_PER_PAGE ? (
-                      <View style={styles.paginationWrap}>
-                        <SavedPagination
-                          currentPage={currentPage}
-                          totalPages={totalPages}
-                          disabled={isPaginationLoading}
-                          onPageChange={handlePageChange}
-                        />
-                      </View>
-                    ) : null}
-                  </>
-                ) : (
-                  <View style={styles.emptyStatePad}>
-                    <EmptySavedState />
+          <LoadingCrossfade
+            loading={isLoading}
+            skeleton={<SavedPageSkeleton columnCount={gridColumns} gridGap={gridGap} />}
+          >
+            {errorMessage ? (
+              <TransitionItem role="support" index={1}>
+                <View style={styles.errorWrap}>
+                  <View style={styles.errorInner}>
+                    <Text style={styles.errorText}>{errorMessage}</Text>
+                    <Pressable style={styles.retryButton} onPress={handleRefetch}>
+                      <Text style={styles.retryButtonText}>Try Again</Text>
+                    </Pressable>
                   </View>
-                )}
-              </View>
-            </TransitionItem>
-          )}
+                </View>
+              </TransitionItem>
+            ) : (
+              <TransitionItem role="support" index={1}>
+                <View style={styles.maxContainer}>
+                  <View style={[styles.titleSection, { marginBottom: titleSectionMarginBottom }]}>
+                    <Text style={[styles.titleHeading, { fontSize: headingFontSize }]}>Your Saved Gems</Text>
+                    <Text style={styles.titleSubtitle}>
+                      {hasAnyContent
+                        ? `${totalSavedCount} ${totalSavedCount === 1 ? 'item' : 'items'} saved`
+                        : 'Businesses you bookmark will appear here'}
+                    </Text>
+                  </View>
+
+                  {hasAnyContent ? (
+                    <>
+                      {categories.length > 1 ? (
+                        <View style={styles.filterWrap}>
+                          <SavedFilterPillGroup
+                            options={filterOptions}
+                            value={selectedCategory}
+                            onChange={setSelectedCategory}
+                            pillHorizontalPadding={pillHorizontalPadding}
+                            pillFontSize={pillFontSize}
+                          />
+                        </View>
+                      ) : null}
+
+                      <SavedGrid
+                        businesses={filteredBusinesses}
+                        gridColumns={gridColumns}
+                        gridGap={gridGap}
+                        paginatedRows={paginatedRows}
+                        onPressExplore={() => router.push(routes.home() as never)}
+                      />
+
+                      {filteredBusinesses.length > ITEMS_PER_PAGE ? (
+                        <View style={styles.paginationWrap}>
+                          <SavedPagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            disabled={isPaginationLoading}
+                            onPageChange={handlePageChange}
+                          />
+                        </View>
+                      ) : null}
+                    </>
+                  ) : (
+                    <View style={styles.emptyStatePad}>
+                      <EmptySavedState />
+                    </View>
+                  )}
+                </View>
+              </TransitionItem>
+            )}
+          </LoadingCrossfade>
         </ScrollView>
       </ScreenTransitionScope>
 

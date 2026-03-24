@@ -78,15 +78,15 @@ export default function LeaderboardScreen() {
           onScroll={handleScroll}
           scrollEventThrottle={16}
         >
-          <TransitionItem variant="header" index={0}>
+          <TransitionItem role="hero" index={0}>
             <LeaderboardHero />
           </TransitionItem>
 
-          <TransitionItem variant="input" index={1}>
+          <TransitionItem role="subheading" index={1}>
             <LeaderboardTabSwitcher activeTab={activeTab} onChangeTab={handleTabChange} />
           </TransitionItem>
 
-          <TransitionItem variant="card" index={2}>
+          <TransitionItem role="support" index={2}>
             <View style={styles.card}>
               {activeTab === 'contributors' ? (
                 <ContributorsSection
@@ -115,7 +115,7 @@ export default function LeaderboardScreen() {
             </View>
           </TransitionItem>
 
-          <TransitionItem variant="cta" index={3}>
+          <TransitionItem role="cta" index={3}>
             <LeaderboardBadgeSection />
           </TransitionItem>
         </ScrollView>

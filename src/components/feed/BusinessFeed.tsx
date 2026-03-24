@@ -107,7 +107,7 @@ export function BusinessFeed({
 
   const renderItem = useCallback<ListRenderItem<BusinessListItemDto>>(
     ({ item, index }) => (
-      <TransitionItem variant="listItem" index={index + 1} animate={index < visibleChunkSize}>
+      <TransitionItem role="listItem" index={index + 1} animate={index < visibleChunkSize}>
         <BusinessCard business={item} />
       </TransitionItem>
     ),
@@ -190,7 +190,7 @@ export function BusinessFeed({
   }, [handleLoadMore, hasBufferedItems, hasNextPage, loadMoreError, query.isFetchingNextPage, visibleItems.length]);
 
   const listHeader = (listHeaderTop || subtitle) ? (
-    <TransitionItem variant="header" index={0}>
+    <TransitionItem role="hero" index={0}>
       <View style={styles.header}>
         {listHeaderTop ?? null}
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}

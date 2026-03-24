@@ -156,7 +156,7 @@ export function EventsSpecialsFeedScreen({ subtitle, onScrollY }: Props) {
     if ('_section' in item) {
       return (
         <ScreenTransitionScope>
-          <TransitionItem variant="header" index={index} animate={index < VISIBLE_CHUNK_SIZE}>
+          <TransitionItem role="hero" index={index} animate={index < VISIBLE_CHUNK_SIZE}>
           <View style={[s.sectionHeader, index > 0 && s.sectionHeaderGap]}>
             <Text style={s.sectionTitle}>{item.title}</Text>
           </View>
@@ -166,7 +166,7 @@ export function EventsSpecialsFeedScreen({ subtitle, onScrollY }: Props) {
     }
     return (
       <ScreenTransitionScope>
-        <TransitionItem variant="listItem" index={index} animate={index < VISIBLE_CHUNK_SIZE}>
+        <TransitionItem role="listItem" index={index} animate={index < VISIBLE_CHUNK_SIZE}>
           <View style={s.cardWrap}>
             <EventCard item={item} />
           </View>

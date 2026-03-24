@@ -5,6 +5,7 @@ import {
   Easing,
   LayoutAnimation,
   Platform,
+  Pressable,
   StyleSheet,
   UIManager,
   View,

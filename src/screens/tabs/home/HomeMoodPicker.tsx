@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Text } from '../../../components/Typography';
+import { haptics } from '../../../lib/haptics';
 import { homeTokens } from './HomeTokens';
 import { NAVBAR_BG_COLOR } from '../../../styles/colors';
 
@@ -56,7 +56,7 @@ export function HomeMoodPicker({ activeMoodQuery, onSelectMood }: Props) {
               key={mood.id}
               style={[styles.tile, isActive && styles.tileActive]}
               onPress={() => {
-                try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                haptics.navigation();
                 // Tapping the active chip clears the search (deselect)
                 onSelectMood(isActive ? '' : mood.query);
               }}

@@ -32,7 +32,7 @@ function TrendingScreenViewComponent({
         {isMapMode && listHeader}
 
         {isMapMode ? (
-          <TransitionItem variant="card" index={5} style={styles.mapTransition}>
+          <TransitionItem role="support" index={5} style={styles.mapTransition}>
             <View style={styles.mapWrap}>
               <TrendingMapView businesses={mapBusinesses} userLocation={userLocation} />
             </View>

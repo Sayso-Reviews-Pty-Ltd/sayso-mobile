@@ -1,12 +1,12 @@
 import { type ComponentProps, useCallback, useMemo, useRef, useState } from 'react';
 import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { Text } from '../Typography';
 import { businessDetailColors } from './styles';
 import { FROSTED_CARD_BORDER_COLOR } from '../../styles/cardSurface';
 import { CARD_CTA_RADIUS } from '../../styles/radii';
 import { homeTokens } from '../../screens/tabs/home/HomeTokens';
+import { haptics } from '../../lib/haptics';
 
 export type BusinessHeaderMenuItem = {
   key: string;
@@ -67,7 +67,7 @@ export function BusinessPageHeader({
   };
 
   const toggleMenu = useCallback(() => {
-    try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    haptics.navigation();
     if (menuVisible) {
       setMenuVisible(false);
       return;

@@ -25,6 +25,7 @@ import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useAuthSession } from '../../hooks/useSession';
 import { routes } from '../../navigation/routes';
 import { NAVBAR_BG_COLOR } from '../../styles/colors';
+import { LoadingCrossfade } from '../../components/LoadingCrossfade';
 import { NotificationItem } from '../../components/NotificationItem';
 import { EmptyState } from '../../components/EmptyState';
 import { SkeletonCard } from '../../components/SkeletonCard';
@@ -144,7 +145,7 @@ export default function NotificationsScreen() {
 
   const handleNotificationPress = useCallback(
     (notification: NotificationWithEntity) => {
-      haptics.tap();
+      haptics.navigation();
       // Mark as read only if not already read.
       if (!notification.read_at) {
         markOneRead.mutate(notification.id);
@@ -175,7 +176,7 @@ export default function NotificationsScreen() {
         <Pressable
           key={chip.id}
           style={[styles.chip, activeFilter === chip.id && styles.chipActive]}
-          onPress={() => { haptics.selection(); setActiveFilter(chip.id); }}
+          onPress={() => { haptics.navigation(); setActiveFilter(chip.id); }}
           accessibilityRole="button"
           accessibilityState={{ selected: activeFilter === chip.id }}
         >
@@ -192,7 +193,7 @@ export default function NotificationsScreen() {
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ title: 'Notifications' }} />
         <ScreenTransitionScope>
-          <TransitionItem variant="card" index={0}>
+          <TransitionItem role="support" index={0}>
           <EmptyState
             icon="notifications-outline"
             title="Sign in to see notifications"
@@ -209,7 +210,7 @@ export default function NotificationsScreen() {
     <SafeAreaView style={styles.container} accessibilityLabel="Notifications">
       <Stack.Screen options={{ title: 'Notifications' }} />
       <ScreenTransitionScope>
-        <TransitionItem variant="header" index={0}>
+        <TransitionItem role="hero" index={0}>
         <View style={styles.header}>
           <Text style={styles.title}>Notifications</Text>
           {unreadCount > 0 ? (
@@ -220,58 +221,63 @@ export default function NotificationsScreen() {
         </View>
       </TransitionItem>
 
-      {isLoading ? (
-        <View style={{ paddingHorizontal: APP_PAGE_GUTTER, paddingVertical: 16 }}>
-          {[1, 2, 3].map((item, index) => (
-            <TransitionItem key={item} variant="listItem" index={index + 1}>
-              <SkeletonCard />
-            </TransitionItem>
-          ))}
-        </View>
-      ) : isError ? (
-        <TransitionItem variant="card" index={1}>
-          <EmptyState
-            icon="cloud-offline-outline"
-            title="Couldn't load notifications"
-            message="Pull down to try again."
-            actionLabel="Retry"
-            onAction={() => { void refetch(); }}
+      <LoadingCrossfade
+        loading={isLoading}
+        skeleton={
+          <View style={{ paddingHorizontal: APP_PAGE_GUTTER, paddingVertical: 16 }}>
+            {[1, 2, 3].map((item, index) => (
+              <TransitionItem key={item} role="listItem" index={index + 1}>
+                <SkeletonCard />
+              </TransitionItem>
+            ))}
+          </View>
+        }
+      >
+        {isError ? (
+          <TransitionItem role="support" index={1}>
+            <EmptyState
+              icon="cloud-offline-outline"
+              title="Couldn't load notifications"
+              message="Pull down to try again."
+              actionLabel="Retry"
+              onAction={() => { void refetch(); }}
+            />
+          </TransitionItem>
+        ) : allNotifications.length === 0 ? (
+          <TransitionItem role="support" index={1}>
+            <EmptyState
+              icon="notifications-outline"
+              title="All caught up"
+              message="You'll see reviews, badges, and activity here."
+            />
+          </TransitionItem>
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={filteredNotifications}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, index }) => (
+              <TransitionItem role="listItem" index={index + 1} animate={index < 10}>
+                <NotificationItem
+                  notification={item}
+                  onPress={() => handleNotificationPress(item as NotificationWithEntity)}
+                  onDismiss={handleDismiss(item.id)}
+                />
+              </TransitionItem>
+            )}
+            ListHeaderComponent={filterBar}
+            ListEmptyComponent={
+              <View style={styles.emptyFilter}>
+                <Text style={styles.emptyFilterText}>No {FILTER_CHIPS.find((c) => c.id === activeFilter)?.label.toLowerCase()} notifications.</Text>
+              </View>
+            }
+            refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+            showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
           />
-        </TransitionItem>
-      ) : allNotifications.length === 0 ? (
-        <TransitionItem variant="card" index={1}>
-          <EmptyState
-            icon="notifications-outline"
-            title="All caught up"
-            message="You'll see reviews, badges, and activity here."
-          />
-        </TransitionItem>
-      ) : (
-        <FlatList
-          ref={listRef}
-          data={filteredNotifications}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <TransitionItem variant="listItem" index={index + 1} animate={index < 10}>
-              <NotificationItem
-                notification={item}
-                onPress={() => handleNotificationPress(item as NotificationWithEntity)}
-                onDismiss={handleDismiss(item.id)}
-              />
-            </TransitionItem>
-          )}
-          ListHeaderComponent={filterBar}
-          ListEmptyComponent={
-            <View style={styles.emptyFilter}>
-              <Text style={styles.emptyFilterText}>No {FILTER_CHIPS.find((c) => c.id === activeFilter)?.label.toLowerCase()} notifications.</Text>
-            </View>
-          }
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-          showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        />
-      )}
+        )}
+      </LoadingCrossfade>
       </ScreenTransitionScope>
     </SafeAreaView>
   );

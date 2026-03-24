@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { BusinessListItemDto, PaginatedBusinessFeedResponseDto } from '@sayso/contracts';
 import { BusinessFeed } from '../../../components/feed/BusinessFeed';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingCrossfade } from '../../../components/LoadingCrossfade';
 import { SkeletonBusinessCard } from '../../../components/feed/SkeletonBusinessCard';
 import { HeaderDmBellActions } from '../../../components/HeaderDmBellActions';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
@@ -72,18 +73,18 @@ function ForYouRouteViewComponent({
         <Stack.Screen options={{ title: 'For You' }} />
         <ScreenTransitionScope>
           <View style={styles.guestHeader}>
-            <TransitionItem variant="header" index={0} style={styles.headerCopy}>
+            <TransitionItem role="hero" index={0} style={styles.headerCopy}>
               <View>
                 <Text style={styles.heroTitle}>Curated Just For You</Text>
                 <Text style={styles.heroDesc}>Personalized discovery starts after sign-in.</Text>
               </View>
             </TransitionItem>
-            <TransitionItem variant="card" index={1}>
+            <TransitionItem role="support" index={1}>
               <HeaderDmBellActions />
             </TransitionItem>
           </View>
 
-          <TransitionItem variant="card" index={2}>
+          <TransitionItem role="support" index={2}>
             <LinearGradient
               colors={[homeTokens.coral, homeTokens.coralDark]}
               start={{ x: 0, y: 0 }}
@@ -135,48 +136,53 @@ function ForYouRouteViewComponent({
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: 'For You', headerRight: () => <HeaderDmBellActions /> }} />
       <ScreenTransitionScope>
-        {preferencesLoading ? (
-          <View style={styles.loadingList}>
-            <View style={styles.loadingHeader}>{heroSection}</View>
-            <TransitionItem variant="card" index={3}>
-              <View style={styles.personalizingPill}>
-                <Ionicons name="sparkles-outline" size={13} color={homeTokens.coral} />
-                <Text style={styles.personalizingText}>Personalizing your feed...</Text>
-              </View>
-            </TransitionItem>
-            {Array.from({ length: 5 }, (_, index) => (
-              <SkeletonBusinessCard key={`for-you-loading-${index}`} />
-            ))}
-          </View>
-        ) : preferencesError ? (
-          <>
-            <View style={styles.loadingHeader}>{heroSection}</View>
-            <EmptyState icon="wifi-outline" title="Couldn't load personalised picks right now." message={preferencesError} />
-          </>
-        ) : !hasPreferences ? (
-          <>
-            <View style={styles.loadingHeader}>{heroSection}</View>
-            <EmptyState
-              icon="sparkles-outline"
-              title="Curated from your interests"
-              message="Based on what you selected, no matches in this feed yet."
+        <LoadingCrossfade
+          loading={preferencesLoading}
+          skeleton={
+            <View style={styles.loadingList}>
+              <View style={styles.loadingHeader}>{heroSection}</View>
+              <TransitionItem role="support" index={3}>
+                <View style={styles.personalizingPill}>
+                  <Ionicons name="sparkles-outline" size={13} color={homeTokens.coral} />
+                  <Text style={styles.personalizingText}>Personalizing your feed...</Text>
+                </View>
+              </TransitionItem>
+              {Array.from({ length: 5 }, (_, index) => (
+                <SkeletonBusinessCard key={`for-you-loading-${index}`} />
+              ))}
+            </View>
+          }
+        >
+          {preferencesError ? (
+            <>
+              <View style={styles.loadingHeader}>{heroSection}</View>
+              <EmptyState icon="wifi-outline" title="Couldn't load personalised picks right now." message={preferencesError} />
+            </>
+          ) : !hasPreferences ? (
+            <>
+              <View style={styles.loadingHeader}>{heroSection}</View>
+              <EmptyState
+                icon="sparkles-outline"
+                title="Curated from your interests"
+                message="Based on what you selected, no matches in this feed yet."
+              />
+            </>
+          ) : (
+            <BusinessFeed
+              feedKey="for-you"
+              queryKey={['for-you', userId, preferenceIds, REQUEST_LIMIT]}
+              horizontalPadding={homeTokens.pageGutter}
+              listHeaderTop={heroSection}
+              onScrollY={handleScrollY}
+              errorTitle="Couldn't load personalised picks right now."
+              emptyTitle="Curated from your interests"
+              emptyMessage="Based on what you selected, no matches in this feed yet."
+              requestLimit={REQUEST_LIMIT}
+              visibleChunkSize={VISIBLE_CHUNK_SIZE}
+              fetchPage={fetchForYouPage}
             />
-          </>
-        ) : (
-          <BusinessFeed
-            feedKey="for-you"
-            queryKey={['for-you', userId, preferenceIds, REQUEST_LIMIT]}
-            horizontalPadding={homeTokens.pageGutter}
-            listHeaderTop={heroSection}
-            onScrollY={handleScrollY}
-            errorTitle="Couldn't load personalised picks right now."
-            emptyTitle="Curated from your interests"
-            emptyMessage="Based on what you selected, no matches in this feed yet."
-            requestLimit={REQUEST_LIMIT}
-            visibleChunkSize={VISIBLE_CHUNK_SIZE}
-            fetchPage={fetchForYouPage}
-          />
-        )}
+          )}
+        </LoadingCrossfade>
       </ScreenTransitionScope>
     </SafeAreaView>
   );

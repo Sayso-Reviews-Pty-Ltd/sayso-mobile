@@ -2,14 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../../lib/api';
+import { haptics } from '../../../lib/haptics';
 import { useAuthSession } from '../../../hooks/useSession';
 import { supabase } from '../../../lib/supabase';
 import { routes } from '../../../navigation/routes';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingCrossfade } from '../../../components/LoadingCrossfade';
 import { StackPageHeader } from '../../../components/StackPageHeader';
 import { Text } from '../../../components/Typography';
 import { C, GRID } from './inbox/constants';
@@ -63,9 +64,7 @@ export default function DMInboxScreen() {
 
   const handleConversationPress = useCallback(
     (id: string) => {
-      try {
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {}
+      haptics.navigation();
       router.push(routes.dmThread(id) as never);
     },
     [router]
@@ -108,52 +107,57 @@ export default function DMInboxScreen() {
         onClear={() => setSearchQuery('')}
       />
 
-      {isLoading ? (
-        <View style={styles.skeletonList}>
-          {[0, 1, 2, 3, 4].map((index) => (
-            <ConversationSkeleton key={index} />
-          ))}
-        </View>
-      ) : isError ? (
-        <EmptyState
-          icon="cloud-offline-outline"
-          title="Could not load conversations"
-          message="Check your connection and try again."
-          actionLabel="Retry"
-          onAction={() => {
-            void refetch();
-          }}
-        />
-      ) : filteredConversations.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="chatbubbles-outline" size={48} color={C.charcoal50} />
-          <Text style={styles.emptyTitle}>
-            {searchQuery ? 'No conversations match your search' : 'No messages yet'}
-          </Text>
-          {!searchQuery ? (
-            <Text style={styles.emptySubtitle}>
-              Messages from businesses you have interacted with will appear here.
+      <LoadingCrossfade
+        loading={isLoading}
+        skeleton={
+          <View style={styles.skeletonList}>
+            {[0, 1, 2, 3, 4].map((index) => (
+              <ConversationSkeleton key={index} />
+            ))}
+          </View>
+        }
+      >
+        {isError ? (
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Could not load conversations"
+            message="Check your connection and try again."
+            actionLabel="Retry"
+            onAction={() => {
+              void refetch();
+            }}
+          />
+        ) : filteredConversations.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="chatbubbles-outline" size={48} color={C.charcoal50} />
+            <Text style={styles.emptyTitle}>
+              {searchQuery ? 'No conversations match your search' : 'No messages yet'}
             </Text>
-          ) : null}
-        </View>
-      ) : (
-        <FlatList
-          data={filteredConversations}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <ConversationRow
-              item={item}
-              onPress={() => handleConversationPress(item.id)}
-            />
-          )}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: insets.bottom + GRID * 2 },
-          ]}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+            {!searchQuery ? (
+              <Text style={styles.emptySubtitle}>
+                Messages from businesses you have interacted with will appear here.
+              </Text>
+            ) : null}
+          </View>
+        ) : (
+          <FlatList
+            data={filteredConversations}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <ConversationRow
+                item={item}
+                onPress={() => handleConversationPress(item.id)}
+              />
+            )}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: insets.bottom + GRID * 2 },
+            ]}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+      </LoadingCrossfade>
     </View>
   );
 }

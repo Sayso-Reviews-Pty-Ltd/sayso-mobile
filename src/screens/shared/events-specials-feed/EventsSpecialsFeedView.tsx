@@ -48,14 +48,14 @@ function FeedListHeader({
   return (
     <ScreenTransitionScope>
       <View>
-        <TransitionItem variant="header" index={0}>
+        <TransitionItem role="hero" index={0}>
         <View style={s.hero}>
           <Text style={s.heroTitle}>Events & Specials</Text>
           <Text style={s.heroSubtitle}>{subtitle}</Text>
         </View>
       </TransitionItem>
 
-      <TransitionItem variant="input" index={1}>
+      <TransitionItem role="subheading" index={1}>
         <View style={s.searchWrap}>
           <HomeSearchBar
             value={searchQuery}
@@ -66,7 +66,7 @@ function FeedListHeader({
         </View>
       </TransitionItem>
 
-      <TransitionItem variant="card" index={2}>
+      <TransitionItem role="support" index={2}>
         <View style={s.filterRow}>
           {FILTER_OPTIONS.map((opt) => (
             <Pressable
@@ -83,7 +83,7 @@ function FeedListHeader({
       </TransitionItem>
 
       {debouncedQuery.length > 0 ? (
-        <TransitionItem variant="card" index={3}>
+        <TransitionItem role="support" index={3}>
           <Text style={s.countText}>
             {filteredCount > 0
               ? `${filteredCount} result${filteredCount !== 1 ? 's' : ''} for "${debouncedQuery}"`
@@ -91,7 +91,7 @@ function FeedListHeader({
           </Text>
         </TransitionItem>
       ) : showCount ? (
-        <TransitionItem variant="card" index={3}>
+        <TransitionItem role="support" index={3}>
           <Text style={s.countText}>{countText}</Text>
         </TransitionItem>
       ) : null}

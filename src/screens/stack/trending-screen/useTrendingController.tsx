@@ -4,7 +4,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { useNavigation } from 'expo-router';
 import type { BusinessListItemDto } from '@sayso/contracts';
@@ -13,6 +12,7 @@ import { useBusinessSearch } from '../../../hooks/useBusinessSearch';
 import { useGlobalScrollToTop } from '../../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../../hooks/useRealtimeQueryInvalidation';
 import { useTrending } from '../../../hooks/useTrending';
+import { haptics } from '../../../lib/haptics';
 import { NAVBAR_BG_COLOR } from '../../../styles/colors';
 import {
   BACK_TO_TOP_THRESHOLD,
@@ -129,11 +129,7 @@ export function useTrendingController() {
 
   const handleDistanceSelect = useCallback(
     (km: number) => {
-      try {
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {
-        // no-op
-      }
+      haptics.navigation();
 
       const next = filters.radiusKm === km ? null : km;
       setFilters((previous) => ({ ...previous, radiusKm: next }));
@@ -153,11 +149,7 @@ export function useTrendingController() {
   );
 
   const handleRatingSelect = useCallback((rating: number) => {
-    try {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {
-      // no-op
-    }
+    haptics.navigation();
     setFilters((previous) => ({
       ...previous,
       minRating: previous.minRating === rating ? null : rating,

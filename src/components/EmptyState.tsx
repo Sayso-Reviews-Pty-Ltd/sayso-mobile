@@ -14,7 +14,7 @@ type Props = {
 
 export function EmptyState({ icon = 'search', title, message, actionLabel, onAction }: Props) {
   function handleAction() {
-    haptics.tap();
+    haptics.navigation();
     onAction?.();
   }
 

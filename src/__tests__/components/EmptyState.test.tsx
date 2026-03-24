@@ -4,10 +4,10 @@ import { EmptyState } from '../../components/EmptyState';
 import { haptics } from '../../lib/haptics';
 
 jest.mock('../../lib/haptics', () => ({
-  haptics: { tap: jest.fn() },
+  haptics: { navigation: jest.fn() },
 }));
 
-const mockTap = (haptics.tap as jest.Mock);
+const mockNavigation = (haptics.navigation as jest.Mock);
 
 describe('EmptyState', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -56,16 +56,16 @@ describe('EmptyState', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
-  it('calls haptics.tap() when the button is pressed', () => {
+  it('calls haptics.navigation() when the button is pressed', () => {
     render(<EmptyState title="Title" actionLabel="Go" onAction={jest.fn()} />);
     fireEvent.press(screen.getByText('Go'));
-    expect(mockTap).toHaveBeenCalledTimes(1);
+    expect(mockNavigation).toHaveBeenCalledTimes(1);
   });
 
-  it('calls haptics.tap() before onAction', () => {
+  it('calls haptics.navigation() before onAction', () => {
     const callOrder: string[] = [];
     const onAction = jest.fn(() => callOrder.push('onAction'));
-    mockTap.mockImplementation(() => callOrder.push('haptics'));
+    mockNavigation.mockImplementation(() => callOrder.push('haptics'));
 
     render(<EmptyState title="Title" actionLabel="Go" onAction={onAction} />);
     fireEvent.press(screen.getByText('Go'));

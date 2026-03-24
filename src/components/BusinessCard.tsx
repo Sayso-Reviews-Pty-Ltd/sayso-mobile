@@ -82,7 +82,7 @@ function BusinessCardComponent({ business, style }: Props) {
   }, [businessIdentifier, href, router]);
 
   const handleNavigate = useCallback(() => {
-    haptics.tap();
+    haptics.navigation();
     markRouteTransitionStart(`business:${businessIdentifier}`);
     router.push(href as never);
   }, [businessIdentifier, href, router]);

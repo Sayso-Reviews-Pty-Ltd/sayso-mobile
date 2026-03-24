@@ -1,6 +1,6 @@
 import { Pressable, TextInput, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
+import { haptics } from '../../../../lib/haptics';
 import { C } from './constants';
 import { styles } from './styles';
 
@@ -29,9 +29,7 @@ export function InboxSearchBar({
         {value.length > 0 ? (
           <Pressable
             onPress={() => {
-              try {
-                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              } catch {}
+              haptics.navigation();
               onClear();
             }}
             hitSlop={8}

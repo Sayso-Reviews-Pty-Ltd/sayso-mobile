@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Platform, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -11,11 +12,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import {
-  MOTION_VARIANTS,
+  EXIT_OPACITY_DURATION,
+  getEnterDelay,
+  getExitDelay,
+  getMotionPhaseTargets,
+  MOTION_ROLES,
+  type MotionPhase,
   OPACITY_LEAD_DURATION,
   REDUCED_MOTION_DURATION,
-  STAGGER_MAX_DELAY,
-  STAGGER_STEP,
+  resolveMotionRole,
+  type MotionRole,
   type MotionVariant,
 } from './motionTokens';
 import { usePageTransitionScope } from './TransitionScope';
@@ -25,6 +31,7 @@ type Props = {
   index?: number;
   style?: StyleProp<ViewStyle>;
   variant?: MotionVariant;
+  role?: MotionRole;
   animate?: boolean;
   disableOnVirtualized?: boolean;
 };
@@ -33,14 +40,19 @@ export function TransitionItem({
   children,
   index = 0,
   style,
-  variant = 'card',
+  variant = 'support',
+  role,
   animate = true,
   disableOnVirtualized = false,
 }: Props) {
+  const isFocused = useIsFocused();
   const reducedMotionEnabled = useReducedMotion();
-  const spec = MOTION_VARIANTS[variant];
+  const motionRole = resolveMotionRole(role ?? variant);
+  const spec = MOTION_ROLES[motionRole];
   const scope = usePageTransitionScope();
   const scopeTick = scope?.scopeTick ?? 0;
+  const phase = (scope?.phase ?? (isFocused ? 'enter' : 'exit')) as MotionPhase;
+  const maxIndex = scope?.maxIndex ?? index;
   const shouldAnimate = animate && !disableOnVirtualized;
 
   // Three independent shared values rather than a single 0→1 progress scalar.
@@ -62,8 +74,8 @@ export function TransitionItem({
   }, [scope]);
 
   useEffect(() => {
-    scope?.registerItem();
-  }, [scope, scopeTick]);
+    scope?.registerItem(index);
+  }, [index, scope, scopeTick]);
 
   useEffect(() => {
     if (!shouldAnimate) {
@@ -78,26 +90,25 @@ export function TransitionItem({
 
     const delay = reducedMotionEnabled
       ? 0
-      : Math.min(spec.baseDelay + index * STAGGER_STEP, STAGGER_MAX_DELAY);
+      : phase === 'enter'
+      ? getEnterDelay(motionRole, index)
+      : getExitDelay(motionRole, index, maxIndex);
 
-    // Always reset to the resting-before-animation state before replaying,
-    // so re-entry (e.g. tab switch) always plays the full reveal.
     cancelAnimation(opacity);
     cancelAnimation(translateY);
     cancelAnimation(scale);
-    opacity.value = 0;
-    translateY.value = spec.translateY;
-    scale.value = spec.scaleFrom;
+
+    const targets = getMotionPhaseTargets(motionRole, phase, reducedMotionEnabled);
+
+    opacity.value = targets.opacityFrom;
+    translateY.value = targets.translateYFrom;
+    scale.value = targets.scaleFrom;
 
     if (reducedMotionEnabled) {
-      // Accessibility path: flat fade + gentle slide, no spring physics.
-      opacity.value = withDelay(delay, withTiming(1, { duration: REDUCED_MOTION_DURATION }));
-      translateY.value = withDelay(
+      opacity.value = withDelay(
         delay,
-        withTiming(0, { duration: REDUCED_MOTION_DURATION, easing: Easing.out(Easing.quad) }),
+        withTiming(targets.opacityTo, { duration: REDUCED_MOTION_DURATION }),
       );
-      // No scale animation — keep it maximally calm.
-      scale.value = 1;
     } else {
       const springConfig = {
         stiffness: spec.stiffness,
@@ -105,26 +116,35 @@ export function TransitionItem({
         mass: spec.mass,
       };
 
-      // Opacity: fast timing that leads the spring. The element fades in while
-      // it's still travelling, so the motion reads as purposeful arrival rather
-      // than a ghostly fade-and-stop.
-      opacity.value = withDelay(
-        delay,
-        withTiming(1, { duration: OPACITY_LEAD_DURATION, easing: Easing.out(Easing.quad) }),
-      );
-
-      // Position: spring physics. The element has inertia — it slightly
-      // overshoots zero and settles back, like a physical object being placed.
-      translateY.value = withDelay(delay, withSpring(0, springConfig));
-
-      // Scale: same spring so position and size settle together. Only applied
-      // to variants where the pop-in reads as intentional (card, cta).
-      if (spec.scaleFrom < 1) {
-        scale.value = withDelay(delay, withSpring(1, springConfig));
+      if (phase === 'enter') {
+        opacity.value = withDelay(
+          delay,
+          withTiming(1, { duration: OPACITY_LEAD_DURATION, easing: Easing.out(Easing.quad) }),
+        );
+        translateY.value = withDelay(delay, withSpring(targets.translateYTo, springConfig));
+        if (spec.scaleFrom < 1) {
+          scale.value = withDelay(delay, withSpring(targets.scaleTo, springConfig));
+        } else {
+          scale.value = 1;
+        }
+      } else {
+        opacity.value = withDelay(
+          delay,
+          withTiming(0, { duration: EXIT_OPACITY_DURATION, easing: Easing.out(Easing.quad) }),
+        );
+        translateY.value = withDelay(delay, withSpring(targets.translateYTo, springConfig));
+        if (spec.scaleFrom < 1) {
+          scale.value = withDelay(delay, withSpring(targets.scaleTo, springConfig));
+        } else {
+          scale.value = 1;
+        }
       }
     }
   }, [
+    phase,
     index,
+    maxIndex,
+    motionRole,
     opacity,
     reducedMotionEnabled,
     scale,

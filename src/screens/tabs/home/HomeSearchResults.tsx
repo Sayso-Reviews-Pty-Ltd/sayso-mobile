@@ -152,7 +152,7 @@ export function HomeSearchResults({
                       key={`distance-${value}`}
                       style={[styles.filterChip, distanceKm === value ? styles.filterChipActive : null]}
                       onPress={() => {
-                        haptics.selection();
+                        haptics.navigation();
                         track('discovery.filter_applied', { filter: 'distance' });
                         onSetDistanceKm(distanceKm === value ? null : value);
                       }}
@@ -174,7 +174,7 @@ export function HomeSearchResults({
                       key={`rating-${value}`}
                       style={[styles.filterChip, minRating === value ? styles.filterChipActive : null]}
                       onPress={() => {
-                        haptics.selection();
+                        haptics.navigation();
                         track('discovery.filter_applied', { filter: 'rating' });
                         onSetMinRating(minRating === value ? null : value);
                       }}

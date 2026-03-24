@@ -160,7 +160,7 @@ function HomeScreenViewComponent({
             headerCollapsed ? styles.headerRowWrapCollapsed : styles.headerRowWrapExpanded,
           ]}
         >
-          <TransitionItem variant="header" index={0}>
+          <TransitionItem role="hero" index={0}>
             <View style={styles.headerRow}>
               <View style={styles.headerCopy}>
                 <Text style={styles.headerTitle}>Sayso</Text>
@@ -170,7 +170,7 @@ function HomeScreenViewComponent({
           </TransitionItem>
         </View>
         <View style={[styles.searchBarWrap, headerCollapsed ? styles.searchBarWrapCollapsed : styles.searchBarWrapExpanded]}>
-          <TransitionItem variant="input" index={1}>
+          <TransitionItem role="subheading" index={1}>
             <HomeSearchBar
               value={searchInput}
               onChangeText={(value) => {
@@ -215,7 +215,7 @@ function HomeScreenViewComponent({
 
       {isSearchActive ? (
         <ScreenTransitionScope>
-          <TransitionItem variant="card" index={2} style={styles.flexOne}>
+          <TransitionItem role="support" index={2} style={styles.flexOne}>
             <HomeSearchResults
               listRef={searchResultsRef}
               query={debouncedQuery}
@@ -251,7 +251,7 @@ function HomeScreenViewComponent({
             onScroll={handleScroll}
             scrollEventThrottle={16}
           >
-            <TransitionItem variant="card" index={3}>
+            <TransitionItem role="support" index={3}>
               <ForYouSection
                 user={user}
                 forYou={forYou}
@@ -261,7 +261,7 @@ function HomeScreenViewComponent({
               />
             </TransitionItem>
 
-            <TransitionItem variant="card" index={4}>
+            <TransitionItem role="support" index={4}>
               <View style={styles.section}>
                 <HomeSectionHeader
                   title="Trending Now"
@@ -278,7 +278,7 @@ function HomeScreenViewComponent({
               </View>
             </TransitionItem>
 
-            <TransitionItem variant="card" index={5}>
+            <TransitionItem role="support" index={5}>
               <View style={styles.section}>
                 <HomeSectionHeader
                   title="Events & Specials"
@@ -293,7 +293,7 @@ function HomeScreenViewComponent({
               </View>
             </TransitionItem>
 
-            <TransitionItem variant="card" index={6}>
+            <TransitionItem role="support" index={6}>
               <HomeCommunityHighlightsSection
                 reviewers={reviewers.reviewers}
                 reviewersMode={reviewers.mode}

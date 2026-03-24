@@ -96,13 +96,13 @@ export function NotificationItem({ notification, onPress, onDismiss }: Props) {
       snapBack();
       return;
     }
-    haptics.tap();
+    haptics.navigation();
     onPress?.();
   };
 
   const handleDelete = async () => {
     if (!onDismiss) return;
-    haptics.tap();
+    haptics.navigation();
     try {
       await onDismiss();
       // On success query invalidation removes the item — no manual animation needed.

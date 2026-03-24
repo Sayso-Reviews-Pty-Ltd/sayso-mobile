@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '../../components/EmptyState';
+import { LoadingCrossfade } from '../../components/LoadingCrossfade';
 import {
   EventSpecialActionCard,
   EventSpecialContactInfoCard,
@@ -312,18 +313,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
     [handleShareEventSpecial, handleToggleSaveFromEventSpecial, isLinkedBusinessSaved, linkedBusinessId, saveBusy]
   );
 
-  if (detailQuery.isLoading) {
-    return (
-      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-        <Stack.Screen options={{ headerShown: false }} />
-        <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
-        <View style={[styles.topChrome, { height: insets.top }]} />
-        <EventSpecialSkeleton />
-      </SafeAreaView>
-    );
-  }
-
-  if (!item || detailQuery.isError || item.isExpired) {
+  if (!detailQuery.isLoading && (!item || detailQuery.isError || item.isExpired)) {
     const missingMessage =
       detailQuery.errorStatus === 404
         ? routeType === 'special'
@@ -354,114 +344,119 @@ export default function EventSpecialScreen({ routeType }: Props) {
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} />
       <View style={[styles.topChrome, { height: insets.top }]} />
-
-      <View style={[styles.stickyHeader, { backgroundColor: NAVBAR_BG_COLOR }]}>
-        <EventSpecialPageHeader
-          onPressBack={handleBack}
-          onPressNotifications={() => router.push(routes.notifications() as never)}
-          onPressMessages={() => router.push(routes.dmInbox() as never)}
-          rightActions={headerRightActions}
-          collapsed={true}
-        />
-      </View>
-
-      <ScreenTransitionScope>
-        <ScrollView
-          ref={scrollRef}
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-        <View style={styles.mainColumn}>
-          <TransitionItem variant="card" index={0}>
-            <EventSpecialHero item={item} rating={effectiveRating} />
-          </TransitionItem>
-
-          <TransitionItem variant="card" index={1}>
-            <EventSpecialInfoBlock
-              title={item.title}
-              rating={effectiveRating}
-              location={item.location}
-              type={item.type}
-            />
-          </TransitionItem>
-
-          <TransitionItem variant="card" index={2}>
-            <EventSpecialDescriptionCard
-              description={item.description}
-              title={item.type === 'special' ? 'About This Special' : 'About This Event'}
-            />
-          </TransitionItem>
-        </View>
-
-        {showDeferredSections ? (
+      <LoadingCrossfade loading={detailQuery.isLoading} skeleton={<EventSpecialSkeleton />}>
+        {item ? (
           <>
-            <View style={styles.mainColumn}>
-              <TransitionItem variant="card" index={3}>
-                <EventSpecialMoreDatesCard
-                  currentStartISO={item.startDateISO}
-                  currentEndISO={item.endDateISO}
-                  occurrences={item.occurrencesList}
-                  onPressDate={(occurrenceId) => {
-                    const target = item.type === 'special' ? routes.specialDetail(occurrenceId) : routes.eventDetail(occurrenceId);
-                    router.push(target as never);
-                  }}
-                />
-              </TransitionItem>
-
-              <TransitionItem variant="card" index={4}>
-                <EventSpecialActionCard
-                  item={item}
-                  routeType={routeType}
-                  isGoing={rsvp.isGoing}
-                  rsvpCount={rsvp.count}
-                  rsvpBusy={rsvp.isToggling}
-                  reminderBusy={reminder.isMutating}
-                  hasReminder1Day={reminder.hasReminder('1_day')}
-                  hasReminder2Hours={reminder.hasReminder('2_hours')}
-                  onPressGoing={() => void handlePressGoing()}
-                  onPressReminder={(option) => void handlePressReminder(option)}
-                  onPressWriteReview={handlePressWriteReview}
-                />
-              </TransitionItem>
-
-              <TransitionItem variant="card" index={5}>
-                <EventSpecialDetailsCard item={item} />
-              </TransitionItem>
-
-              <TransitionItem variant="card" index={6}>
-                <EventSpecialContactInfoCard item={item} />
-              </TransitionItem>
+            <View style={[styles.stickyHeader, { backgroundColor: NAVBAR_BG_COLOR }]}>
+              <EventSpecialPageHeader
+                onPressBack={handleBack}
+                onPressNotifications={() => router.push(routes.notifications() as never)}
+                onPressMessages={() => router.push(routes.dmInbox() as never)}
+                rightActions={headerRightActions}
+                collapsed={true}
+              />
             </View>
 
-            <TransitionItem variant="card" index={7}>
-              <EventSpecialReviewsSection
-                title={item.type === 'special' ? 'Special Reviews' : 'Event Reviews'}
-                targetId={id ?? item.id}
-                reviews={reviews.reviews}
-                isLoading={reviews.isLoading}
-                error={reviews.error}
-                onRefresh={() => {
-                  void reviews.refetch();
-                }}
-                onPressWriteReview={handlePressWriteReview}
-              />
-            </TransitionItem>
+            <ScreenTransitionScope>
+              <ScrollView
+                ref={scrollRef}
+                style={styles.scroll}
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+              >
+              <View style={styles.mainColumn}>
+                <TransitionItem role="hero" index={0}>
+                  <EventSpecialHero item={item} rating={effectiveRating} />
+                </TransitionItem>
 
-            <TransitionItem variant="card" index={8}>
-              <EventSpecialRelatedSection
-                title={item.type === 'special' ? 'More Specials Near You' : 'More Events Near You'}
-                items={related.items}
-                isLoading={related.isLoading}
-                error={related.error}
-              />
-            </TransitionItem>
+                <TransitionItem role="subheading" index={1}>
+                  <EventSpecialInfoBlock
+                    title={item.title}
+                    rating={effectiveRating}
+                    location={item.location}
+                    type={item.type}
+                  />
+                </TransitionItem>
+
+                <TransitionItem role="support" index={2}>
+                  <EventSpecialDescriptionCard
+                    description={item.description}
+                    title={item.type === 'special' ? 'About This Special' : 'About This Event'}
+                  />
+                </TransitionItem>
+              </View>
+
+              {showDeferredSections ? (
+                <>
+                  <View style={styles.mainColumn}>
+                    <TransitionItem role="support" index={3}>
+                      <EventSpecialMoreDatesCard
+                        currentStartISO={item.startDateISO}
+                        currentEndISO={item.endDateISO}
+                        occurrences={item.occurrencesList}
+                        onPressDate={(occurrenceId) => {
+                          const target = item.type === 'special' ? routes.specialDetail(occurrenceId) : routes.eventDetail(occurrenceId);
+                          router.push(target as never);
+                        }}
+                      />
+                    </TransitionItem>
+
+                    <TransitionItem role="cta" index={4}>
+                      <EventSpecialActionCard
+                        item={item}
+                        routeType={routeType}
+                        isGoing={rsvp.isGoing}
+                        rsvpCount={rsvp.count}
+                        rsvpBusy={rsvp.isToggling}
+                        reminderBusy={reminder.isMutating}
+                        hasReminder1Day={reminder.hasReminder('1_day')}
+                        hasReminder2Hours={reminder.hasReminder('2_hours')}
+                        onPressGoing={() => void handlePressGoing()}
+                        onPressReminder={(option) => void handlePressReminder(option)}
+                        onPressWriteReview={handlePressWriteReview}
+                      />
+                    </TransitionItem>
+
+                    <TransitionItem role="support" index={5}>
+                      <EventSpecialDetailsCard item={item} />
+                    </TransitionItem>
+
+                    <TransitionItem role="support" index={6}>
+                      <EventSpecialContactInfoCard item={item} />
+                    </TransitionItem>
+                  </View>
+
+                  <TransitionItem role="support" index={7}>
+                    <EventSpecialReviewsSection
+                      title={item.type === 'special' ? 'Special Reviews' : 'Event Reviews'}
+                      targetId={id ?? item.id}
+                      reviews={reviews.reviews}
+                      isLoading={reviews.isLoading}
+                      error={reviews.error}
+                      onRefresh={() => {
+                        void reviews.refetch();
+                      }}
+                      onPressWriteReview={handlePressWriteReview}
+                    />
+                  </TransitionItem>
+
+                  <TransitionItem role="support" index={8}>
+                    <EventSpecialRelatedSection
+                      title={item.type === 'special' ? 'More Specials Near You' : 'More Events Near You'}
+                      items={related.items}
+                      isLoading={related.isLoading}
+                      error={related.error}
+                    />
+                  </TransitionItem>
+                </>
+              ) : null}
+              </ScrollView>
+            </ScreenTransitionScope>
           </>
         ) : null}
-        </ScrollView>
-      </ScreenTransitionScope>
+      </LoadingCrossfade>
 
     </SafeAreaView>
   );

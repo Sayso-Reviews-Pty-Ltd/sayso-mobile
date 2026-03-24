@@ -14,13 +14,13 @@ const sharedHeaderStyles = {
 
 export const rootStackScreenOptions = {
   ...sharedHeaderStyles,
-  animation: 'none',
+  animation: 'fade',
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;
 
 export const sharedStackScreenOptions = {
   ...sharedHeaderStyles,
-  animation: 'none',
+  animation: 'fade',
   headerShadowVisible: false,
   headerStyle: { backgroundColor: NAVBAR_BG_COLOR },
   headerTintColor: '#FFFFFF',
@@ -30,7 +30,7 @@ export const sharedStackScreenOptions = {
 export const fullScreenModalScreenOptions = {
   ...sharedHeaderStyles,
   presentation: Platform.OS === 'web' ? 'card' : 'fullScreenModal',
-  animation: 'none',
+  animation: 'fade',
   headerShown: false,
   headerShadowVisible: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
@@ -39,7 +39,7 @@ export const fullScreenModalScreenOptions = {
 export const sheetModalScreenOptions = {
   ...sharedHeaderStyles,
   presentation: Platform.OS === 'web' ? 'card' : 'modal',
-  animation: 'none',
+  animation: 'fade',
   headerShadowVisible: false,
   contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
 } as const;

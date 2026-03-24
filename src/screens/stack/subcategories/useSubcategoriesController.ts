@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 import { apiFetch } from '../../../lib/api';
+import { haptics } from '../../../lib/haptics';
 import { routes } from '../../../navigation/routes';
 import { MAX, MIN } from './constants';
 import { buildHelperText, toVisibleGroups } from './helpers';
@@ -32,11 +32,7 @@ export function useSubcategoriesController() {
 
   const toggle = useCallback(
     (id: string) => {
-      try {
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {
-        // no-op
-      }
+      haptics.navigation();
 
       triggerExcite(id);
 
@@ -63,11 +59,7 @@ export function useSubcategoriesController() {
       return;
     }
 
-    try {
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      // no-op
-    }
+    haptics.complete();
 
     setIsLoading(true);
     setError('');

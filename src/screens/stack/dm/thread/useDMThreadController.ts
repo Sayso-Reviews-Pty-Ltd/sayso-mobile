@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthSession } from '../../../../hooks/useSession';
 import { apiFetch } from '../../../../lib/api';
+import { haptics } from '../../../../lib/haptics';
 import { supabase } from '../../../../lib/supabase';
 import type { MessageDto, MessagesApiResponse, SendMessageResponse } from './types';
 
@@ -74,11 +74,7 @@ export function useDMThreadController(threadId?: string) {
     const body = inputText.trim();
     if (!body) return;
 
-    try {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch {
-      // no-op
-    }
+    haptics.confirm();
 
     setInputText('');
 
@@ -98,6 +94,7 @@ export function useDMThreadController(threadId?: string) {
       await sendMutation.mutateAsync(body);
       setLocalMessages((previous) => previous.filter((message) => message.id !== localId));
     } catch {
+      haptics.error();
       setLocalMessages((previous) =>
         previous.map((message) =>
           message.id === localId ? { ...message, status: 'failed' } : message
@@ -107,11 +104,7 @@ export function useDMThreadController(threadId?: string) {
   }, [inputText, sendMutation, user?.id]);
 
   const handleRetry = useCallback((message: MessageDto) => {
-    try {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {
-      // no-op
-    }
+    haptics.navigation();
     setLocalMessages((previous) => previous.filter((item) => item.id !== message.id));
     setInputText(message.body);
   }, []);

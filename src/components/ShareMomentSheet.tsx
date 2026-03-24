@@ -10,13 +10,13 @@ type Props = { visible: boolean; onClose: () => void; moment: Moment; onShare?: 
 export function ShareMomentSheet({ visible, onClose, moment, onShare }: Props) {
   const handleShare = () => {
     onShare?.();
-    haptics.success();
+    haptics.complete();
     track('prestige.share_moment_tapped');
     onClose();
   };
 
   const handleDismiss = () => {
-    haptics.tap();
+    haptics.navigation();
     track('prestige.share_moment_dismissed');
     onClose();
   };

@@ -178,7 +178,7 @@ export function useWriteReviewSubmit(params: Params) {
         showSubmissionFeedback('success', successTitle, successMessage);
       }
 
-      if (!partialSuccessWarningMessage) haptics.success();
+      if (!partialSuccessWarningMessage) haptics.complete();
 
       if (!isEditMode && !partialSuccessWarningMessage) {
         setShowSuccessConfetti(true);

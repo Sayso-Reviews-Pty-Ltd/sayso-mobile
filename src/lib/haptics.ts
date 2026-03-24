@@ -5,11 +5,10 @@
 //
 // Usage:
 //   import { haptics } from '../lib/haptics';
-//   haptics.tap();        // press/navigation
+//   haptics.navigation(); // navigation transition intent
 //   haptics.confirm();    // save, vote, follow
-//   haptics.success();    // review submitted, tier unlocked
-//   haptics.milestone();  // badge earned, prestige upgrade
-//   haptics.error();      // failed action
+//   haptics.complete();   // completion/success moment
+//   haptics.error();      // failed action (double-tap pattern)
 
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
@@ -23,22 +22,32 @@ function run(fn: () => Promise<void>): void {
   fn().catch(() => {});
 }
 
+function wait(ms: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 export const haptics = {
-  /** Light tap — standard press, navigation, selection */
-  tap: () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)),
+  /** Light — navigation transitions and lightweight intent actions */
+  navigation: () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)),
 
   /** Medium confirmation — save, helpful vote, toggle */
   confirm: () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)),
 
-  /** Success notification — review submitted, share, complete */
-  success: () => run(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
+  /** Completion/success moment — medium by design (intent-forward, non-noisy) */
+  complete: () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)),
 
-  /** Milestone — badge earned, prestige tier upgrade */
-  milestone: () => run(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
+  /** Error — failed action with explicit double-tap pattern */
+  error: () => run(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await wait(70);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }),
 
-  /** Error — failed action, validation error */
-  error: () => run(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)),
-
-  /** Selection change — filter, tab switch */
-  selection: () => run(() => Haptics.selectionAsync()),
+  /** Legacy aliases kept for rollout compatibility */
+  tap: () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)),
+  success: () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)),
+  milestone: () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)),
+  selection: () => run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)),
 };

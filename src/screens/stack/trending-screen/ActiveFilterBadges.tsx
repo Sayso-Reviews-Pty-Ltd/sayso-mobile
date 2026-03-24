@@ -21,7 +21,7 @@ export function ActiveFilterBadges({
   onClearRadius,
 }: Props) {
   return (
-    <TransitionItem variant="card" index={3}>
+    <TransitionItem role="support" index={3}>
       <View style={styles.activeBadgesRow}>
         {minRating !== null ? (
           <Pressable style={styles.activeBadge} onPress={onClearRating}>

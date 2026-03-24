@@ -14,6 +14,10 @@ type Props = {
 
 const PULSE_MIN = 0.74;
 const PULSE_MAX = 0.96;
+export const SKELETON_SHIMMER_WIDTH_PERCENT = 240;
+export const SKELETON_SHIMMER_DURATION_MS = 2000;
+export const SKELETON_SHIMMER_TRANSLATE_START = -420;
+export const SKELETON_SHIMMER_TRANSLATE_END = 420;
 
 export function SkeletonBlock({
   style,
@@ -45,7 +49,7 @@ export function SkeletonBlock({
 
     shimmer.value = withRepeat(
       withSequence(
-        withDelay(160, withTiming(1, { duration: 1400, easing: Easing.linear })),
+        withDelay(220, withTiming(1, { duration: SKELETON_SHIMMER_DURATION_MS, easing: Easing.linear })),
         withTiming(0, { duration: 0 })
       ),
       -1,
@@ -65,8 +69,8 @@ export function SkeletonBlock({
   const shimmerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(shimmer.value, [0, 0.3, 0.7, 1], [0, 0.28, 0.28, 0]),
     transform: [
-      { translateX: interpolate(shimmer.value, [0, 1], [-140, 260]) },
-      { rotate: '18deg' },
+      { translateX: interpolate(shimmer.value, [0, 1], [SKELETON_SHIMMER_TRANSLATE_START, SKELETON_SHIMMER_TRANSLATE_END]) },
+      { rotate: '14deg' },
     ],
   }), []);
 
@@ -98,10 +102,10 @@ const styles = StyleSheet.create({
   },
   shimmer: {
     position: 'absolute',
-    top: -14,
-    bottom: -14,
-    width: '44%',
-    backgroundColor: 'rgba(255, 255, 255, 0.20)',
+    top: -18,
+    bottom: -18,
+    width: `${SKELETON_SHIMMER_WIDTH_PERCENT}%`,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   default: {
     backgroundColor: 'rgba(45, 45, 45, 0.10)',

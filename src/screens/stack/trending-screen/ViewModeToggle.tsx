@@ -12,7 +12,7 @@ type Props = {
 
 export function ViewModeToggle({ isMapMode, onSetMapMode }: Props) {
   return (
-    <TransitionItem variant="card" index={4}>
+    <TransitionItem role="support" index={4}>
       <View style={styles.toggleRow}>
         <View style={styles.togglePill}>
           <Pressable

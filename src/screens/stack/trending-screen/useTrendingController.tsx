@@ -5,7 +5,8 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import * as Location from 'expo-location';
-import { useNavigation } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { BusinessListItemDto } from '@sayso/contracts';
 import { businessDetailColors } from '../../../components/business-detail/styles';
 import { useBusinessSearch } from '../../../hooks/useBusinessSearch';
@@ -13,6 +14,7 @@ import { useGlobalScrollToTop } from '../../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../../hooks/useRealtimeQueryInvalidation';
 import { useTrending } from '../../../hooks/useTrending';
 import { haptics } from '../../../lib/haptics';
+import { routes } from '../../../navigation/routes';
 import { NAVBAR_BG_COLOR } from '../../../styles/colors';
 import {
   BACK_TO_TOP_THRESHOLD,
@@ -26,7 +28,10 @@ import { useTrendingFiltersPersistence } from './useTrendingFiltersPersistence';
 
 export function useTrendingController() {
   const navigation = useNavigation();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ reset?: string | string[] }>();
   const headerCollapsedRef = useRef(false);
+  const resetAppliedRef = useRef(false);
   const pendingScrollYRef = useRef(0);
   const scrollRafRef = useRef<number | null>(null);
 
@@ -45,6 +50,8 @@ export function useTrendingController() {
 
   const isSearching = debouncedQuery.trim().length >= 1;
   const hasFilters = filters.minRating !== null || filters.radiusKm !== null;
+  const resetParam = Array.isArray(params.reset) ? params.reset[0] : params.reset;
+  const shouldResetFromQuery = resetParam === '1';
 
   const trendingQuery = useTrending(50, !isSearching);
   const searchQuery = useBusinessSearch({
@@ -99,6 +106,37 @@ export function useTrendingController() {
 
   useRealtimeQueryInvalidation(realtimeTargets);
   useTrendingFiltersPersistence({ filters, setFilters });
+
+  useEffect(() => {
+    if (!shouldResetFromQuery || resetAppliedRef.current) {
+      return;
+    }
+
+    resetAppliedRef.current = true;
+
+    const resetAndConsume = async () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+
+      setInputValue('');
+      setDebouncedQuery('');
+      setFilters({ minRating: null, radiusKm: null });
+      setUserLocation(null);
+      setVisibleCount(VISIBLE_CHUNK);
+      setShowBackToTop(false);
+
+      try {
+        await AsyncStorage.removeItem('user_filters');
+      } catch {
+        // Keep UI responsive even if persistence clear fails.
+      }
+
+      router.replace(routes.trending() as never);
+    };
+
+    void resetAndConsume();
+  }, [router, shouldResetFromQuery]);
 
   useEffect(() => {
     setVisibleCount(VISIBLE_CHUNK);
@@ -168,6 +206,18 @@ export function useTrendingController() {
     setFilters({ minRating: null, radiusKm: null });
     setUserLocation(null);
   }, []);
+
+  const handleClearEverything = useCallback(() => {
+    setInputValue('');
+    setDebouncedQuery('');
+    setFilters({ minRating: null, radiusKm: null });
+    setUserLocation(null);
+    setVisibleCount(VISIBLE_CHUNK);
+  }, []);
+
+  const handleBrowseTrendingReset = useCallback(() => {
+    router.replace(routes.trendingReset() as never);
+  }, [router]);
 
   const handleRefresh = useCallback(() => {
     setVisibleCount(VISIBLE_CHUNK);
@@ -265,6 +315,8 @@ export function useTrendingController() {
   return {
     clearRatingFilter,
     clearRadiusFilter,
+    handleClearEverything,
+    handleBrowseTrendingReset,
     handleClearFilters,
     handleClearSearch,
     handleDistanceSelect,

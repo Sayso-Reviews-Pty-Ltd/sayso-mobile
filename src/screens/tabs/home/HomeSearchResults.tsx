@@ -17,6 +17,10 @@ import { APP_PAGE_GUTTER } from '../../../styles/layout';
 import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
 import { haptics } from '../../../lib/haptics';
 import { track } from '../../../lib/telemetry';
+import {
+  DISCOVERY_DISTANCE_TIERS,
+  resolveDiscoveryZeroResults,
+} from '../../../lib/discoveryRecovery';
 
 type Props = {
   query: string;
@@ -29,6 +33,8 @@ type Props = {
   onSetMinRating: (value: number | null) => void;
   onSetDistanceKm: (value: number | null) => void;
   onClearFilters: () => void;
+  onClearSearch: () => void;
+  onBrowseTrending: () => void;
   onRefresh: () => void;
   refreshing: boolean;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -38,29 +44,61 @@ type Props = {
 // ─── Contextual empty state ───────────────────────────────────────────────────
 function SearchEmptyState({
   query,
-  hasFilters,
-  onClearFilters,
+  minRating,
+  distanceKm,
+  onSetMinRating,
+  onSetDistanceKm,
+  onClearSearch,
+  onBrowseTrending,
 }: {
   query: string;
-  hasFilters: boolean;
-  onClearFilters: () => void;
+  minRating: number | null;
+  distanceKm: number | null;
+  onSetMinRating: (value: number | null) => void;
+  onSetDistanceKm: (value: number | null) => void;
+  onClearSearch: () => void;
+  onBrowseTrending: () => void;
 }) {
-  if (hasFilters) {
-    return (
-      <EmptyState
-        icon="options-outline"
-        title="No results match your filters"
-        message="Try adjusting your distance or minimum rating."
-        actionLabel="Clear filters"
-        onAction={onClearFilters}
-      />
-    );
-  }
+  const recovery = resolveDiscoveryZeroResults({
+    query,
+    minRating,
+    radiusKm: distanceKm,
+  });
+
+  const handleAction = () => {
+    switch (recovery.action) {
+      case 'expand_radius':
+        onSetDistanceKm(recovery.nextRadiusKm);
+        break;
+      case 'clear_radius':
+        onSetDistanceKm(null);
+        break;
+      case 'lower_rating':
+        onSetMinRating(recovery.nextMinRating);
+        break;
+      case 'clear_rating':
+        onSetMinRating(null);
+        break;
+      case 'clear_search':
+        onClearSearch();
+        break;
+      case 'browse_trending':
+        onBrowseTrending();
+        break;
+      default:
+        break;
+    }
+  };
+
+  const hasQuery = query.trim().length > 0;
+
   return (
     <EmptyState
-      icon="search-outline"
-      title={`No results for "${query.trim()}"`}
-      message="Try a different search term or explore a nearby area."
+      icon={hasQuery ? 'search-outline' : 'options-outline'}
+      title={hasQuery ? `No results for "${query.trim()}"` : 'No results match your filters'}
+      message={recovery.message}
+      actionLabel={recovery.actionLabel}
+      onAction={handleAction}
     />
   );
 }
@@ -70,12 +108,10 @@ const ratingOptions = [
   { label: '4.5+', value: 4.5 },
 ];
 
-const distanceOptions = [
-  { label: '1 km', value: 1 },
-  { label: '3 km', value: 3 },
-  { label: '5 km', value: 5 },
-  { label: '10 km', value: 10 },
-];
+const distanceOptions = DISCOVERY_DISTANCE_TIERS.map((value) => ({
+  label: `${value} km`,
+  value,
+}));
 
 export function HomeSearchResults({
   query,
@@ -88,6 +124,8 @@ export function HomeSearchResults({
   onSetMinRating,
   onSetDistanceKm,
   onClearFilters,
+  onClearSearch,
+  onBrowseTrending,
   onRefresh,
   refreshing,
   onScroll,
@@ -123,7 +161,7 @@ export function HomeSearchResults({
         data={isLoading ? [] : results}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <BusinessCard business={item} />}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: homeTokens.tightSpace }} />}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -202,8 +240,12 @@ export function HomeSearchResults({
           ) : (
             <SearchEmptyState
               query={query}
-              hasFilters={hasFilters}
-              onClearFilters={onClearFilters}
+              minRating={minRating}
+              distanceKm={distanceKm}
+              onSetMinRating={onSetMinRating}
+              onSetDistanceKm={onSetDistanceKm}
+              onClearSearch={onClearSearch}
+              onBrowseTrending={onBrowseTrending}
             />
           )
         }

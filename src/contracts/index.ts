@@ -63,11 +63,19 @@ export interface BusinessListItemDto {
   priceRange?: string;
   hasRating?: boolean;
   distance?: number | string;
+  distance_km?: number | null;
   lat?: number | null;
   lng?: number | null;
+  average_rating?: number;
+  review_count?: number;
+  last_reviewed_at?: string | null;
+  interest_tags?: string[];
+  subcategory_tags?: string[];
+  for_you_score?: number;
   percentiles?: BusinessPercentilesDto;
   verified?: boolean;
   href?: string;
+  fallback_tier?: 'tier_1' | 'tier_2' | 'tier_3' | 'tier_4';
 }
 
 export interface BusinessSearchResponseDto {
@@ -76,12 +84,19 @@ export interface BusinessSearchResponseDto {
   count: number;
 }
 
+export interface ForYouFeedMetaDto {
+  sparse?: boolean;
+  active_tiers?: Array<'tier_1' | 'tier_2' | 'tier_3' | 'tier_4'>;
+  location_source?: 'device' | 'fallback' | string;
+  radius_km?: number;
+}
+
 export interface PaginatedBusinessFeedResponseDto {
   items: BusinessListItemDto[];
   nextCursor: string | null;
   businesses?: BusinessListItemDto[];
   cursorId?: string | null;
-  meta?: Record<string, unknown>;
+  meta?: (Record<string, unknown> & ForYouFeedMetaDto) | Record<string, unknown>;
 }
 
 export interface UserPreferenceDto {

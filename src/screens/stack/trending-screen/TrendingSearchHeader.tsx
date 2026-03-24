@@ -1,17 +1,28 @@
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { Text } from '../../../components/Typography';
 import { HomeSearchBar } from '../../tabs/home/HomeSearchBar';
 import { styles } from './trendingStyles';
 
 type Props = {
+  activeFilterCount: number;
+  hasSearchAndFilters: boolean;
   inputValue: string;
   isFetching: boolean;
   onClear: () => void;
+  onClearEverything: () => void;
   onInputChange: (text: string) => void;
 };
 
-export function TrendingSearchHeader({ inputValue, isFetching, onClear, onInputChange }: Props) {
+export function TrendingSearchHeader({
+  activeFilterCount,
+  hasSearchAndFilters,
+  inputValue,
+  isFetching,
+  onClear,
+  onClearEverything,
+  onInputChange,
+}: Props) {
   return (
     <>
       <TransitionItem role="hero" index={0}>
@@ -28,7 +39,13 @@ export function TrendingSearchHeader({ inputValue, isFetching, onClear, onInputC
             onChangeText={onInputChange}
             onClear={onClear}
             isFetching={isFetching}
+            activeFilterCount={activeFilterCount}
           />
+          {hasSearchAndFilters ? (
+            <TouchableOpacity style={styles.clearEverythingButton} onPress={onClearEverything} activeOpacity={0.86}>
+              <Text style={styles.clearEverythingButtonText}>Clear everything</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </TransitionItem>
     </>

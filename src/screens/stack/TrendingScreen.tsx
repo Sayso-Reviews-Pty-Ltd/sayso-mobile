@@ -5,6 +5,8 @@ export default function TrendingScreen() {
   const {
     clearRatingFilter,
     clearRadiusFilter,
+    handleClearEverything,
+    handleBrowseTrendingReset,
     handleClearFilters,
     handleClearSearch,
     handleDistanceSelect,
@@ -24,6 +26,8 @@ export default function TrendingScreen() {
     <TrendingListShell
       clearRatingFilter={clearRatingFilter}
       clearRadiusFilter={clearRadiusFilter}
+      handleClearEverything={handleClearEverything}
+      handleBrowseTrendingReset={handleBrowseTrendingReset}
       handleClearFilters={handleClearFilters}
       handleClearSearch={handleClearSearch}
       handleDistanceSelect={handleDistanceSelect}

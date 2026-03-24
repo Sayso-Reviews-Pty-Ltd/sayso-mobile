@@ -5,7 +5,7 @@ import { CARD_RADIUS } from '../../../../styles/radii';
 import { NAVBAR_BG_COLOR } from '../../../../styles/colors';
 
 export const REVIEWER_CARD_WIDTH = 240;
-export const REVIEWER_GAP = 16;
+export const REVIEWER_GAP = homeTokens.tightSpace;
 export const REVIEWER_SKELETONS = [0, 1, 2] as const;
 export const FLATLIST_PERF = {
   initialNumToRender: 2,

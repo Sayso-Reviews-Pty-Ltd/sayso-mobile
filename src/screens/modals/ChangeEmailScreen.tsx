@@ -95,7 +95,7 @@ export default function ChangeEmailScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-  scroll: { paddingHorizontal: GRID * 2, alignItems: 'center' },
+  scroll: { paddingHorizontal: GRID, alignItems: 'center' },
   rail: { width: '100%', maxWidth: 420, gap: GRID * 3 },
   backBtnWrap: { position: 'absolute', left: GRID * 2, zIndex: 20 },
   backBtn: {

@@ -1,10 +1,10 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring,
   withDelay, withSequence, Easing, makeMutable, type SharedValue,
 } from 'react-native-reanimated';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +15,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { apiFetch } from '../../lib/api';
 import { haptics } from '../../lib/haptics';
 import { routes } from '../../navigation/routes';
+import { useProfile } from '../../providers/ProfileProvider';
 
 const MIN = 3;
 const MAX = 6;
@@ -55,7 +56,7 @@ type InterestItemProps = {
 
 const InterestItem = memo(function InterestItem({ item, mutables, isSelected, isDisabled, onPress }: InterestItemProps) {
   const wrapStyle = useAnimatedStyle(() => ({
-    width: '48.2%',
+    width: '48.5%',
     opacity: mutables.opacity.value,
     transform: [
       { translateY: mutables.y.value },
@@ -104,10 +105,22 @@ const InterestItem = memo(function InterestItem({ item, mutables, isSelected, is
 
 export default function InterestsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ edit?: string | string[]; returnTo?: string | string[] }>();
+  const { profileState } = useProfile();
   const reducedMotion = useReducedMotion();
   const [selected, setSelected] = useState<Set<InterestId>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const editParam = Array.isArray(params.edit) ? params.edit[0] : params.edit;
+  const returnToParam = Array.isArray(params.returnTo) ? params.returnTo[0] : params.returnTo;
+  const isEditMode = editParam === '1' && Boolean(profileState?.isOnboardingComplete);
+  const editReturnRoute = useMemo(() => {
+    if (typeof returnToParam === 'string' && returnToParam.startsWith('/')) {
+      return returnToParam;
+    }
+    return routes.forYou();
+  }, [returnToParam]);
 
   const badgeOpacity = useSharedValue(0);
   const badgeY = useSharedValue(12);
@@ -266,15 +279,25 @@ export default function InterestsScreen() {
         body: JSON.stringify({ interests: ids }),
       });
       await AsyncStorage.setItem('onboarding_interests', JSON.stringify(ids));
-      router.push(routes.subcategories() as never);
+      if (isEditMode) {
+        router.replace(editReturnRoute as never);
+      } else {
+        router.push(routes.subcategories() as never);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save interests. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  }, [canContinue, isLoading, router, selected]);
+  }, [canContinue, editReturnRoute, isEditMode, isLoading, router, selected]);
 
-  const handleBack = () => router.replace(routes.register() as never);
+  const handleBack = () => {
+    if (isEditMode) {
+      router.replace(editReturnRoute as never);
+      return;
+    }
+    router.replace(routes.register() as never);
+  };
 
   const helperText =
     selected.size < MIN
@@ -346,6 +369,7 @@ const styles = StyleSheet.create({
   contentLayer: {
     position: 'relative',
     zIndex: 1,
+    width: '100%',
   },
 
   errorBanner: {
@@ -355,7 +379,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   errorText: {
     color: ONBOARDING_TOKENS.coral,
@@ -367,17 +391,17 @@ const styles = StyleSheet.create({
 
   selectionWrap: {
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   selectionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     borderWidth: 1,
     borderColor: 'rgba(157,171,155,0.2)',
     backgroundColor: 'rgba(157,171,155,0.10)',
     borderRadius: 999,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   selectionPillReady: {
@@ -402,7 +426,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 14,
+    rowGap: 12,
   },
   circle: {
     width: '100%',

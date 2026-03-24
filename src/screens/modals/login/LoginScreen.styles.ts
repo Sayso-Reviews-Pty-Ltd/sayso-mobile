@@ -6,7 +6,7 @@ export const styles = StyleSheet.create({
   flex: { flex: 1 },
 
   scroll: {
-    paddingHorizontal: GRID * 2,
+    paddingHorizontal: GRID,
     alignItems: 'center',
   },
 

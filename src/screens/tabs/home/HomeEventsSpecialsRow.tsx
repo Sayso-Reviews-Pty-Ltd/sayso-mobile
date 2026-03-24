@@ -9,7 +9,7 @@ import { CARD_RADIUS } from '../../../styles/radii';
 import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
-const GAP = 14;
+const GAP = homeTokens.tightSpace;
 const SKELETONS = [0, 1, 2];
 const SCALE_INACTIVE = 0.92;
 const OPACITY_INACTIVE = 0.7;

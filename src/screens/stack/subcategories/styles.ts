@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   errorText: {
     color: ONBOARDING_TOKENS.coral,
@@ -25,12 +25,12 @@ export const styles = StyleSheet.create({
   counterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     borderWidth: 1,
     borderColor: 'rgba(157,171,155,0.2)',
     backgroundColor: 'rgba(157,171,155,0.10)',
     borderRadius: 999,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   counterPillReady: {
@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
   },
   counterHint: {
-    marginTop: 7,
+    marginTop: 8,
     fontSize: 13,
     lineHeight: 18,
     color: ONBOARDING_TOKENS.charcoal60,

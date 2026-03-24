@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter, useRootNavigationState } from 'expo-router';
+import { useGlobalSearchParams, usePathname, useRouter, useRootNavigationState } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../providers/AuthProvider';
 import { useProfile } from '../providers/ProfileProvider';
@@ -80,6 +80,14 @@ function isPrivate(pathname: string): boolean {
   );
 }
 
+function readFirstQueryValue(value: unknown): string | null {
+  if (Array.isArray(value)) {
+    const first = value[0];
+    return typeof first === 'string' ? first : null;
+  }
+  return typeof value === 'string' ? value : null;
+}
+
 function stepToRoute(step: string | null): string {
   switch (step) {
     case 'subcategories': return routes.subcategories();
@@ -124,6 +132,7 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
   const isTestEnv = process.env.NODE_ENV === 'test';
   const router = useRouter();
   const pathname = usePathname();
+  const query = useGlobalSearchParams<{ edit?: string | string[] }>();
   const { session, isLoading: isAuthLoading } = useAuth();
   const { profileState, isProfileLoading } = useProfile();
   // Used in Case 2 to verify the role-unsupported route is registered before
@@ -186,6 +195,7 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
     const isUnauthOnly     = isMatch(pathname, UNAUTHENTICATED_ONLY_ROUTES);
     const isAuthBridge     = isMatch(pathname, AUTH_BRIDGE_ROUTES);
     const isOnboardingStep = isMatch(pathname, ONBOARDING_STEP_ROUTES);
+    const isEditMode = readFirstQueryValue(query.edit) === '1';
 
     function navigate(target: string) {
       if (target === pathname || lastRedirectRef.current === target) return;
@@ -305,7 +315,8 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
 
     // ── Case 5: Fully onboarded ───────────────────────────────────────────────
     // Move logged-in, onboarded users off landing/auth/onboarding screens
-    if (isUnauthOnly || isOnboardingStep) {
+    const allowOnboardingEdit = isOnboardingStep && isEditMode;
+    if (isUnauthOnly || (isOnboardingStep && !allowOnboardingEdit)) {
       // Clear any stale resume so normal completion never triggers a resume redirect.
       AsyncStorage.removeItem(ONBOARDING_RESUME_KEY).catch(() => {});
       setResumeRoute(null);
@@ -313,7 +324,7 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
     }
     // Auth-bridge routes (verify-email, role-unsupported) — let them sit there;
     // they'll navigate forward themselves once their state resolves.
-  }, [isAuthLoading, isProfileLoading, session, profileState, pathname, router, navigationState, resumeRoute, resumeLoaded]);
+  }, [isAuthLoading, isProfileLoading, session, profileState, pathname, query.edit, router, navigationState, resumeRoute, resumeLoaded]);
 
   return <>{children}</>;
 }

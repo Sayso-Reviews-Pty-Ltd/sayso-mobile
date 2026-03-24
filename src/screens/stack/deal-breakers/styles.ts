@@ -7,8 +7,8 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(114,47,55,0.35)',
     borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     marginBottom: 16,
   },
   errorText: {

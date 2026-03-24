@@ -5,7 +5,6 @@ import {
   Easing,
   LayoutAnimation,
   Platform,
-  Pressable,
   StyleSheet,
   UIManager,
   View,
@@ -169,15 +168,11 @@ export function BusinessReviewsSection({ businessId, onPressWriteReview, newRevi
         )}
 
         {isExpanded && hasNextPage && (
-          <Pressable
-            style={[styles.loadMoreButton, isFetchingNextPage && styles.loadMoreDisabled]}
+          <LoadMoreButton
             onPress={handleLoadMoreReviews}
-            disabled={isFetchingNextPage}
-          >
-            <Text style={styles.loadMoreText}>
-              {isFetchingNextPage ? 'Loading...' : 'Load more reviews'}
-            </Text>
-          </Pressable>
+            loading={isFetchingNextPage}
+            label="Load more reviews"
+          />
         )}
       </View>
     </View>
@@ -205,13 +200,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
   },
-  loadMoreButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 16,
-  },
   toggleButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -226,16 +214,8 @@ const styles = StyleSheet.create({
   toggleButtonPressed: {
     opacity: 0.75,
   },
-  loadMoreDisabled: {
-    opacity: 0.7,
-  },
   toggleText: {
     color: businessDetailColors.charcoal,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  loadMoreText: {
-    color: businessDetailColors.coral,
     fontSize: 13,
     fontWeight: '700',
   },

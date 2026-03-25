@@ -124,7 +124,11 @@ function ReviewImage({ uri, onPress }: { uri: string; onPress: () => void }) {
   }
 
   return (
-    <Pressable onPress={onPress}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="View full image"
+    >
       <Image
         source={{ uri }}
         style={styles.reviewImage}
@@ -140,7 +144,12 @@ function ImageLightbox({ uri, onClose }: { uri: string; onClose: () => void }) {
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.lightboxOverlay} onPress={onClose}>
         <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
-        <Pressable style={styles.lightboxClose} onPress={onClose}>
+        <Pressable
+          style={styles.lightboxClose}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close image preview"
+        >
           <Ionicons name="close" size={22} color={C.white} />
         </Pressable>
       </Pressable>
@@ -225,7 +234,12 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
             {review.content}
           </Text>
           {isLongBody ? (
-            <Pressable onPress={() => setExpanded((v) => !v)}>
+            <Pressable
+              onPress={() => setExpanded((v) => !v)}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              accessibilityRole="button"
+              accessibilityLabel={expanded ? 'Show less of this review' : 'Read more of this review'}
+            >
               <Text style={styles.readMoreText}>
                 {expanded ? 'Show less' : 'Read more'}
               </Text>

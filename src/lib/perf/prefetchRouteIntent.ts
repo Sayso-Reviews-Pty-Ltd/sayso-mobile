@@ -59,7 +59,8 @@ export function prefetchRouteIntent(routeKey: string, params: PrefetchParams) {
           queryKey: prefetch.queryKey,
           queryFn: prefetch.queryFn,
           staleTime: prefetch.staleTime ?? 60_000,
-        })
+                retry: 1,
+})
       );
     }
 

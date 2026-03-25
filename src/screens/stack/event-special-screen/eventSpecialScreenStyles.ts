@@ -22,6 +22,9 @@ export const styles = StyleSheet.create({
     paddingBottom: 24,
     gap: 20,
   },
+  statusBanner: {
+    marginHorizontal: businessDetailSpacing.pageGutter,
+  },
   mainColumn: {
     marginHorizontal: businessDetailSpacing.pageGutter,
     gap: 16,

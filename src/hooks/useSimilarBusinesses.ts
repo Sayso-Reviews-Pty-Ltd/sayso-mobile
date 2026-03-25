@@ -35,7 +35,8 @@ export function useSimilarBusinesses(
       return payload.businesses ?? payload.items ?? payload.data ?? [];
     },
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   return {
     businesses: query.data ?? [],

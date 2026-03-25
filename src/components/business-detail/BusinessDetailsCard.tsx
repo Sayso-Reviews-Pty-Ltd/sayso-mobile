@@ -54,7 +54,13 @@ export function BusinessDetailsCard({ priceRange, verified, hours, openingHours,
           <View style={styles.hoursHeader}>
             <Text style={styles.label}>Hours</Text>
             {rows.length > 0 ? (
-              <Pressable style={styles.hoursToggle} onPress={() => setExpanded((current) => !current)}>
+              <Pressable
+                style={styles.hoursToggle}
+                onPress={() => setExpanded((current) => !current)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={expanded ? 'Hide opening hours' : 'See all opening hours'}
+              >
                 <Text style={styles.hoursToggleText}>{expanded ? 'Hide' : 'See all'}</Text>
                 <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={businessDetailColors.textMuted} />
               </Pressable>

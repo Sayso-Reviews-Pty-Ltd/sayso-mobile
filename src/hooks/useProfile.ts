@@ -47,7 +47,8 @@ export function useProfile() {
     queryKey: ['profile'],
     queryFn: () => apiFetch<ProfileResponse>('/api/user/profile'),
     staleTime: 60_000,
-  });
+    retry: 1,
+});
 }
 
 export function useUpdateProfile() {

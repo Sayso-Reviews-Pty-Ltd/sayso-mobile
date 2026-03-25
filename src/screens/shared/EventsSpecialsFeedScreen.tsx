@@ -88,7 +88,8 @@ export function EventsSpecialsFeedScreen({ subtitle, onScrollY }: Props) {
     queryFn: ({ pageParam }) => fetchEventsPage(pageParam, selectedFilter),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   const items = useMemo(
     () => query.data?.pages.flatMap((p) => p.items ?? EMPTY_ITEMS) ?? EMPTY_ITEMS,

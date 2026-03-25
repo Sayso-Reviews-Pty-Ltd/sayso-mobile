@@ -130,7 +130,8 @@ export function useEventSpecialDetail(id: string | null | undefined) {
     enabled: Boolean(id),
     queryFn: () => fetchEventSpecialDetail(id!),
     staleTime: 120_000,
-  });
+    retry: 1,
+});
 
   const error = query.error instanceof Error ? query.error : null;
 

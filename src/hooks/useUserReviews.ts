@@ -49,7 +49,8 @@ export function useUserReviews() {
     queryFn: () => apiFetch<UserReviewsResponse>('/api/user/reviews?page=1&pageSize=20'),
     enabled: Boolean(user) && !isLoading,
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 }
 
 export function useDeleteUserReview() {

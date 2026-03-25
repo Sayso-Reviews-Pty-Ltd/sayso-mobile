@@ -25,7 +25,8 @@ export function useReviewerProfileController() {
     queryFn: () => apiFetch<ApiResponse>(`/api/reviewers/${id}`),
     enabled: Boolean(id),
     staleTime: 60_000,
-  });
+    retry: 1,
+});
 
   const reviewer = data?.reviewer ?? null;
 

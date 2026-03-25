@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, Share } from 'react-native';
+import { Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { type BusinessHeaderRightAction } from '../../../components/business-detail';
 import { apiFetch } from '../../../lib/api';
 import { ENV } from '../../../lib/env';
 import { routes } from '../../../navigation/routes';
 import type { WriteReviewParams } from '../../../navigation/types';
+import type { FeedbackVariant } from './types';
 
 type SavedQuery = {
   data?: { businesses?: Array<{ id?: string | null }> };
@@ -21,10 +22,12 @@ type Params = {
   displayTitle: string;
   user: { id: string } | null | undefined;
   savedQuery: SavedQuery;
+  onFeedback?: (variant: FeedbackVariant, title: string, message: string) => void;
 };
 
 export function useWriteReviewHeaderActions({
   isBusinessReview, businessDetail, eventSpecial, id, type, displayTitle, user, savedQuery,
+  onFeedback,
 }: Params) {
   const router = useRouter();
   const [saveBusy, setSaveBusy] = useState(false);
@@ -61,7 +64,10 @@ export function useWriteReviewHeaderActions({
   }, [businessDetail?.id, displayTitle, id, isBusinessReview, type]);
 
   const handleHeaderSave = useCallback(async () => {
-    if (!linkedBusinessId) { Alert.alert('Save unavailable', 'Saving is unavailable for this listing.'); return; }
+    if (!linkedBusinessId) {
+      onFeedback?.('warning', 'Save unavailable', 'Saving is unavailable for this listing.');
+      return;
+    }
     if (!user) { router.push(routes.onboarding() as never); return; }
     if (saveBusy) return;
     setSaveBusy(true);
@@ -73,11 +79,11 @@ export function useWriteReviewHeaderActions({
       }
       await savedQuery.refetch();
     } catch (error) {
-      Alert.alert('Save unavailable', error instanceof Error ? error.message : 'Unable to update saved items right now.');
+      onFeedback?.('error', 'Save unavailable', error instanceof Error ? error.message : 'Unable to update saved items right now.');
     } finally {
       setSaveBusy(false);
     }
-  }, [linkedBusinessId, router, saveBusy, savedBusinessIds, savedQuery, user]);
+  }, [linkedBusinessId, onFeedback, router, saveBusy, savedBusinessIds, savedQuery, user]);
 
   const headerRightActions = useMemo<BusinessHeaderRightAction[]>(
     () => [

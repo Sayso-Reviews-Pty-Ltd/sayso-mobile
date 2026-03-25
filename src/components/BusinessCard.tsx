@@ -76,7 +76,8 @@ function BusinessCardComponent({ business, style }: Props) {
           queryKey: getBusinessDetailQueryKey(businessIdentifier),
           queryFn: () => fetchBusinessDetail(businessIdentifier),
           staleTime: 120_000,
-        },
+                retry: 1,
+},
       ],
     });
   }, [businessIdentifier, href, router]);
@@ -145,7 +146,8 @@ function BusinessCardComponent({ business, style }: Props) {
                     queryKey: getBusinessDetailQueryKey(businessIdentifier),
                     queryFn: () => fetchBusinessDetail(businessIdentifier),
                     staleTime: 120_000,
-                  },
+                                    retry: 1,
+},
                 ],
               });
               handleNavigate();

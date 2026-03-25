@@ -15,7 +15,8 @@ export function useEventRsvp(id: string | null | undefined) {
     enabled: Boolean(id),
     queryFn: () => apiFetch<RsvpResponse>(`/api/events-and-specials/${id}/rsvp`),
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   const mutation = useMutation({
     mutationFn: () => apiFetch<RsvpResponse>(`/api/events-and-specials/${id}/rsvp`, { method: 'POST' }),

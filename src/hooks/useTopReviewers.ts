@@ -8,7 +8,8 @@ export function useTopReviewers(limit = 12, enabled = true) {
     enabled,
     queryFn: () => apiFetch<TopReviewersResponseDto>(`/api/reviewers/top?limit=${limit}`),
     staleTime: 120_000,
-  });
+    retry: 1,
+});
 
   return {
     reviewers: query.data?.reviewers ?? ([] as TopReviewerDto[]),

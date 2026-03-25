@@ -10,6 +10,7 @@ import { useAuthSession } from '../../../hooks/useSession';
 import { supabase } from '../../../lib/supabase';
 import { routes } from '../../../navigation/routes';
 import { EmptyState } from '../../../components/EmptyState';
+import { InlineErrorBanner } from '../../../components/InlineErrorBanner';
 import { LoadingCrossfade } from '../../../components/LoadingCrossfade';
 import { StackPageHeader } from '../../../components/StackPageHeader';
 import { Text } from '../../../components/Typography';
@@ -19,6 +20,10 @@ import { ConversationSkeleton } from './inbox/ConversationSkeleton';
 import { InboxSearchBar } from './inbox/InboxSearchBar';
 import { styles } from './inbox/styles';
 import type { ConversationsApiResponse } from './inbox/types';
+
+function InboxSeparator() {
+  return <View style={styles.separator} />;
+}
 
 export default function DMInboxScreen() {
   const router = useRouter();
@@ -31,7 +36,8 @@ export default function DMInboxScreen() {
     queryFn: () => apiFetch<ConversationsApiResponse>('/api/conversations'),
     enabled: Boolean(user),
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   const conversations = data?.conversations ?? [];
   const search = searchQuery.trim().toLowerCase();
@@ -118,7 +124,7 @@ export default function DMInboxScreen() {
           </View>
         }
       >
-        {isError ? (
+        {isError && conversations.length === 0 ? (
           <EmptyState
             icon="cloud-offline-outline"
             title="Could not load conversations"
@@ -141,22 +147,34 @@ export default function DMInboxScreen() {
             ) : null}
           </View>
         ) : (
-          <FlatList
-            data={filteredConversations}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <ConversationRow
-                item={item}
-                onPress={() => handleConversationPress(item.id)}
+          <View style={styles.listWrap}>
+            {isError ? (
+              <InlineErrorBanner
+                message="Showing saved conversations. Pull to refresh or retry."
+                actionLabel="Retry"
+                onAction={() => {
+                  void refetch();
+                }}
               />
-            )}
-            contentContainerStyle={[
-              styles.listContent,
-              { paddingBottom: insets.bottom + GRID * 2 },
-            ]}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-            showsVerticalScrollIndicator={false}
-          />
+            ) : null}
+            <FlatList
+              data={filteredConversations}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <ConversationRow
+                  item={item}
+                  onPress={() => handleConversationPress(item.id)}
+                />
+              )}
+              contentContainerStyle={[
+                styles.listContent,
+                { paddingBottom: insets.bottom + GRID * 2 },
+              ]}
+              ItemSeparatorComponent={InboxSeparator}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
         )}
       </LoadingCrossfade>
     </View>

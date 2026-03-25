@@ -28,6 +28,7 @@ import { NAVBAR_BG_COLOR } from '../../styles/colors';
 import { LoadingCrossfade } from '../../components/LoadingCrossfade';
 import { NotificationItem } from '../../components/NotificationItem';
 import { EmptyState } from '../../components/EmptyState';
+import { InlineErrorBanner } from '../../components/InlineErrorBanner';
 import { SkeletonCard } from '../../components/SkeletonCard';
 import { Text } from '../../components/Typography';
 import { TransitionItem } from '../../components/motion/TransitionItem';
@@ -234,7 +235,7 @@ export default function NotificationsScreen() {
           </View>
         }
       >
-        {isError ? (
+        {isError && allNotifications.length === 0 ? (
           <TransitionItem role="support" index={1}>
             <EmptyState
               icon="cloud-offline-outline"
@@ -266,7 +267,20 @@ export default function NotificationsScreen() {
                 />
               </TransitionItem>
             )}
-            ListHeaderComponent={filterBar}
+            ListHeaderComponent={
+              <View style={styles.listHeader}>
+                {isError ? (
+                  <InlineErrorBanner
+                    message="Showing saved notifications. Pull down or tap retry to refresh."
+                    actionLabel="Retry"
+                    onAction={() => {
+                      void refetch();
+                    }}
+                  />
+                ) : null}
+                {filterBar}
+              </View>
+            }
             ListEmptyComponent={
               <View style={styles.emptyFilter}>
                 <Text style={styles.emptyFilterText}>No {FILTER_CHIPS.find((c) => c.id === activeFilter)?.label.toLowerCase()} notifications.</Text>
@@ -311,6 +325,9 @@ const styles = StyleSheet.create({
   },
   filterScroll: {
     paddingVertical: 12,
+  },
+  listHeader: {
+    gap: 8,
   },
   filterRow: {
     gap: 8,

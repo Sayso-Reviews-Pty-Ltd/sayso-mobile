@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { haptics } from '../../lib/haptics';
 import {
-  Alert,
   InteractionManager,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -13,6 +12,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '../../components/EmptyState';
+import { InlineErrorBanner } from '../../components/InlineErrorBanner';
 import { LoadingCrossfade } from '../../components/LoadingCrossfade';
 import { Text } from '../../components/Typography';
 import {
@@ -67,7 +67,14 @@ export default function BusinessScreen({ initialTab }: Props) {
   const savedQuery = useSavedBusinesses();
   const [saveBusy, setSaveBusy] = useState(false);
 
-  const { data: business, isLoading, isError } = useBusinessDetail(id);
+  const {
+    data: business,
+    isLoading,
+    isError,
+    error: businessError,
+    refetch: refetchBusiness,
+  } = useBusinessDetail(id);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const realtimeTargets = useMemo(
     () => [
@@ -162,6 +169,7 @@ export default function BusinessScreen({ initialTab }: Props) {
 
     haptics.confirm();
     setSaveBusy(true);
+    setSaveError(null);
     try {
       if (savedBusinessIds.has(business.id)) {
         await apiFetch<{ success?: boolean; message?: string }>(`/api/user/saved?business_id=${business.id}`, {
@@ -175,10 +183,7 @@ export default function BusinessScreen({ initialTab }: Props) {
       }
       await savedQuery.refetch();
     } catch (error) {
-      Alert.alert(
-        'Save unavailable',
-        error instanceof Error ? error.message : 'Unable to update saved items right now.'
-      );
+      setSaveError(error instanceof Error ? error.message : 'Unable to update saved items right now.');
     } finally {
       setSaveBusy(false);
     }
@@ -260,7 +265,7 @@ export default function BusinessScreen({ initialTab }: Props) {
     return () => handle.cancel();
   }, [newReviewId, isLoading, router]);
 
-  if (!isLoading && (isError || !business)) {
+  if (!isLoading && !business) {
     return (
       <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -309,6 +314,28 @@ export default function BusinessScreen({ initialTab }: Props) {
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
               >
+              {isError && businessError ? (
+                <View style={styles.statusBanner}>
+                  <InlineErrorBanner
+                    message={`Showing saved details. ${businessError instanceof Error ? businessError.message : 'Please refresh.'}`}
+                    actionLabel="Retry"
+                    onAction={() => {
+                      void refetchBusiness();
+                    }}
+                  />
+                </View>
+              ) : null}
+
+              {saveError ? (
+                <View style={styles.statusBanner}>
+                  <InlineErrorBanner
+                    message={saveError}
+                    actionLabel="Dismiss"
+                    onAction={() => setSaveError(null)}
+                  />
+                </View>
+              ) : null}
+
               <View style={styles.mainColumn}>
                 <TransitionItem role="hero" index={0}>
                   <BusinessHeroCarousel

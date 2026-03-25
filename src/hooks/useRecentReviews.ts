@@ -8,7 +8,8 @@ export function useRecentReviews(limit = 10, enabled = true) {
     enabled,
     queryFn: () => apiFetch<RecentReviewsResponseDto>(`/api/reviews/recent?limit=${limit}`),
     staleTime: 90_000,
-  });
+    retry: 1,
+});
 
   return {
     reviews: query.data?.reviews ?? ([] as RecentReviewDto[]),

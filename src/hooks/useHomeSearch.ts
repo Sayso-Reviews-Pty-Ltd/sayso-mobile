@@ -75,7 +75,8 @@ export function useHomeSearch({
     },
     placeholderData: keepPreviousData,
     staleTime: 20_000,
-  });
+    retry: 1,
+});
 
   return {
     businesses: queryResult.data ?? [],

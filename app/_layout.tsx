@@ -14,6 +14,7 @@ import {
 import { useFonts as useLocalFonts } from 'expo-font';
 import { Providers } from '../src/providers/Providers';
 import { RootGuard } from '../src/components/RootGuard';
+import { OfflineBanner } from '../src/components/OfflineBanner';
 import { rootStackScreenOptions } from '../src/navigation/screenOptions';
 import { NAVBAR_BG_COLOR } from '../src/styles/colors';
 
@@ -37,6 +38,7 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: NAVBAR_BG_COLOR }}>
+      <OfflineBanner />
       <Providers>
         {/* TODO: re-enable once dev build is ready — Expo Go ignores Info.plist */}
         {/* <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} /> */}

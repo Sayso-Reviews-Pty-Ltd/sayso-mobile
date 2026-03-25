@@ -17,7 +17,8 @@ export function useUserPreferences(enabled = true) {
     queryFn: () => apiFetch<UserPreferencesResponseDto>('/api/user/preferences'),
     enabled: enabled && Boolean(user?.id),
     staleTime: 60_000,
-  });
+    retry: 1,
+});
 
   return {
     interests: query.data?.interests ?? EMPTY_PREFERENCES.interests,

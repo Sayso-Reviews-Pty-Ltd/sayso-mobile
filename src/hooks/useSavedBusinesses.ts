@@ -13,7 +13,8 @@ export function useSavedBusinesses() {
     queryFn: () => apiFetch<SavedBusinessesResponseDto>('/api/user/saved'),
     enabled: !!user && !isLoading,
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 }
 
 export function useUnsaveBusiness() {

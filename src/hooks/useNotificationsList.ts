@@ -8,7 +8,8 @@ export function useNotificationsList(limit = 30) {
     queryFn: () =>
       apiFetch<NotificationsResponseDto>(`/api/notifications/user?limit=${limit}`),
     staleTime: 15_000,
-  });
+    retry: 1,
+});
 }
 
 export function useMarkAllRead() {

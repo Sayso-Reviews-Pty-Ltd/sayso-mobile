@@ -16,7 +16,8 @@ export function useEventRatings(
     enabled: Boolean(id),
     queryFn: () => apiFetch<RatingsResponse>(`/api/events/${id}/ratings`),
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   return {
     rating:

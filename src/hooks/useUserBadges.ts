@@ -34,7 +34,8 @@ export function useUserBadges() {
     },
     enabled: Boolean(user?.id) && !isLoading,
     staleTime: 60_000,
-  });
+    retry: 1,
+});
 }
 
 export function useAllUserBadges() {
@@ -49,5 +50,6 @@ export function useAllUserBadges() {
     },
     enabled: Boolean(user?.id) && !isLoading,
     staleTime: 60_000,
-  });
+    retry: 1,
+});
 }

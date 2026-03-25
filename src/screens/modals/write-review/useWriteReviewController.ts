@@ -92,7 +92,8 @@ export function useWriteReviewController() {
     queryFn: () => apiFetch<{ review?: ExistingReviewDto }>(`/api/reviews/${reviewId}`),
     enabled: Boolean(reviewId),
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   const { existingReviewLoading, originalValuesRef } = useWriteReviewPrefill({
     reviewId,
@@ -159,7 +160,7 @@ export function useWriteReviewController() {
   const isSubmitDisabled = !isFormValid || submitting;
   const controlsDisabled = submitting || existingReviewLoading;
 
-  const { handleSubmit, notificationNotice, toastNotice, cleanup } = useWriteReviewSubmit({
+  const { handleSubmit, showSubmissionFeedback, notificationNotice, toastNotice, cleanup } = useWriteReviewSubmit({
     id,
     isEditMode,
     reviewId,
@@ -192,6 +193,7 @@ export function useWriteReviewController() {
     displayTitle,
     user,
     savedQuery,
+    onFeedback: showSubmissionFeedback,
   });
 
   const effectiveQuickTags = useMemo(() => {

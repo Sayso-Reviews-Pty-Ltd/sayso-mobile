@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { InlineErrorBanner } from '../InlineErrorBanner';
 import { ReviewCard, type ReviewCardData } from './ReviewCard';
 import { Text } from '../Typography';
 import { supabase } from '../../lib/supabase';
@@ -144,7 +145,7 @@ export function ReviewsList({
     );
   }
 
-  if (error) {
+  if (error && (!reviews || reviews.length === 0)) {
     return (
       <View style={styles.errorCard}>
         <Ionicons name="alert-circle-outline" size={24} color="#EF4444" />
@@ -182,6 +183,9 @@ export function ReviewsList({
 
   return (
     <View style={styles.stack}>
+      {error ? (
+        <InlineErrorBanner message={`Showing saved reviews. ${error}`} />
+      ) : null}
       {reviews.map((review) => (
         <ReviewCard key={review.id} review={review} />
       ))}

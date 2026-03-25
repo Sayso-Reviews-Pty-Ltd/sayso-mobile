@@ -8,7 +8,8 @@ export function useEventsSpecialsPreview(limit = 12, enabled = true) {
     enabled,
     queryFn: () => apiFetch<EventsAndSpecialsResponseDto>(`/api/events-and-specials?limit=${limit}`),
     staleTime: 90_000,
-  });
+    retry: 1,
+});
 
   return {
     items: query.data?.items ?? ([] as EventSpecialListItemDto[]),

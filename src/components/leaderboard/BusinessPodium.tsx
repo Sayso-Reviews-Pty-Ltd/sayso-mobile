@@ -96,7 +96,8 @@ function PodiumItem({ business, rank }: { business: FeaturedBusinessDto; rank: 1
               queryKey: getBusinessDetailQueryKey(business.id),
               queryFn: () => fetchBusinessDetail(business.id),
               staleTime: 120_000,
-            },
+                        retry: 1,
+},
           ],
         });
       }}

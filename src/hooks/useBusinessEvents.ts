@@ -68,7 +68,8 @@ export function useBusinessEvents(businessId: string | null | undefined) {
       return rows.map(normalizeEventItem).filter((item): item is EventSpecialListItemDto => Boolean(item));
     },
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   return {
     events: query.data ?? [],

@@ -91,7 +91,8 @@ export function useEventReviews(id: string | null | undefined) {
       return rows.map(normalizeReviewItem).filter((item): item is EventReviewItem => Boolean(item));
     },
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   return {
     reviews: query.data ?? [],

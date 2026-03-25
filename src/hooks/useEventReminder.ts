@@ -27,7 +27,8 @@ export function useEventReminder(id: string | null | undefined) {
     enabled: Boolean(id),
     queryFn: () => apiFetch<ReminderResponse>(`/api/events-and-specials/${id}/reminder`),
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   const mutation = useMutation({
     mutationFn: async (params: {

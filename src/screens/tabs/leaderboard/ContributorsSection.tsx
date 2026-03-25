@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { ContributorPodium, ContributorRow } from '../../../components/leaderboard';
+import { EmptyState } from '../../../components/EmptyState';
 import { LeaderboardEmptyState } from './LeaderboardEmptyState';
-import { LeaderboardErrorState } from './LeaderboardErrorState';
 import { LeaderboardExpandButton } from './LeaderboardExpandButton';
 import { LeaderboardLoadingState } from './LeaderboardLoadingState';
 import { styles } from './styles';
@@ -30,7 +30,14 @@ export function ContributorsSection({
   }
 
   if (hasError) {
-    return <LeaderboardErrorState onRetry={onRetry} />;
+    return (
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load leaderboard"
+        actionLabel="Retry"
+        onAction={onRetry}
+      />
+    );
   }
 
   if (reviewers.length === 0) {

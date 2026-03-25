@@ -28,6 +28,10 @@ export const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: GRID * 2,
   },
+  listWrap: {
+    flex: 1,
+    gap: GRID,
+  },
   separator: {
     height: 1,
     backgroundColor: C.charcoal08,

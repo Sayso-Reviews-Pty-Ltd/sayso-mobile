@@ -36,5 +36,6 @@ export function useBusinessSearch({ query, minRating, radiusKm, lat, lng, limit 
     enabled: normalized.length >= 1,
     placeholderData: keepPreviousData,
     staleTime: 20_000,
-  });
+    retry: 1,
+});
 }

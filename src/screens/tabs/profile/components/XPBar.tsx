@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import { InlineErrorBanner } from '../../../../components/InlineErrorBanner';
 import { SkeletonBlock } from '../../../../components/SkeletonBlock';
 import { Text } from '../../../../components/Typography';
 import { useUserXP } from '../../../../hooks/useUserXP';
@@ -27,7 +28,17 @@ export function XPBar() {
     );
   }
 
-  if (xp.error) return null;
+  if (xp.error) {
+    return (
+      <InlineErrorBanner
+        message={xp.error}
+        actionLabel="Retry"
+        onAction={() => {
+          void xp.refetch();
+        }}
+      />
+    );
+  }
 
   const perk = nextPerkAt(xp.level);
 

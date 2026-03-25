@@ -87,5 +87,6 @@ export function useBusinessReviews(businessId: string) {
       last.pagination.hasMore ? last.pagination.page + 1 : undefined,
     enabled: !!businessId,
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 }

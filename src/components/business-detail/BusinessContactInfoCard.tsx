@@ -32,7 +32,12 @@ export function BusinessContactInfoCard({ phone, email, website, address, locati
           <Ionicons name="mail-outline" size={15} color={businessDetailColors.charcoal} />
         </View>
         {email ? (
-          <Pressable onPress={() => Linking.openURL(`mailto:${email}`)}>
+          <Pressable
+            onPress={() => Linking.openURL(`mailto:${email}`)}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            accessibilityLabel={`Send email to ${email}`}
+            accessibilityRole="link"
+          >
             <Text style={styles.valueText}>{email}</Text>
           </Pressable>
         ) : (
@@ -45,7 +50,12 @@ export function BusinessContactInfoCard({ phone, email, website, address, locati
           <Ionicons name="globe-outline" size={15} color={businessDetailColors.charcoal} />
         </View>
         {websiteHref ? (
-          <Pressable onPress={() => Linking.openURL(websiteHref)}>
+          <Pressable
+            onPress={() => Linking.openURL(websiteHref)}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            accessibilityLabel="Visit website"
+            accessibilityRole="link"
+          >
             <Text style={styles.valueText}>Visit website</Text>
           </Pressable>
         ) : (

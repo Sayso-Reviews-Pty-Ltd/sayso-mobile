@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   InteractionManager,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -12,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '../../components/EmptyState';
+import { InlineErrorBanner } from '../../components/InlineErrorBanner';
 import { LoadingCrossfade } from '../../components/LoadingCrossfade';
 import {
   EventSpecialActionCard,
@@ -61,6 +61,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
   const { user } = useAuthSession();
   const savedQuery = useSavedBusinesses();
   const [saveBusy, setSaveBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const detailQuery = useEventSpecialDetail(id);
   const item = detailQuery.data;
@@ -190,6 +191,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
       return;
     }
 
+    setActionError(null);
     try {
       await rsvp.toggleRsvp();
     } catch (error) {
@@ -198,7 +200,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
         router.push(routes.onboarding() as never);
         return;
       }
-      Alert.alert('RSVP unavailable', message);
+      setActionError(message);
     }
   };
 
@@ -209,10 +211,11 @@ export default function EventSpecialScreen({ routeType }: Props) {
     }
 
     if (!item?.startDateISO) {
-      Alert.alert('Reminder unavailable', 'This listing does not have a valid start date yet.');
+      setActionError('This listing does not have a valid start date yet.');
       return;
     }
 
+    setActionError(null);
     try {
       const isActive = reminder.hasReminder(option);
       await reminder.toggleReminder({
@@ -227,7 +230,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
         router.push(routes.onboarding() as never);
         return;
       }
-      Alert.alert('Reminder unavailable', message);
+      setActionError(message);
     }
   };
 
@@ -253,7 +256,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
 
   const handleToggleSaveFromEventSpecial = useCallback(async () => {
     if (!linkedBusinessId) {
-      Alert.alert('Save unavailable', 'Saving is unavailable for this listing.');
+      setActionError('Saving is unavailable for this listing.');
       return;
     }
     if (!user) {
@@ -263,6 +266,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
     if (saveBusy) return;
 
     setSaveBusy(true);
+    setActionError(null);
     try {
       if (savedBusinessIds.has(linkedBusinessId)) {
         await apiFetch<{ success?: boolean; message?: string }>(
@@ -277,10 +281,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
       }
       await savedQuery.refetch();
     } catch (error) {
-      Alert.alert(
-        'Save unavailable',
-        error instanceof Error ? error.message : 'Unable to update saved items right now.'
-      );
+      setActionError(error instanceof Error ? error.message : 'Unable to update saved items right now.');
     } finally {
       setSaveBusy(false);
     }
@@ -313,7 +314,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
     [handleShareEventSpecial, handleToggleSaveFromEventSpecial, isLinkedBusinessSaved, linkedBusinessId, saveBusy]
   );
 
-  if (!detailQuery.isLoading && (!item || detailQuery.isError || item.isExpired)) {
+  if (!detailQuery.isLoading && (!item || item.isExpired)) {
     const missingMessage =
       detailQuery.errorStatus === 404
         ? routeType === 'special'
@@ -370,6 +371,28 @@ export default function EventSpecialScreen({ routeType }: Props) {
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
               >
+              {detailQuery.isError && item ? (
+                <View style={styles.statusBanner}>
+                  <InlineErrorBanner
+                    message={`Showing saved details. ${detailQuery.error ?? 'Please refresh.'}`}
+                    actionLabel="Retry"
+                    onAction={() => {
+                      void detailQuery.refetch();
+                    }}
+                  />
+                </View>
+              ) : null}
+
+              {actionError ? (
+                <View style={styles.statusBanner}>
+                  <InlineErrorBanner
+                    message={actionError}
+                    actionLabel="Dismiss"
+                    onAction={() => setActionError(null)}
+                  />
+                </View>
+              ) : null}
+
               <View style={styles.mainColumn}>
                 <TransitionItem role="hero" index={0}>
                   <EventSpecialHero item={item} rating={effectiveRating} />

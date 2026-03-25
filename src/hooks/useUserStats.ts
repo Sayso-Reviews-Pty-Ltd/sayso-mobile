@@ -24,5 +24,6 @@ export function useUserStats() {
     queryFn: () => apiFetch<UserStatsResponse>('/api/user/stats'),
     enabled: Boolean(user) && !isLoading,
     staleTime: 60_000,
-  });
+    retry: 1,
+});
 }

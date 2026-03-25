@@ -25,7 +25,8 @@ export function useUserXP(): UserXPData {
     queryFn: () => apiFetch<RawXPData>('/api/user/xp'),
     enabled: Boolean(user) && !sessionLoading,
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   const levelState = currentLevelFromXP(query.data?.total_xp ?? 0);
 

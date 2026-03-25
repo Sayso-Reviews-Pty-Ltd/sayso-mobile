@@ -85,7 +85,8 @@ export function useRelatedEventSpecials(id: string | null | undefined, limit = 4
       return rows.map(normalizeRelatedItem).filter((item): item is EventSpecialListItemDto => Boolean(item));
     },
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   return {
     items: query.data ?? [],

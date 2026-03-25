@@ -217,5 +217,6 @@ export function useBusinessDetail(id: string) {
     queryFn: () => fetchBusinessDetail(id),
     enabled: !!id,
     staleTime: 120_000,
-  });
+    retry: 1,
+});
 }

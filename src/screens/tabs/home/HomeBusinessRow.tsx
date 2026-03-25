@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Animated, FlatList, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { BusinessListItemDto, FeaturedBusinessDto } from '@sayso/contracts';
 import { BusinessCard } from '../../../components/BusinessCard';
+import { InlineErrorBanner } from '../../../components/InlineErrorBanner';
 import { Text } from '../../../components/Typography';
 import { SkeletonCard } from '../../../components/SkeletonCard';
 import { homeTokens } from './HomeTokens';
@@ -123,7 +124,7 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
     );
   }
 
-  if (error) {
+  if (error && items.length === 0) {
     return (
       <View style={styles.messageCard}>
         <Text style={styles.messageTitle}>Couldn&apos;t load this row right now.</Text>
@@ -142,36 +143,43 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
   }
 
   return (
-    <AnimatedFlatList
-      horizontal
-      data={items}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item, index }) =>
-        reducedMotion ? (
-          <BusinessCard business={item} style={{ width: cardWidth }} />
-        ) : (
-          <AnimatedCard scrollX={scrollX} index={index} snapInterval={snapInterval}>
+    <View style={styles.rowWrap}>
+      {error ? (
+        <View style={styles.bannerWrap}>
+          <InlineErrorBanner message={`Showing saved results. ${error}`} />
+        </View>
+      ) : null}
+      <AnimatedFlatList
+        horizontal
+        data={items}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) =>
+          reducedMotion ? (
             <BusinessCard business={item} style={{ width: cardWidth }} />
-          </AnimatedCard>
-        )
-      }
-      ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
-      getItemLayout={(_, index) => ({
-        length: cardWidth,
-        offset: (cardWidth + GAP) * index,
-        index,
-      })}
-      showsHorizontalScrollIndicator={false}
-      snapToInterval={snapInterval}
-      snapToAlignment="start"
-      decelerationRate="fast"
-      disableIntervalMomentum
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      style={styles.row}
-      contentContainerStyle={[styles.content, { paddingBottom: resolvedPaddingBottom }]}
-      {...FLATLIST_PERF}
-    />
+          ) : (
+            <AnimatedCard scrollX={scrollX} index={index} snapInterval={snapInterval}>
+              <BusinessCard business={item} style={{ width: cardWidth }} />
+            </AnimatedCard>
+          )
+        }
+        ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+        getItemLayout={(_, index) => ({
+          length: cardWidth,
+          offset: (cardWidth + GAP) * index,
+          index,
+        })}
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={snapInterval}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        disableIntervalMomentum
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        style={styles.row}
+        contentContainerStyle={[styles.content, { paddingBottom: resolvedPaddingBottom }]}
+        {...FLATLIST_PERF}
+      />
+    </View>
   );
 }
 
@@ -179,6 +187,13 @@ const styles = StyleSheet.create({
   row: {
     overflow: 'visible',
     backgroundColor: homeTokens.offWhite,
+  },
+  rowWrap: {
+    backgroundColor: homeTokens.offWhite,
+  },
+  bannerWrap: {
+    marginHorizontal: homeTokens.pageGutter,
+    marginBottom: 8,
   },
   content: {
     paddingHorizontal: homeTokens.pageGutter,

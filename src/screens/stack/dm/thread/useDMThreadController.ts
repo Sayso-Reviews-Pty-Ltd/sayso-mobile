@@ -20,7 +20,8 @@ export function useDMThreadController(threadId?: string) {
     queryFn: () => apiFetch<MessagesApiResponse>(`/api/conversations/${threadId}/messages`),
     enabled: Boolean(threadId) && Boolean(user),
     staleTime: 15_000,
-  });
+    retry: 1,
+});
 
   const conversation = data?.conversation;
   const serverMessages = data?.messages ?? [];

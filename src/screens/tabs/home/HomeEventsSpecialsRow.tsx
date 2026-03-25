@@ -3,6 +3,7 @@ import { Animated, FlatList, Platform, StyleSheet, View, useWindowDimensions } f
 import type { EventSpecialListItemDto } from '@sayso/contracts';
 import { EventCard } from '../../../components/EventCard';
 import { EventCardSkeleton } from '../../../components/EventCardSkeleton';
+import { InlineErrorBanner } from '../../../components/InlineErrorBanner';
 import { Text } from '../../../components/Typography';
 import { homeTokens } from './HomeTokens';
 import { CARD_RADIUS } from '../../../styles/radii';
@@ -98,7 +99,7 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
     );
   }
 
-  if (error || items.length === 0) {
+  if (error && items.length === 0) {
     return (
       <View style={styles.messageCard}>
         <Text style={styles.messageTitle}>Nothing to show here yet.</Text>
@@ -109,36 +110,52 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
     );
   }
 
+  if (items.length === 0) {
+    return (
+      <View style={styles.messageCard}>
+        <Text style={styles.messageTitle}>Nothing to show here yet.</Text>
+        <Text style={styles.messageText}>Events and specials will appear here as new listings go live.</Text>
+      </View>
+    );
+  }
+
   return (
-    <AnimatedFlatList
-      horizontal
-      data={items}
-      keyExtractor={(item) => `${item.type}-${item.id}`}
-      renderItem={({ item, index }) =>
-        reducedMotion ? (
-          <EventCard item={item} style={{ width: cardWidth }} />
-        ) : (
-          <AnimatedCard scrollX={scrollX} index={index} snapInterval={snapInterval}>
+    <View style={styles.rowWrap}>
+      {error ? (
+        <View style={styles.bannerWrap}>
+          <InlineErrorBanner message={`Showing saved results. ${error}`} />
+        </View>
+      ) : null}
+      <AnimatedFlatList
+        horizontal
+        data={items}
+        keyExtractor={(item) => `${item.type}-${item.id}`}
+        renderItem={({ item, index }) =>
+          reducedMotion ? (
             <EventCard item={item} style={{ width: cardWidth }} />
-          </AnimatedCard>
-        )
-      }
-      ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
-      getItemLayout={(_, index) => ({
-        length: cardWidth,
-        offset: (cardWidth + GAP) * index,
-        index,
-      })}
-      showsHorizontalScrollIndicator={false}
-      snapToInterval={snapInterval}
-      snapToAlignment="start"
-      decelerationRate="fast"
-      disableIntervalMomentum
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      style={styles.row}
-      contentContainerStyle={styles.content}
-    />
+          ) : (
+            <AnimatedCard scrollX={scrollX} index={index} snapInterval={snapInterval}>
+              <EventCard item={item} style={{ width: cardWidth }} />
+            </AnimatedCard>
+          )
+        }
+        ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+        getItemLayout={(_, index) => ({
+          length: cardWidth,
+          offset: (cardWidth + GAP) * index,
+          index,
+        })}
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={snapInterval}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        disableIntervalMomentum
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        style={styles.row}
+        contentContainerStyle={styles.content}
+      />
+    </View>
   );
 }
 
@@ -146,6 +163,13 @@ const styles = StyleSheet.create({
   row: {
     overflow: 'visible',
     backgroundColor: homeTokens.offWhite,
+  },
+  rowWrap: {
+    backgroundColor: homeTokens.offWhite,
+  },
+  bannerWrap: {
+    marginHorizontal: homeTokens.pageGutter,
+    marginBottom: 8,
   },
   content: {
     paddingHorizontal: homeTokens.pageGutter,

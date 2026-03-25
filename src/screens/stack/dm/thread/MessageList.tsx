@@ -85,6 +85,7 @@ export function MessageList({
       renderItem={renderItem}
       contentContainerStyle={[styles.messageList, { paddingBottom: GRID * 2 }]}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
       ListEmptyComponent={
         <View style={styles.emptyThread}>

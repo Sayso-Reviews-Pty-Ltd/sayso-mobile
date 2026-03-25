@@ -71,7 +71,8 @@ export function BusinessFeed({
     queryFn: ({ pageParam }) => fetchPage(pageParam),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
-  });
+    retry: 1,
+});
 
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items ?? page.businesses ?? EMPTY_ITEMS) ?? EMPTY_ITEMS,

@@ -56,7 +56,8 @@ export function useFeaturedBusinesses(limit = 12, region: string | null = null, 
       return payload.data ?? payload.businesses ?? [];
     },
     staleTime: 120_000,
-  });
+    retry: 1,
+});
 
   const error = query.error as (Error & { statusCode?: number; status?: number }) | null;
   const statusCode = (error && 'status' in error && typeof error.status === 'number')

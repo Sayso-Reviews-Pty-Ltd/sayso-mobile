@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, cancelAnimation } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import type { NotificationDto } from '@sayso/contracts';
@@ -44,6 +45,10 @@ export function NotificationItem({ notification, onPress, onDismiss }: Props) {
     typeof notification.read === 'boolean'
       ? notification.read
       : Boolean((notification as NotificationDto & { read_at?: string | null }).read_at);
+  const reducedMotion = useReducedMotion();
+  const reducedMotionRef = useRef(reducedMotion);
+  reducedMotionRef.current = reducedMotion;
+
   const translateX = useSharedValue(0);
   const isRevealed = useRef(false);
 
@@ -56,12 +61,14 @@ export function NotificationItem({ notification, onPress, onDismiss }: Props) {
 
   const snapBack = () => {
     isRevealed.current = false;
-    translateX.value = withSpring(0, { stiffness: 56, damping: 7 });
+    translateX.value = reducedMotionRef.current ? 0 : withSpring(0, { stiffness: 56, damping: 7 });
   };
 
   const snapReveal = () => {
     isRevealed.current = true;
-    translateX.value = withSpring(-DELETE_REVEAL, { stiffness: 56, damping: 7 });
+    translateX.value = reducedMotionRef.current
+      ? -DELETE_REVEAL
+      : withSpring(-DELETE_REVEAL, { stiffness: 56, damping: 7 });
   };
 
   const panResponder = useRef(

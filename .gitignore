@@ -73,3 +73,4 @@ Thumbs.db
 *.der
 *.secret
 secrets/
+.cursor/mcp.json

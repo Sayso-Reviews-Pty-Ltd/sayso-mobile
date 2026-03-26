@@ -1,0 +1,56 @@
+name: Mobile E2E Guard
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: mobile-e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile-e2e:
+    name: Mobile E2E (Review + Account Lifecycle)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      E2E_PERSONAL_ACCOUNT_EMAIL: ${{ secrets.E2E_PERSONAL_ACCOUNT_EMAIL }}
+      E2E_PERSONAL_ACCOUNT_PASSWORD: ${{ secrets.E2E_PERSONAL_ACCOUNT_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Validate required E2E secrets
+        run: |
+          if [ -z "$E2E_PERSONAL_ACCOUNT_EMAIL" ] || [ -z "$E2E_PERSONAL_ACCOUNT_PASSWORD" ]; then
+            echo "Missing required secrets: E2E_PERSONAL_ACCOUNT_EMAIL and/or E2E_PERSONAL_ACCOUNT_PASSWORD"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run mobile E2E regression guard
+        run: npm run test:e2e:mobile
+
+      - name: Upload Playwright report and artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-mobile-e2e-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 7

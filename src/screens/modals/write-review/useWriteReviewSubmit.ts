@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { type BusinessDetail, getBusinessDetailQueryKey } from '../../../hooks/useBusinessDetail';
 import { type UserBadgeDto } from '../../../hooks/useUserBadges';
 import { ApiError, apiFetch } from '../../../lib/api';
 import { haptics } from '../../../lib/haptics';
@@ -156,8 +157,31 @@ export function useWriteReviewSubmit(params: Params) {
       }
 
       if (isBusinessReview) {
-        qc.invalidateQueries({ queryKey: ['business-reviews', String(businessDetail?.id ?? id)] });
-        qc.invalidateQueries({ queryKey: ['business', String(businessDetail?.id ?? id)] });
+        const businessId = String(businessDetail?.id ?? id);
+
+        // Optimistic cache update: reflect the new review immediately so the
+        // business screen shows the correct rating + count on redirect without
+        // waiting for a network round-trip. The invalidateQueries below will
+        // trigger a background refetch that overwrites this with server data.
+        const prev = qc.getQueryData<BusinessDetail>(getBusinessDetailQueryKey(businessId));
+        if (prev) {
+          const oldCount = prev.reviews ?? 0;
+          const oldRating = prev.rating ?? rating;
+          const newCount = oldCount + 1;
+          const newAvg = oldCount > 0
+            ? (oldRating * oldCount + rating) / newCount
+            : rating;
+          const rounded = parseFloat(newAvg.toFixed(1));
+          qc.setQueryData<BusinessDetail>(getBusinessDetailQueryKey(businessId), {
+            ...prev,
+            reviews: newCount,
+            rating: rounded,
+            stats: { ...prev.stats, total_reviews: newCount, average_rating: rounded },
+          });
+        }
+
+        qc.invalidateQueries({ queryKey: ['business-reviews', businessId] });
+        qc.invalidateQueries({ queryKey: ['business', businessId] });
       } else {
         qc.invalidateQueries({ queryKey: ['event-special-detail', id] });
         qc.invalidateQueries({ queryKey: ['event-reviews', id] });

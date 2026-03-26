@@ -59,6 +59,18 @@ export function useUpdateProfile() {
         method: 'PUT',
         body: JSON.stringify(payload),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile'] }),
+    onSuccess: (_response, payload) => {
+      qc.setQueryData<ProfileResponse | undefined>(['profile'], (current) => {
+        if (!current?.data) return current;
+        return {
+          ...current,
+          data: {
+            ...current.data,
+            ...payload,
+          },
+        };
+      });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    },
   });
 }

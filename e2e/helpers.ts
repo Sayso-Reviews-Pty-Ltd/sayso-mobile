@@ -19,7 +19,9 @@ export async function signInWithPersonalAccount(
   await page.getByPlaceholder(/enter your password/i).fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
 
-  const badPassword = page.getByText(/Incorrect email or password/i).first();
+  // Matches strings from sayso-web `getClearAuthMessage` (login) — not only wrong-password copy.
+  const loginErrorPattern =
+    /Incorrect email or password|We could not sign you in|Too many attempts|verify your email before signing|could not reach authentication/i;
 
   try {
     await page.waitForURL((url) => !url.pathname.toLowerCase().includes('/login'), {
@@ -27,8 +29,25 @@ export async function signInWithPersonalAccount(
     });
     return 'authenticated';
   } catch {
-    await badPassword.waitFor({ state: 'visible', timeout: 15_000 });
-    return 'bad_credentials';
+    const pollUntil = Date.now() + 30_000;
+    while (Date.now() < pollUntil) {
+      const href = page.url();
+      if (!href.toLowerCase().includes('/login')) {
+        return 'authenticated';
+      }
+      const banner = page.getByText(loginErrorPattern).first();
+      if (await banner.isVisible().catch(() => false)) {
+        const text = (await banner.textContent().catch(() => '')) || '';
+        if (/verify your email/i.test(text)) {
+          throw new Error('E2E account must have a verified email before this test can sign in.');
+        }
+        return 'bad_credentials';
+      }
+      await page.waitForTimeout(400);
+    }
+    throw new Error(
+      `E2E login stalled: still on /login after ${timeoutMs}ms + 30s poll. URL: ${page.url()}`,
+    );
   }
 }
 

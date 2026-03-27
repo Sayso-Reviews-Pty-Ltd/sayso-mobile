@@ -14,7 +14,7 @@
     "test:ci": "jest --ci --runInBand --detectOpenHandles --forceExit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:e2e:mobile": "playwright test e2e/01-review.spec.ts e2e/02-account-recreate-onboarding.spec.ts --project=mobile-chrome --workers=1",
+    "test:e2e:mobile": "playwright test e2e/01-review.spec.ts --project=mobile-chrome --workers=1",
     "test:e2e:auth": "playwright test e2e/register.spec.ts e2e/oauth.spec.ts --project=mobile-chrome",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{ts,tsx}\"",

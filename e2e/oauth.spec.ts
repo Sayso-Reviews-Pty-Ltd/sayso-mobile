@@ -15,7 +15,6 @@
 import { test, expect } from '@playwright/test';
 import { goToLogin, goToRegister } from './helpers';
 
-
 // ---------------------------------------------------------------------------
 // Button visibility
 // ---------------------------------------------------------------------------
@@ -36,7 +35,6 @@ test.describe('OAuth – Google button', () => {
     // Google button must never be gated behind form validation
     await expect(page.getByRole('button', { name: /google/i })).toBeEnabled();
   });
-
 });
 
 // ---------------------------------------------------------------------------
@@ -85,7 +83,7 @@ test.describe('OAuth – callback error handling', () => {
 
   test('expired email link → redirects to verify-email', async ({ page }) => {
     await page.goto(
-      '/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired'
+      '/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired',
     );
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveURL(/verify-email|login/, { timeout: 10_000 });
@@ -124,7 +122,7 @@ test.describe('OAuth – callback error handling', () => {
 // breakers, role-unsupported, reset-password) require either:
 //   a) A local dev server with a stubbed Supabase auth endpoint, or
 //   b) Real Supabase test credentials set via E2E_PERSONAL_ACCOUNT_EMAIL /
-//      E2E_PERSONAL_ACCOUNT_PASSWORD (see the existing account lifecycle spec).
+//      E2E_PERSONAL_ACCOUNT_PASSWORD (see e2e/01-review.spec.ts).
 //
 // All error-state paths (above) are fully covered because they are handled
 // client-side via URL params before any server exchange occurs.

@@ -108,35 +108,61 @@ test.describe('Account reset and onboarding (UI focused)', () => {
     }
 
     // 3) Onboarding step 1: interests feedback.
-    await page.goto(`${BASE}/interests`);
-    await page.waitForLoadState('networkidle');
-    if (/\/login/i.test(page.url())) {
-      await goToLogin(page);
-      expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+    // ProtectedRoute can show only PageLoader until client auth hydrates — no h2 yet. Prefer
+    // InterestSelection copy (always present once the form mounts) over the animated title.
+    const interestsPickerHint = page.getByText(/Select \d+ or more to continue/);
+    const verifyEmailClientGate = page.getByRole('heading', { name: 'Verify Your Email' });
+    const checkEmailHeading = page.getByRole('heading', { name: 'Check Your Email' });
+
+    let interestsStepReady = false;
+    for (let attempt = 0; attempt < 3 && !interestsStepReady; attempt++) {
+      if (attempt > 0) {
+        await goToLogin(page);
+        expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+      }
+
       await page.goto(`${BASE}/interests`);
       await page.waitForLoadState('networkidle');
-    }
-    if (/verify-email/i.test(page.url())) {
-      await expect(page.getByRole('heading', { name: 'Check Your Email' })).toBeVisible();
-      await page.getByText('Back to login').click();
-      expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
-      await page.goto(`${BASE}/interests`);
-      await page.waitForLoadState('networkidle');
+
+      if (/\/login/i.test(page.url())) {
+        await goToLogin(page);
+        expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+        await page.goto(`${BASE}/interests`);
+        await page.waitForLoadState('networkidle');
+      }
+
+      if (/verify-email/i.test(page.url())) {
+        await expect(checkEmailHeading).toBeVisible();
+        await page.getByText('Back to login').click();
+        expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+        await page.goto(`${BASE}/interests`);
+        await page.waitForLoadState('networkidle');
+      }
+
+      try {
+        await expect(interestsPickerHint.or(verifyEmailClientGate)).toBeVisible({
+          timeout: 45_000,
+        });
+      } catch {
+        continue;
+      }
+
+      if (await verifyEmailClientGate.isVisible()) {
+        await page.getByRole('link', { name: /Go to Email Verification Page/i }).click();
+        await page.waitForLoadState('networkidle');
+        await page.getByText('Back to login').click();
+        expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+        continue;
+      }
+
+      await expect(interestsPickerHint).toBeVisible({ timeout: 15_000 });
+      interestsStepReady = true;
     }
 
-    const interestsTitle = page.getByRole('heading', { name: 'What interests you?' });
-    const verifyEmailClientGate = page.getByRole('heading', { name: 'Verify Your Email' });
-    await expect(interestsTitle.or(verifyEmailClientGate)).toBeVisible({ timeout: 60_000 });
-    if (await verifyEmailClientGate.isVisible()) {
-      await page.getByRole('link', { name: /Go to Email Verification Page/i }).click();
-      await page.waitForLoadState('networkidle');
-      await page.getByText('Back to login').click();
-      expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
-      await page.goto(`${BASE}/interests`);
-      await page.waitForLoadState('networkidle');
+    if (!interestsStepReady) {
+      throw new Error(`E2E: interests step did not mount (auth/hydration). URL: ${page.url()}`);
     }
-    await expect(interestsTitle).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText('Select 3 or more to continue')).toBeVisible();
+
     await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled();
 
     await page.getByText('Food & Drink').first().click();

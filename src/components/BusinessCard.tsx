@@ -102,9 +102,18 @@ function BusinessCardComponent({ business, style }: Props) {
       accessibilityHint="Opens business details"
       accessibilityRole="button"
     >
-      <LinearGradient colors={CARD_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardGradient}>
+      <LinearGradient
+        colors={CARD_GRADIENT}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.cardGradient}
+      >
         <View style={styles.media}>
-          <BusinessCardImage imageUri={image} placeholderUri={placeholderImage} isPlaceholder={isPlaceholder} />
+          <BusinessCardImage
+            imageUri={image}
+            placeholderUri={placeholderImage}
+            isPlaceholder={isPlaceholder}
+          />
           <BusinessCardBadges
             verified={business.verified}
             hasRating={hasRating}
@@ -140,7 +149,14 @@ function BusinessCardComponent({ business, style }: Props) {
           )}
 
           <Pressable
-            style={({ pressed }) => [styles.reviewButton, ctaShadowStyle, pressed ? styles.reviewButtonPressed : null]}
+            style={({ pressed }) => [
+              styles.reviewButton,
+              ctaShadowStyle,
+              pressed ? styles.reviewButtonPressed : null,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`${ctaLabel} ${business.name}`}
+            accessibilityHint="Opens business details"
             onPress={(event) => {
               event.stopPropagation();
               prefetchRouteIntent(`business:${businessIdentifier}`, {
@@ -151,7 +167,7 @@ function BusinessCardComponent({ business, style }: Props) {
                     queryKey: getBusinessDetailQueryKey(businessIdentifier),
                     queryFn: () => fetchBusinessDetail(businessIdentifier),
                     staleTime: 120_000,
-                },
+                  },
                 ],
               });
               handleNavigate();
@@ -177,7 +193,7 @@ function BusinessCardComponent({ business, style }: Props) {
 
 export const BusinessCard = memo(
   BusinessCardComponent,
-  (prev, next) => prev.business === next.business && prev.style === next.style
+  (prev, next) => prev.business === next.business && prev.style === next.style,
 );
 
 const styles = StyleSheet.create({

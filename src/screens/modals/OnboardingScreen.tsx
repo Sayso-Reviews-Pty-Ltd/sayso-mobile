@@ -1,25 +1,16 @@
 import { useEffect, useRef } from 'react';
-import {
-  Animated,
-  Easing,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { routes } from '../../navigation/routes';
 import { Text } from '../../components/Typography';
-import { CARD_BG_COLOR, CARD_BG_RGB, NAVBAR_BG_COLOR } from '../../styles/colors';
+import { Button } from '../../components/ui/button';
 
 const GRID = 8;
 const TYPE_SCALE = {
   logo: 26,
   title: 34,
   subtitle: 16,
-  cta: 16,
-  auth: 14,
   tagline: 14,
 } as const;
 
@@ -27,7 +18,6 @@ const C = {
   page: '#E5E0E5',
   charcoal: '#2D2D2D',
   charcoalSoft: 'rgba(45,45,45,0.72)',
-  white: '#FFFFFF',
 };
 
 export default function OnboardingScreen() {
@@ -122,9 +112,7 @@ export default function OnboardingScreen() {
         ]}
       >
         {/* Wordmark — pinned to the top */}
-        <Animated.View
-          style={{ opacity: headerOpacity, transform: [{ translateY: headerY }] }}
-        >
+        <Animated.View style={{ opacity: headerOpacity, transform: [{ translateY: headerY }] }}>
           <Text style={styles.logoText}>Sayso</Text>
         </Animated.View>
 
@@ -155,28 +143,14 @@ export default function OnboardingScreen() {
               },
             ]}
           >
-            <Pressable
-              style={({ pressed }) => [styles.getStartedBtn, pressed && styles.getStartedBtnPressed]}
-              onPress={handleGetStarted}
-            >
-              <Text style={styles.getStartedTxt}>Get Started</Text>
-            </Pressable>
+            <Button variant="onboarding-primary" onPress={handleGetStarted}>
+              Get Started
+            </Button>
 
             <View style={styles.authRow}>
-              <Pressable
-                style={({ pressed }) => [styles.logInBtn, pressed && styles.logInBtnPressed]}
-                onPress={handleLogIn}
-                hitSlop={8}
-              >
-                <LinearGradient
-                  colors={[CARD_BG_COLOR, `rgba(${CARD_BG_RGB}, 0.82)`]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.logInBtnGradient}
-                >
-                  <Text style={styles.authLogIn}>Log In</Text>
-                </LinearGradient>
-              </Pressable>
+              <Button variant="onboarding-gradient" onPress={handleLogIn} hitSlop={8}>
+                Log In
+              </Button>
             </View>
           </Animated.View>
 
@@ -242,47 +216,8 @@ const styles = StyleSheet.create({
     gap: GRID * 1.5,
   },
 
-  getStartedBtn: {
-    width: '100%',
-    borderRadius: 999,
-    backgroundColor: NAVBAR_BG_COLOR,
-    paddingVertical: GRID * 2,
-    paddingHorizontal: GRID * 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  getStartedBtnPressed: {
-    opacity: 0.96,
-    transform: [{ scale: 0.99 }],
-  },
-  getStartedTxt: {
-    fontSize: TYPE_SCALE.cta,
-    fontWeight: '700',
-    color: C.white,
-  },
-
   authRow: {
     width: '100%',
-  },
-  logInBtn: {
-    width: '100%',
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  logInBtnGradient: {
-    paddingVertical: GRID * 2,
-    paddingHorizontal: GRID * 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logInBtnPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
-  },
-  authLogIn: {
-    fontSize: TYPE_SCALE.cta,
-    fontWeight: '700',
-    color: C.white,
   },
 
   tagline: {

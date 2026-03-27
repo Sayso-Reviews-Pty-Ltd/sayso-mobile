@@ -55,6 +55,9 @@ export function BusinessCardBadges({
             onPressDistance?.();
           }}
           disabled={!onPressDistance}
+          accessibilityRole="button"
+          accessibilityLabel={`${distanceBadgeText}${onPressDistance ? ', tap to open maps' : ''}`}
+          accessibilityState={{ disabled: !onPressDistance }}
         >
           <Text style={styles.distanceText}>{distanceBadgeText}</Text>
         </Pressable>

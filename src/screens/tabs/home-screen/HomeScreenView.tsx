@@ -1,8 +1,6 @@
 import { memo, useState } from 'react';
 import {
-  Animated,
   FlatList,
-  RefreshControl,
   ScrollView,
   View,
   type NativeScrollEvent,
@@ -14,16 +12,12 @@ import { HeaderDmBellActions } from '../../../components/HeaderDmBellActions';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { Text } from '../../../components/Typography';
-import { HomeBusinessRow } from '../home/HomeBusinessRow';
-import { HomeCommunityHighlightsSection } from '../home/HomeCommunityHighlightsSection';
-import { HomeEventsSpecialsRow } from '../home/HomeEventsSpecialsRow';
 import { HomeSearchBar } from '../home/HomeSearchBar';
 import { HomeSearchResults } from '../home/HomeSearchResults';
 import { HomeSearchSuggestions } from '../home/HomeSearchSuggestions';
-import { HomeSectionHeader } from '../home/HomeSectionHeader';
 import { getOverlayShadowStyle } from '../../../styles/overlayShadow';
 import { CARD_CTA_RADIUS } from '../../../styles/radii';
-import { ForYouSection } from './components/ForYouSection';
+import { HomeFeedBody } from './components/HomeFeedBody';
 import { styles } from './HomeScreenView.styles';
 
 const ctaShadowStyle = getOverlayShadowStyle(CARD_CTA_RADIUS);
@@ -152,7 +146,12 @@ function HomeScreenViewComponent({
         ]}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
-        {headerCollapsed ? <View pointerEvents="none" style={[styles.headerMaterial, styles.headerMaterialCollapsed]} /> : null}
+        {headerCollapsed ? (
+          <View
+            pointerEvents="none"
+            style={[styles.headerMaterial, styles.headerMaterialCollapsed]}
+          />
+        ) : null}
         <View
           pointerEvents={headerCollapsed ? 'none' : 'auto'}
           style={[
@@ -169,7 +168,12 @@ function HomeScreenViewComponent({
             </View>
           </TransitionItem>
         </View>
-        <View style={[styles.searchBarWrap, headerCollapsed ? styles.searchBarWrapCollapsed : styles.searchBarWrapExpanded]}>
+        <View
+          style={[
+            styles.searchBarWrap,
+            headerCollapsed ? styles.searchBarWrapCollapsed : styles.searchBarWrapExpanded,
+          ]}
+        >
           <TransitionItem role="subheading" index={1}>
             <HomeSearchBar
               value={searchInput}
@@ -241,76 +245,28 @@ function HomeScreenViewComponent({
           </TransitionItem>
         </ScreenTransitionScope>
       ) : (
-        <ScreenTransitionScope>
-          <Animated.ScrollView
-            ref={homeFeedRef}
-            style={styles.scroll}
-            showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} />}
-            contentContainerStyle={styles.content}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-          >
-            <TransitionItem role="support" index={3}>
-              <ForYouSection
-                user={user}
-                forYou={forYou}
-                onNavigateForYou={onNavigateForYou}
-                onNavigateOnboarding={onNavigateOnboarding}
-                ctaShadowStyle={ctaShadowStyle}
-              />
-            </TransitionItem>
-
-            <TransitionItem role="support" index={4}>
-              <View style={styles.section}>
-                <HomeSectionHeader
-                  title="Trending Now"
-                  actionLabel="See More"
-                  onPress={onNavigateTrending}
-                />
-                <HomeBusinessRow
-                  items={trending.data?.businesses ?? []}
-                  loading={trending.isLoading}
-                  error={trending.error instanceof Error ? trending.error.message : null}
-                  emptyTitle="Nothing trending yet"
-                  emptyMessage="Check back soon for live activity."
-                />
-              </View>
-            </TransitionItem>
-
-            <TransitionItem role="support" index={5}>
-              <View style={styles.section}>
-                <HomeSectionHeader
-                  title="Events & Specials"
-                  actionLabel="See More"
-                  onPress={onNavigateEvents}
-                />
-                <HomeEventsSpecialsRow
-                  items={events.items}
-                  loading={events.isLoading}
-                  error={events.error}
-                />
-              </View>
-            </TransitionItem>
-
-            <TransitionItem role="support" index={6}>
-              <HomeCommunityHighlightsSection
-                reviewers={reviewers.reviewers}
-                reviewersMode={reviewers.mode}
-                recentReviews={recentReviews.reviews}
-                reviewersLoading={reviewers.isLoading || recentReviews.isLoading}
-                reviewersError={reviewers.error ?? recentReviews.error}
-                featuredBusinesses={featured.featuredBusinesses}
-                featuredLoading={featured.isLoading}
-                featuredError={featured.error}
-                onPressContributors={onNavigateLeaderboardContributors}
-                onPressFeatured={onNavigateLeaderboardBusinesses}
-                onPressBadges={onNavigateBadges}
-                onPressReviewer={navigateToReviewer}
-              />
-            </TransitionItem>
-          </Animated.ScrollView>
-        </ScreenTransitionScope>
+        <HomeFeedBody
+          homeFeedRef={homeFeedRef}
+          user={user}
+          refreshing={refreshing}
+          handleRefresh={handleRefresh}
+          handleScroll={handleScroll}
+          ctaShadowStyle={ctaShadowStyle}
+          forYou={forYou}
+          trending={trending}
+          events={events}
+          reviewers={reviewers}
+          recentReviews={recentReviews}
+          featured={featured}
+          navigateToReviewer={navigateToReviewer}
+          onNavigateForYou={onNavigateForYou}
+          onNavigateTrending={onNavigateTrending}
+          onNavigateEvents={onNavigateEvents}
+          onNavigateLeaderboardContributors={onNavigateLeaderboardContributors}
+          onNavigateLeaderboardBusinesses={onNavigateLeaderboardBusinesses}
+          onNavigateBadges={onNavigateBadges}
+          onNavigateOnboarding={onNavigateOnboarding}
+        />
       )}
     </SafeAreaView>
   );

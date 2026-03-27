@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Share } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import { type EventSpecialHeaderRightAction } from '../../../components/event-detail';
 import { useEventReminder } from '../../../hooks/useEventReminder';
@@ -7,6 +8,7 @@ import { useEventRsvp } from '../../../hooks/useEventRsvp';
 import { useEventSpecialDetail } from '../../../hooks/useEventSpecialDetail';
 import { useSavedBusinesses } from '../../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../../hooks/useSession';
+import { useAuthGate } from '../../../providers/AuthGateProvider';
 import { apiFetch } from '../../../lib/api';
 import { ENV } from '../../../lib/env';
 import { routes } from '../../../navigation/routes';
@@ -40,12 +42,13 @@ export function useEventSpecialScreenActions({
 }: UseEventSpecialScreenActionsParams) {
   const router = useRouter();
   const { user } = useAuthSession();
+  const { showAuthGate } = useAuthGate();
   const [saveBusy, setSaveBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handlePressGoing = async () => {
     if (!user) {
-      router.push(routes.onboarding() as never);
+      showAuthGate({ message: `Log in to RSVP to ${item?.title ?? 'this event'}` });
       return;
     }
 
@@ -64,7 +67,7 @@ export function useEventSpecialScreenActions({
 
   const handlePressReminder = async (option: '1_day' | '2_hours') => {
     if (!user) {
-      router.push(routes.onboarding() as never);
+      showAuthGate({ message: `Log in to set a reminder for ${item?.title ?? 'this event'}` });
       return;
     }
 
@@ -83,7 +86,8 @@ export function useEventSpecialScreenActions({
         hasReminder: isActive,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to update reminder right now.';
+      const message =
+        error instanceof Error ? error.message : 'Unable to update reminder right now.';
       if (isUnauthorizedError(message)) {
         router.push(routes.onboarding() as never);
         return;
@@ -100,7 +104,8 @@ export function useEventSpecialScreenActions({
   const handleShareEventSpecial = useCallback(async () => {
     if (!item) return;
     const origin = ENV.apiBaseUrl || 'https://www.sayso.co.za';
-    const detailPath = routeType === 'special' ? routes.specialDetail(item.id) : routes.eventDetail(item.id);
+    const detailPath =
+      routeType === 'special' ? routes.specialDetail(item.id) : routes.eventDetail(item.id);
 
     try {
       await Share.share({
@@ -118,7 +123,7 @@ export function useEventSpecialScreenActions({
       return;
     }
     if (!user) {
-      router.push(routes.onboarding() as never);
+      showAuthGate({ message: `Log in to save ${item?.title ?? 'this listing'}` });
       return;
     }
     if (saveBusy) return;
@@ -129,17 +134,26 @@ export function useEventSpecialScreenActions({
       if (savedBusinessIds.has(linkedBusinessId)) {
         await apiFetch<{ success?: boolean; message?: string }>(
           `/api/user/saved?business_id=${linkedBusinessId}`,
-          { method: 'DELETE' }
+          { method: 'DELETE' },
         );
+        Toast.show({ type: 'info', text1: 'Removed from saves', visibilityTime: 2000 });
       } else {
         await apiFetch<{ success?: boolean; message?: string }>('/api/user/saved', {
           method: 'POST',
           body: JSON.stringify({ business_id: linkedBusinessId }),
         });
+        Toast.show({
+          type: 'success',
+          text1: `Saved ${item?.title ?? 'listing'}`,
+          visibilityTime: 2000,
+        });
       }
       await savedQuery.refetch();
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Unable to update saved items right now.');
+      const msg =
+        error instanceof Error ? error.message : 'Unable to update saved items right now.';
+      setActionError(msg);
+      Toast.show({ type: 'error', text1: 'Could not save', text2: msg, visibilityTime: 3000 });
     } finally {
       setSaveBusy(false);
     }
@@ -169,7 +183,13 @@ export function useEventSpecialScreenActions({
         disabled: saveBusy,
       },
     ],
-    [handleShareEventSpecial, handleToggleSaveFromEventSpecial, isLinkedBusinessSaved, linkedBusinessId, saveBusy]
+    [
+      handleShareEventSpecial,
+      handleToggleSaveFromEventSpecial,
+      isLinkedBusinessSaved,
+      linkedBusinessId,
+      saveBusy,
+    ],
   );
 
   return {

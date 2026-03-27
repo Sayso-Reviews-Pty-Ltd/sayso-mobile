@@ -15,8 +15,7 @@ jest.mock('expo-linear-gradient', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
-    LinearGradient: ({ children, ...props }: any) =>
-      React.createElement(View, props, children),
+    LinearGradient: ({ children, ...props }: any) => React.createElement(View, props, children),
   };
 });
 
@@ -24,13 +23,15 @@ jest.mock('react-native-safe-area-context', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
-    SafeAreaView: ({ children, ...props }: any) =>
-      React.createElement(View, props, children),
+    SafeAreaView: ({ children, ...props }: any) => React.createElement(View, props, children),
     useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
   };
 });
 
-jest.mock('../../lib/api', () => ({ apiFetch: jest.fn(), ApiError: class ApiError extends Error {} }));
+jest.mock('../../lib/api', () => ({
+  apiFetch: jest.fn(),
+  ApiError: class ApiError extends Error {},
+}));
 
 jest.mock('../../lib/supabase', () => ({
   supabase: { auth: { getSession: jest.fn().mockResolvedValue({ data: { session: null } }) } },
@@ -46,6 +47,8 @@ jest.mock('../../providers/SecurityProvider', () => ({
 
 jest.mock('../../hooks/useBusinessDetail', () => ({
   useBusinessDetail: jest.fn(),
+  getBusinessDetailQueryKey: (id: string) => ['business', id],
+  fetchBusinessDetail: jest.fn(),
 }));
 
 jest.mock('../../hooks/useEventSpecialDetail', () => ({
@@ -137,14 +140,18 @@ function renderScreen() {
   render(
     <QueryClientProvider client={qc}>
       <WriteReviewScreen />
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
   return qc;
 }
 
 function setupDefaults() {
   mockUseLocalSearchParams.mockReturnValue({ id: 'biz-123', type: 'business' });
-  mockUseRouter.mockReturnValue({ back: mockRouterBack, push: jest.fn(), replace: mockRouterReplace });
+  mockUseRouter.mockReturnValue({
+    back: mockRouterBack,
+    push: jest.fn(),
+    replace: mockRouterReplace,
+  });
   mockUseAuth.mockReturnValue({ user: { id: 'user-1' }, session: null, isLoading: false });
   mockUseSecurity.mockReturnValue({
     guardSensitiveAction: jest.fn().mockReturnValue({ allowed: true }),
@@ -199,9 +206,7 @@ describe('WriteReviewScreen — rendering', () => {
 
   it('shows the invalid-hint when form is empty', () => {
     renderScreen();
-    expect(
-      screen.getByText('Add a rating and at least 10 characters to submit')
-    ).toBeTruthy();
+    expect(screen.getByText('Add a rating and at least 10 characters to submit')).toBeTruthy();
   });
 
   it('shows "Tap a star to rate" prompt when no star is selected', () => {
@@ -212,9 +217,7 @@ describe('WriteReviewScreen — rendering', () => {
   it('renders 5 star buttons with correct accessibility labels', () => {
     renderScreen();
     for (let i = 1; i <= 5; i++) {
-      expect(
-        screen.getByLabelText(`Rate ${i} star${i !== 1 ? 's' : ''}`)
-      ).toBeTruthy();
+      expect(screen.getByLabelText(`Rate ${i} star${i !== 1 ? 's' : ''}`)).toBeTruthy();
     }
   });
 });
@@ -302,7 +305,7 @@ describe('WriteReviewScreen — form submission', () => {
     // Type sufficient review text
     fireEvent.changeText(
       screen.getByPlaceholderText('Share your experience with others...'),
-      'This is a great cafe!'
+      'This is a great cafe!',
     );
     await waitFor(() => {
       expect(screen.queryByText('Add a rating and at least 10 characters to submit')).toBeNull();
@@ -343,7 +346,7 @@ describe('WriteReviewScreen — form submission', () => {
     await waitFor(() => {
       const calls = mockApiFetch.mock.calls;
       const submitCall = calls.find(
-        ([path, opts]: [string, any]) => path === '/api/reviews' && opts?.method === 'POST'
+        ([path, opts]: [string, any]) => path === '/api/reviews' && opts?.method === 'POST',
       );
       expect(submitCall).toBeDefined();
       expect(screen.getAllByText('Review submitted').length).toBeGreaterThan(0);
@@ -365,7 +368,7 @@ describe('WriteReviewScreen — form submission', () => {
     await waitFor(() => {
       const calls = mockApiFetch.mock.calls;
       const submitCall = calls.find(
-        ([path, opts]: [string, any]) => path === '/api/reviews' && opts?.method === 'POST'
+        ([path, opts]: [string, any]) => path === '/api/reviews' && opts?.method === 'POST',
       );
       expect(submitCall).toBeDefined();
     });
@@ -397,7 +400,7 @@ describe('WriteReviewScreen — form submission', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Review submitted').length).toBeGreaterThan(0);
       expect(
-        screen.getAllByText("Some images couldn't be uploaded. Your review was saved.").length
+        screen.getAllByText("Some images couldn't be uploaded. Your review was saved.").length,
       ).toBeGreaterThan(0);
     });
 
@@ -434,11 +437,13 @@ describe('WriteReviewScreen — form submission', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Review submission failed').length).toBeGreaterThan(0);
       expect(
-        screen.getAllByText("We couldn't save your review. Please try again.").length
+        screen.getAllByText("We couldn't save your review. Please try again.").length,
       ).toBeGreaterThan(0);
       expect(screen.getByDisplayValue('This is a great cafe!')).toBeTruthy();
       expect(screen.getByText('Write a Review')).toBeTruthy();
-      expect(screen.getByTestId('submit-review-btn').props.accessibilityState?.disabled).toBe(false);
+      expect(screen.getByTestId('submit-review-btn').props.accessibilityState?.disabled).toBe(
+        false,
+      );
     });
 
     expect(screen.queryByText('Review submitted')).toBeNull();
@@ -471,11 +476,13 @@ describe('WriteReviewScreen — form submission', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Review submission failed').length).toBeGreaterThan(0);
       expect(
-        screen.getAllByText("We couldn't save your review. Please try again.").length
+        screen.getAllByText("We couldn't save your review. Please try again.").length,
       ).toBeGreaterThan(0);
       expect(screen.getByDisplayValue('This is a great cafe!')).toBeTruthy();
       expect(screen.getByText('Write a Review')).toBeTruthy();
-      expect(screen.getByTestId('submit-review-btn').props.accessibilityState?.disabled).toBe(false);
+      expect(screen.getByTestId('submit-review-btn').props.accessibilityState?.disabled).toBe(
+        false,
+      );
     });
 
     act(() => {
@@ -492,14 +499,14 @@ describe('WriteReviewScreen — form submission', () => {
     // Only fill text, no rating
     fireEvent.changeText(
       screen.getByPlaceholderText('Share your experience with others...'),
-      'Good experience here!'
+      'Good experience here!',
     );
 
     fireEvent.press(screen.getByTestId('submit-review-btn'));
 
     // apiFetch should NOT have been called with POST /api/reviews
     const reviewSubmitCall = mockApiFetch.mock.calls.find(
-      ([path, opts]: [string, any]) => path === '/api/reviews' && opts?.method === 'POST'
+      ([path, opts]: [string, any]) => path === '/api/reviews' && opts?.method === 'POST',
     );
     expect(reviewSubmitCall).toBeUndefined();
   });
@@ -551,7 +558,9 @@ describe('WriteReviewScreen — edit mode', () => {
     });
     mockUseEventSpecialDetail.mockReturnValue({ data: null, isLoading: false });
     // review-detail query + deal-breakers
-    mockApiFetch.mockResolvedValue({ review: { id: 'rev-456', rating: 3, content: 'Old review text here.' } });
+    mockApiFetch.mockResolvedValue({
+      review: { id: 'rev-456', rating: 3, content: 'Old review text here.' },
+    });
   });
 
   it('renders "Edit Review" heading in edit mode', () => {
@@ -560,7 +569,7 @@ describe('WriteReviewScreen — edit mode', () => {
     render(
       <QueryClientProvider client={qc}>
         <WriteReviewScreen />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
     expect(screen.getByText('Edit Review')).toBeTruthy();
   });
@@ -571,7 +580,7 @@ describe('WriteReviewScreen — edit mode', () => {
     render(
       <QueryClientProvider client={qc}>
         <WriteReviewScreen />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
     await waitFor(() => {
       expect(screen.getAllByText('Save Changes').length).toBeGreaterThan(0);

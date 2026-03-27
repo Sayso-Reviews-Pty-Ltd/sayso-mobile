@@ -61,43 +61,47 @@ export type ProfileSchemaType = z.infer<typeof ProfileSchema>;
 
 // ── Business (raw API shape) ───────────────────────────────────────────────
 
-export const RawBusinessDetailSchema = z.object({
-  id: optionalString,
-  name: optionalString,
-  category_label: optionalString,
-  category: optionalString,
-  primary_category_label: optionalString,
-  primary_category_slug: optionalString,
-  primary_subcategory_slug: optionalString,
-  location: optionalString,
-  address: optionalString,
-  phone: optionalString,
-  email: optionalString,
-  website: optionalString,
-  description: z.union([
-    z.string(),
-    z.object({ raw: optionalString, friendly: optionalString }),
-    z.null(),
-  ]).optional(),
-  image_url: optionalString,
-  image: optionalString,
-  verified: optionalBoolean,
-  rating: optionalNumber,
-  reviews: optionalNumber,
-  lat: optionalNumber,
-  lng: optionalNumber,
-  latitude: optionalNumber,
-  longitude: optionalNumber,
-  slug: optionalString,
-  badge: optionalString,
-  owner_id: optionalString,
-  interest_id: optionalString,
-  sub_interest_id: optionalString,
-  stats: z.object({
-    average_rating: optionalNumber,
-    total_reviews: optionalNumber,
-  }).optional(),
-});
+export const RawBusinessDetailSchema = z
+  .object({
+    id: optionalString,
+    name: optionalString,
+    category_label: optionalString,
+    category: optionalString,
+    primary_category_label: optionalString,
+    primary_category_slug: optionalString,
+    primary_subcategory_slug: optionalString,
+    location: optionalString,
+    address: optionalString,
+    phone: optionalString,
+    email: optionalString,
+    website: optionalString,
+    description: z
+      .union([z.string(), z.object({ raw: optionalString, friendly: optionalString }), z.null()])
+      .optional(),
+    image_url: optionalString,
+    image: optionalString,
+    verified: optionalBoolean,
+    rating: optionalNumber,
+    reviews: optionalNumber,
+    lat: optionalNumber,
+    lng: optionalNumber,
+    latitude: optionalNumber,
+    longitude: optionalNumber,
+    slug: optionalString,
+    badge: optionalString,
+    owner_id: optionalString,
+    interest_id: optionalString,
+    sub_interest_id: optionalString,
+    stats: z
+      .object({
+        average_rating: optionalNumber,
+        total_reviews: optionalNumber,
+      })
+      .optional(),
+    // Preserve fields the normalizer reads (images, hours, price aliases, etc.)
+    // so successful parses do not strip API keys we did not enumerate.
+  })
+  .passthrough();
 
 export type RawBusinessDetailSchemaType = z.infer<typeof RawBusinessDetailSchema>;
 

@@ -197,10 +197,7 @@ describe('fetchBusinessDetail — data normalization', () => {
     mockApiFetch.mockResolvedValueOnce({
       id: 'biz-1',
       name: 'T',
-      images: [
-        { url: 'https://img.test/a.jpg' },
-        { image_url: 'https://img.test/b.jpg' },
-      ],
+      images: [{ url: 'https://img.test/a.jpg' }, { image_url: 'https://img.test/b.jpg' }],
     });
     const result = await fetchBusinessDetail('biz-1');
     expect(result.images).toContain('https://img.test/a.jpg');
@@ -234,7 +231,10 @@ describe('getBusinessDetailQueryKey', () => {
 // ─── useBusinessDetail hook ────────────────────────────────────────────────────
 
 describe('useBusinessDetail', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockApiFetch.mockReset();
+  });
 
   it('fetches and returns normalised business data', async () => {
     mockApiFetch.mockResolvedValueOnce({ id: 'biz-1', name: 'Cafe Luna', rating: 4.5 });

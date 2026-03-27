@@ -99,19 +99,27 @@ export interface BusinessDetail {
   };
 }
 
-function normalizeDescription(raw: RawDescription, category: string | undefined, location: string | undefined) {
+function normalizeDescription(
+  raw: RawDescription,
+  category: string | undefined,
+  location: string | undefined,
+) {
   if (!raw) {
     return `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
   }
 
   if (typeof raw === 'string') {
     const trimmed = raw.trim();
-    return trimmed.length > 0 ? trimmed : `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
+    return trimmed.length > 0
+      ? trimmed
+      : `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
   }
 
   const preferred = raw.friendly ?? raw.raw ?? '';
   const trimmed = preferred.trim();
-  return trimmed.length > 0 ? trimmed : `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
+  return trimmed.length > 0
+    ? trimmed
+    : `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
 }
 
 function toNumber(value: unknown) {
@@ -154,7 +162,8 @@ function normalizeImages(raw: RawBusinessDetail) {
 
 function normalizeBusinessDetail(raw: RawBusinessDetail, fallbackId: string): BusinessDetail {
   const images = normalizeImages(raw);
-  const primaryCategory = raw.category_label ?? raw.primary_category_label ?? raw.category ?? undefined;
+  const primaryCategory =
+    raw.category_label ?? raw.primary_category_label ?? raw.category ?? undefined;
   const location = raw.location ?? undefined;
   const statsAverageRating = toNumber(raw.stats?.average_rating);
   const statsTotalReviews = toNumber(raw.stats?.total_reviews);
@@ -220,6 +229,5 @@ export function useBusinessDetail(id: string) {
     queryFn: () => fetchBusinessDetail(id),
     enabled: !!id,
     staleTime: 120_000,
-    retry: 1,
-});
+  });
 }

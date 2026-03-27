@@ -51,7 +51,11 @@ function setup({
   mockUsePathname.mockReturnValue(pathname);
   mockUseAuth.mockReturnValue({ session, isLoading: isAuthLoading });
   mockUseProfile.mockReturnValue({ profileState, isProfileLoading });
-  render(<RootGuard><Text>child</Text></RootGuard>);
+  render(
+    <RootGuard>
+      <Text>child</Text>
+    </RootGuard>,
+  );
   return { replace };
 }
 
@@ -66,7 +70,11 @@ describe('RootGuard', () => {
     mockUsePathname.mockReturnValue('/home');
     mockUseAuth.mockReturnValue({ session: null, isLoading: true });
     mockUseProfile.mockReturnValue({ profileState: null, isProfileLoading: true });
-    const { getByText } = render(<RootGuard><Text>child content</Text></RootGuard>);
+    const { getByText } = render(
+      <RootGuard>
+        <Text>child content</Text>
+      </RootGuard>,
+    );
     expect(getByText('child content')).toBeTruthy();
   });
 
@@ -194,7 +202,11 @@ describe('RootGuard', () => {
   it('redirects incomplete onboarding user to /subcategories when on that step', async () => {
     const { replace } = setup({
       session: { user: { id: '1' } },
-      profileState: { ...FULLY_ONBOARDED, isOnboardingComplete: false, onboardingStep: 'subcategories' },
+      profileState: {
+        ...FULLY_ONBOARDED,
+        isOnboardingComplete: false,
+        onboardingStep: 'subcategories',
+      },
       pathname: '/home',
     });
     await waitFor(() => {
@@ -205,7 +217,11 @@ describe('RootGuard', () => {
   it('redirects incomplete onboarding user to /deal-breakers when on that step', async () => {
     const { replace } = setup({
       session: { user: { id: '1' } },
-      profileState: { ...FULLY_ONBOARDED, isOnboardingComplete: false, onboardingStep: 'deal-breakers' },
+      profileState: {
+        ...FULLY_ONBOARDED,
+        isOnboardingComplete: false,
+        onboardingStep: 'deal-breakers',
+      },
       pathname: '/home',
     });
     await waitFor(() => {
@@ -213,17 +229,16 @@ describe('RootGuard', () => {
     });
   });
 
-  it('redirects authenticated user to /home on first load (initial routing guard)', async () => {
-    // The auth-hardening initial routing guard sends any authenticated user to
-    // /home on first mount before onboarding state is evaluated, preventing
-    // deep-link jumps into onboarding steps.
+  it('redirects authenticated user ahead of onboarding progress back to the current step', async () => {
+    // onboardingStep null → expected first step is /interests; deep-link to
+    // /deal-breakers is treated as skip-ahead and corrected.
     const { replace } = setup({
       session: { user: { id: '1' } },
       profileState: { ...FULLY_ONBOARDED, isOnboardingComplete: false, onboardingStep: null },
       pathname: '/deal-breakers',
     });
     await waitFor(() => {
-      expect(replace).toHaveBeenCalledWith('/home');
+      expect(replace).toHaveBeenCalledWith('/interests');
     });
   });
 

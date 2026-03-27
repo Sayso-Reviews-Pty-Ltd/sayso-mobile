@@ -110,7 +110,15 @@ test.describe('Account reset and onboarding (UI focused)', () => {
     // 3) Onboarding step 1: interests feedback.
     await page.goto('https://sayso.co.za/interests');
     await page.waitForLoadState('networkidle');
-    await expect(page.getByText('What interests you?')).toBeVisible();
+    if (/\/login/i.test(page.url())) {
+      await goToLogin(page);
+      expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+      await page.goto('https://sayso.co.za/interests');
+      await page.waitForLoadState('networkidle');
+    }
+    await expect(page.getByRole('heading', { name: 'What interests you?' })).toBeVisible({
+      timeout: 25_000,
+    });
     await expect(page.getByText('Select 3 or more to continue')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled();
 

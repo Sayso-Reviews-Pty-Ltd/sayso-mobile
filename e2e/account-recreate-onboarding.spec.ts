@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { goToLogin } from './helpers';
+import { goToLogin, signInWithPersonalAccount } from './helpers';
 
 test.describe('Account reset and onboarding (UI focused)', () => {
   test('delete account, re-register, and complete onboarding with feedback checks', async ({
@@ -15,19 +15,9 @@ test.describe('Account reset and onboarding (UI focused)', () => {
 
     // 1) Sign in and delete account from profile.
     await goToLogin(page);
-    await page.getByPlaceholder('you@example.com').fill(email!);
-    await page.getByPlaceholder(/enter your password/i).fill(password!);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    const loginOutcome = await signInWithPersonalAccount(page, email!, password!);
 
-    let authenticated = false;
-    try {
-      await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 10_000 });
-      authenticated = true;
-    } catch {
-      authenticated = false;
-    }
-
-    if (authenticated) {
+    if (loginOutcome === 'authenticated') {
       await page.goto('https://sayso.co.za/profile');
       await page.waitForLoadState('networkidle');
       const accountActionsCard = page.getByRole('region', { name: /account actions/i });
@@ -47,11 +37,8 @@ test.describe('Account reset and onboarding (UI focused)', () => {
           timeout: 20_000,
         });
       }
-    } else {
-      await expect(
-        page.getByText('Incorrect email or password. Please try again.').first()
-      ).toBeVisible({ timeout: 10_000 });
     }
+    // bad_credentials: wrong E2E secrets — error banner already visible from signIn helper
 
     // 2) Re-sign up and assert registration form feedback (skip if already mid-onboarding).
     if (!/\/interests|\/subcategories|\/deal-breakers|\/complete/.test(page.url())) {
@@ -106,12 +93,7 @@ test.describe('Account reset and onboarding (UI focused)', () => {
         await expect(page.getByText('Check Your Email')).toBeVisible();
         await page.getByText('Back to login').click();
         await expect(page.getByPlaceholder('you@example.com')).toBeVisible();
-        await page.getByPlaceholder('you@example.com').fill(email!);
-        await page.getByPlaceholder(/enter your password/i).fill(password!);
-        await page.getByRole('button', { name: 'Sign in' }).click();
-        await page.waitForURL((url) => !url.pathname.includes('/login'), {
-          timeout: 15_000,
-        });
+        expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
       }
 
       // If registration didn't create an active session (e.g. email already exists),
@@ -121,12 +103,7 @@ test.describe('Account reset and onboarding (UI focused)', () => {
         if (await loginTab.isVisible()) {
           await loginTab.click();
         }
-        await page.getByPlaceholder('you@example.com').fill(email!);
-        await page.getByPlaceholder(/enter your password/i).fill(password!);
-        await page.getByRole('button', { name: 'Sign in' }).click();
-        await page.waitForURL((url) => !url.pathname.includes('/login'), {
-          timeout: 15_000,
-        });
+        expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
       }
     }
 

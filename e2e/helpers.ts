@@ -2,6 +2,36 @@ import type { Page } from '@playwright/test';
 
 export const BASE = process.env.E2E_BASE_URL ?? 'https://sayso.co.za';
 
+const LOGIN_TIMEOUT_MS = 60_000;
+
+/**
+ * Submit login and wait until we either leave `/login` or see the standard
+ * bad-credentials message. CI runners and cold prod can exceed 10–15s easily.
+ */
+export async function signInWithPersonalAccount(
+  page: Page,
+  email: string,
+  password: string,
+  options: { timeoutMs?: number } = {},
+): Promise<'authenticated' | 'bad_credentials'> {
+  const timeoutMs = options.timeoutMs ?? LOGIN_TIMEOUT_MS;
+  await page.getByPlaceholder('you@example.com').fill(email);
+  await page.getByPlaceholder(/enter your password/i).fill(password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  const badPassword = page.getByText(/Incorrect email or password/i).first();
+
+  try {
+    await page.waitForURL((url) => !url.pathname.toLowerCase().includes('/login'), {
+      timeout: timeoutMs,
+    });
+    return 'authenticated';
+  } catch {
+    await badPassword.waitFor({ state: 'visible', timeout: 15_000 });
+    return 'bad_credentials';
+  }
+}
+
 export async function goToLogin(page: Page) {
   await page.goto(`${BASE}/login`);
   await page.waitForLoadState('networkidle');

@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { APP_PAGE_GUTTER } from '../../../styles/layout';
 import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
-import { OFF_WHITE, CARD_BG, SAGE, CHARCOAL } from './savedScreenTokens';
+import { OFF_WHITE, CARD_BG, CHARCOAL } from './savedScreenTokens';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: OFF_WHITE },

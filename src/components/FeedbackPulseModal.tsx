@@ -1,4 +1,5 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './Typography';
 import { haptics } from '../lib/haptics';
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
 
 export function FeedbackPulseModal({ visible, onClose, context, onRespond }: Props) {
   const handleRespond = (positive: boolean) => {
-    positive ? haptics.complete() : haptics.navigation();
+    if (positive) { haptics.complete(); } else { haptics.navigation(); }
     onRespond(positive); // caller (useFeedbackPulse) owns tracking
     onClose();
   };

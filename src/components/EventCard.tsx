@@ -67,8 +67,7 @@ function EventCardComponent({ item, style }: Props) {
           queryKey: getEventSpecialDetailQueryKey(item.id),
           queryFn: () => fetchEventSpecialDetail(item.id),
           staleTime: 120_000,
-                retry: 1,
-},
+        },
       ],
     });
   }, [href, item.id, router]);

@@ -35,7 +35,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
           if (parsed.minRating != null) setMinRating(parsed.minRating);
           if (parsed.distanceKm != null) setDistanceKm(parsed.distanceKm);
         }
-      } catch {}
+      } catch { /* non-critical: runs on first mount, safe to ignore */ }
       hydratedRef.current = true;
     };
     void restore();
@@ -48,7 +48,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     const save = async () => {
       try {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ minRating, distanceKm }));
-      } catch {}
+      } catch { /* non-critical: filter persist failure should not surface to user */ }
     };
     void save();
   }, [minRating, distanceKm]);

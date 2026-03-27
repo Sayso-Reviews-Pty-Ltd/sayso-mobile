@@ -1,7 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../../../components/Typography';
-import { APP_PAGE_GUTTER } from '../../../../styles/layout';
 import { CHARCOAL } from '../constants';
 import { getPrestigeInfo, getNextMilestonePrompt } from '../../../../lib/prestige';
 import { ProfileSectionCard } from './ProfileSectionCard';

@@ -1,5 +1,6 @@
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { TextInput } from '../../../../components/Typography';
 import { haptics } from '../../../../lib/haptics';
 import { C } from './constants';
 import { styles } from './styles';

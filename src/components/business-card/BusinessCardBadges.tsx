@@ -42,8 +42,8 @@ export function BusinessCardBadges({
           </LinearGradient>
         </View>
       ) : (
-        <View style={[styles.badge, getOverlayShadowStyle(999), styles.rightBadge]}>
-          <Text style={styles.badgeText}>New</Text>
+        <View style={[styles.newBadge, getOverlayShadowStyle(999)]}>
+          <Text style={styles.newBadgeText}>New</Text>
         </View>
       )}
 
@@ -110,8 +110,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
+  newBadge: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(114,47,55,0.92)',
+  },
+  newBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
   badgeText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#2D2D2D',
   },

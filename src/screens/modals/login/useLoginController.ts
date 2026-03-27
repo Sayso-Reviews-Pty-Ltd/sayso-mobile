@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Keyboard, TextInput } from 'react-native';
+import { useCallback, useEffect, useRef, useState, type ElementRef } from 'react';
+import { Animated, Easing, Keyboard } from 'react-native';
+import { TextInput } from '../../../components/Typography';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -38,7 +39,7 @@ export function useLoginController(defaultMode: AuthMode) {
   // ref not state — avoids re-render window between guard check and set
   const isAuthSettling = useRef(false);
   const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const passwordInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<ElementRef<typeof TextInput>>(null);
 
   const tabAnim = useRef(new Animated.Value(defaultMode === 'login' ? 1 : 0)).current;
   const formOpacity = useRef(new Animated.Value(1)).current;

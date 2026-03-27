@@ -4,29 +4,14 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
-  Share,
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '../../components/EmptyState';
-import { InlineErrorBanner } from '../../components/InlineErrorBanner';
 import { LoadingCrossfade } from '../../components/LoadingCrossfade';
-import {
-  EventSpecialActionCard,
-  EventSpecialContactInfoCard,
-  EventSpecialDescriptionCard,
-  EventSpecialDetailsCard,
-  EventSpecialHero,
-  EventSpecialInfoBlock,
-  EventSpecialMoreDatesCard,
-  EventSpecialPageHeader,
-  type EventSpecialHeaderRightAction,
-  EventSpecialRelatedSection,
-  EventSpecialReviewsSection,
-  EventSpecialSkeleton,
-} from '../../components/event-detail';
+import { EventSpecialSkeleton } from '../../components/event-detail';
 import { NAVBAR_BG_COLOR } from '../../styles/colors';
 import { useEventReminder } from '../../hooks/useEventReminder';
 import { useEventRatings } from '../../hooks/useEventRatings';
@@ -37,34 +22,25 @@ import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
 import { useRelatedEventSpecials } from '../../hooks/useRelatedEventSpecials';
 import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
-import { TransitionItem } from '../../components/motion/TransitionItem';
-import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
-import { useAuthSession } from '../../hooks/useSession';
-import { apiFetch } from '../../lib/api';
-import { ENV } from '../../lib/env';
 import { markFirstContentful, markInteractive } from '../../lib/perf/perfMarkers';
 import { routes } from '../../navigation/routes';
 import { styles } from './event-special-screen/eventSpecialScreenStyles';
+import { EventSpecialScreenContent } from './event-special-screen/EventSpecialScreenContent';
+import { useEventSpecialScreenActions } from './event-special-screen/useEventSpecialScreenActions';
 
 type Props = {
   routeType: 'event' | 'special';
 };
 
-function isUnauthorizedError(message: string | null) {
-  return Boolean(message && /HTTP\s+401/.test(message));
-}
-
 export default function EventSpecialScreen({ routeType }: Props) {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuthSession();
   const savedQuery = useSavedBusinesses();
-  const [saveBusy, setSaveBusy] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const detailQuery = useEventSpecialDetail(id);
   const item = detailQuery.data;
+
   const linkedBusinessId = useMemo(() => {
     if (!item) return null;
     const snakeCaseId = (item as unknown as Record<string, unknown>).business_id;
@@ -77,6 +53,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
     }
     return null;
   }, [item]);
+
   const savedBusinessIds = useMemo(() => {
     const ids = ((savedQuery.data?.businesses ?? []) as Array<{ id?: string | null }>)
       .map((savedItem: { id?: string | null }) => savedItem?.id)
@@ -86,6 +63,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
       );
     return new Set(ids);
   }, [savedQuery.data?.businesses]);
+
   const isLinkedBusinessSaved = Boolean(linkedBusinessId && savedBusinessIds.has(linkedBusinessId));
 
   useEffect(() => {
@@ -140,10 +118,7 @@ export default function EventSpecialScreen({ routeType }: Props) {
         setShowDeferredSections(true);
       });
     });
-
-    return () => {
-      task.cancel();
-    };
+    return () => { task.cancel(); };
   }, [item?.id]);
 
   const setScrollTopVisible = useCallback((visible: boolean) => {
@@ -179,140 +154,29 @@ export default function EventSpecialScreen({ routeType }: Props) {
 
   useEffect(() => {
     if (!item || !id) return;
-
     if (item.type !== routeType) {
       router.replace((item.type === 'special' ? routes.specialDetail(item.id) : routes.eventDetail(item.id)) as never);
     }
   }, [id, item, routeType, router]);
 
-  const handlePressGoing = async () => {
-    if (!user) {
-      router.push(routes.onboarding() as never);
-      return;
-    }
-
-    setActionError(null);
-    try {
-      await rsvp.toggleRsvp();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to update RSVP right now.';
-      if (isUnauthorizedError(message)) {
-        router.push(routes.onboarding() as never);
-        return;
-      }
-      setActionError(message);
-    }
-  };
-
-  const handlePressReminder = async (option: '1_day' | '2_hours') => {
-    if (!user) {
-      router.push(routes.onboarding() as never);
-      return;
-    }
-
-    if (!item?.startDateISO) {
-      setActionError('This listing does not have a valid start date yet.');
-      return;
-    }
-
-    setActionError(null);
-    try {
-      const isActive = reminder.hasReminder(option);
-      await reminder.toggleReminder({
-        option,
-        startDateISO: item.startDateISO,
-        eventTitle: item.title,
-        hasReminder: isActive,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to update reminder right now.';
-      if (isUnauthorizedError(message)) {
-        router.push(routes.onboarding() as never);
-        return;
-      }
-      setActionError(message);
-    }
-  };
-
-  const handlePressWriteReview = () => {
-    if (!id) return;
-    router.push(routes.writeReview(routeType, id) as never);
-  };
-
-  const handleShareEventSpecial = useCallback(async () => {
-    if (!item) return;
-    const origin = ENV.apiBaseUrl || 'https://www.sayso.co.za';
-    const detailPath = routeType === 'special' ? routes.specialDetail(item.id) : routes.eventDetail(item.id);
-
-    try {
-      await Share.share({
-        title: item.title,
-        message: `Check out ${item.title} on Sayso\n${origin}${detailPath}`,
-      });
-    } catch {
-      // Non-blocking.
-    }
-  }, [item, routeType]);
-
-  const handleToggleSaveFromEventSpecial = useCallback(async () => {
-    if (!linkedBusinessId) {
-      setActionError('Saving is unavailable for this listing.');
-      return;
-    }
-    if (!user) {
-      router.push(routes.onboarding() as never);
-      return;
-    }
-    if (saveBusy) return;
-
-    setSaveBusy(true);
-    setActionError(null);
-    try {
-      if (savedBusinessIds.has(linkedBusinessId)) {
-        await apiFetch<{ success?: boolean; message?: string }>(
-          `/api/user/saved?business_id=${linkedBusinessId}`,
-          { method: 'DELETE' }
-        );
-      } else {
-        await apiFetch<{ success?: boolean; message?: string }>('/api/user/saved', {
-          method: 'POST',
-          body: JSON.stringify({ business_id: linkedBusinessId }),
-        });
-      }
-      await savedQuery.refetch();
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Unable to update saved items right now.');
-    } finally {
-      setSaveBusy(false);
-    }
-  }, [linkedBusinessId, router, saveBusy, savedBusinessIds, savedQuery, user]);
-
-  const headerRightActions = useMemo<EventSpecialHeaderRightAction[]>(
-    () => [
-      {
-        key: 'share',
-        icon: 'share-social-outline',
-        onPress: () => {
-          void handleShareEventSpecial();
-        },
-        accessibilityLabel: 'Share listing',
-      },
-      {
-        key: 'save',
-        icon: isLinkedBusinessSaved ? 'bookmark' : 'bookmark-outline',
-        onPress: () => {
-          void handleToggleSaveFromEventSpecial();
-        },
-        accessibilityLabel: linkedBusinessId
-          ? isLinkedBusinessSaved
-            ? 'Unsave business'
-            : 'Save business'
-          : 'Save unavailable',
-        disabled: saveBusy,
-      },
-    ],
-    [handleShareEventSpecial, handleToggleSaveFromEventSpecial, isLinkedBusinessSaved, linkedBusinessId, saveBusy]
-  );
+  const {
+    actionError,
+    setActionError,
+    handlePressGoing,
+    handlePressReminder,
+    handlePressWriteReview,
+    headerRightActions,
+  } = useEventSpecialScreenActions({
+    id,
+    routeType,
+    item,
+    rsvp,
+    reminder,
+    savedQuery,
+    savedBusinessIds,
+    linkedBusinessId,
+    isLinkedBusinessSaved,
+  });
 
   if (!detailQuery.isLoading && (!item || item.isExpired)) {
     const missingMessage =
@@ -338,8 +202,6 @@ export default function EventSpecialScreen({ routeType }: Props) {
     );
   }
 
-  const effectiveRating = ratings.rating;
-
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -351,140 +213,31 @@ export default function EventSpecialScreen({ routeType }: Props) {
         fillContainer
       >
         {item ? (
-          <>
-            <View style={[styles.stickyHeader, { backgroundColor: NAVBAR_BG_COLOR }]}>
-              <EventSpecialPageHeader
-                onPressBack={handleBack}
-                onPressNotifications={() => router.push(routes.notifications() as never)}
-                onPressMessages={() => router.push(routes.dmInbox() as never)}
-                rightActions={headerRightActions}
-                collapsed={true}
-              />
-            </View>
-
-            <ScreenTransitionScope>
-              <ScrollView
-                ref={scrollRef}
-                style={styles.scroll}
-                contentContainerStyle={styles.content}
-                showsVerticalScrollIndicator={false}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-              >
-              {detailQuery.isError && item ? (
-                <View style={styles.statusBanner}>
-                  <InlineErrorBanner
-                    message={`Showing saved details. ${detailQuery.error ?? 'Please refresh.'}`}
-                    actionLabel="Retry"
-                    onAction={() => {
-                      void detailQuery.refetch();
-                    }}
-                  />
-                </View>
-              ) : null}
-
-              {actionError ? (
-                <View style={styles.statusBanner}>
-                  <InlineErrorBanner
-                    message={actionError}
-                    actionLabel="Dismiss"
-                    onAction={() => setActionError(null)}
-                  />
-                </View>
-              ) : null}
-
-              <View style={styles.mainColumn}>
-                <TransitionItem role="hero" index={0}>
-                  <EventSpecialHero item={item} rating={effectiveRating} />
-                </TransitionItem>
-
-                <TransitionItem role="subheading" index={1}>
-                  <EventSpecialInfoBlock
-                    title={item.title}
-                    rating={effectiveRating}
-                    location={item.location}
-                    type={item.type}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={2}>
-                  <EventSpecialDescriptionCard
-                    description={item.description}
-                    title={item.type === 'special' ? 'About This Special' : 'About This Event'}
-                  />
-                </TransitionItem>
-              </View>
-
-              {showDeferredSections ? (
-                <>
-                  <View style={styles.mainColumn}>
-                    <TransitionItem role="support" index={3}>
-                      <EventSpecialMoreDatesCard
-                        currentStartISO={item.startDateISO}
-                        currentEndISO={item.endDateISO}
-                        occurrences={item.occurrencesList}
-                        onPressDate={(occurrenceId) => {
-                          const target = item.type === 'special' ? routes.specialDetail(occurrenceId) : routes.eventDetail(occurrenceId);
-                          router.push(target as never);
-                        }}
-                      />
-                    </TransitionItem>
-
-                    <TransitionItem role="cta" index={4}>
-                      <EventSpecialActionCard
-                        item={item}
-                        routeType={routeType}
-                        isGoing={rsvp.isGoing}
-                        rsvpCount={rsvp.count}
-                        rsvpBusy={rsvp.isToggling}
-                        reminderBusy={reminder.isMutating}
-                        hasReminder1Day={reminder.hasReminder('1_day')}
-                        hasReminder2Hours={reminder.hasReminder('2_hours')}
-                        onPressGoing={() => void handlePressGoing()}
-                        onPressReminder={(option) => void handlePressReminder(option)}
-                        onPressWriteReview={handlePressWriteReview}
-                      />
-                    </TransitionItem>
-
-                    <TransitionItem role="support" index={5}>
-                      <EventSpecialDetailsCard item={item} />
-                    </TransitionItem>
-
-                    <TransitionItem role="support" index={6}>
-                      <EventSpecialContactInfoCard item={item} />
-                    </TransitionItem>
-                  </View>
-
-                  <TransitionItem role="support" index={7}>
-                    <EventSpecialReviewsSection
-                      title={item.type === 'special' ? 'Special Reviews' : 'Event Reviews'}
-                      targetId={id ?? item.id}
-                      reviews={reviews.reviews}
-                      isLoading={reviews.isLoading}
-                      error={reviews.error}
-                      onRefresh={() => {
-                        void reviews.refetch();
-                      }}
-                      onPressWriteReview={handlePressWriteReview}
-                    />
-                  </TransitionItem>
-
-                  <TransitionItem role="support" index={8}>
-                    <EventSpecialRelatedSection
-                      title={item.type === 'special' ? 'More Specials Near You' : 'More Events Near You'}
-                      items={related.items}
-                      isLoading={related.isLoading}
-                      error={related.error}
-                    />
-                  </TransitionItem>
-                </>
-              ) : null}
-              </ScrollView>
-            </ScreenTransitionScope>
-          </>
+          <EventSpecialScreenContent
+            scrollRef={scrollRef}
+            onScroll={handleScroll}
+            item={item}
+            routeType={routeType}
+            effectiveRating={ratings.rating}
+            id={id ?? item.id}
+            showDeferredSections={showDeferredSections}
+            detailQueryIsError={detailQuery.isError}
+            detailQueryError={detailQuery.error}
+            onRefetchDetail={() => { void detailQuery.refetch(); }}
+            actionError={actionError}
+            onDismissActionError={() => setActionError(null)}
+            rsvp={rsvp}
+            reminder={reminder}
+            reviews={reviews}
+            related={related}
+            headerRightActions={headerRightActions}
+            onPressBack={handleBack}
+            onPressGoing={() => void handlePressGoing()}
+            onPressReminder={(option) => void handlePressReminder(option)}
+            onPressWriteReview={handlePressWriteReview}
+          />
         ) : null}
       </LoadingCrossfade>
-
     </SafeAreaView>
   );
 }

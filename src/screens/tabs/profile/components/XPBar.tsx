@@ -5,7 +5,7 @@ import { SkeletonBlock } from '../../../../components/SkeletonBlock';
 import { Text } from '../../../../components/Typography';
 import { useUserXP } from '../../../../hooks/useUserXP';
 import { nextPerkAt } from '../../../../lib/xp/levels';
-import { CHARCOAL, CORAL } from '../constants';
+import { CORAL } from '../constants';
 
 export function XPBar() {
   const xp = useUserXP();

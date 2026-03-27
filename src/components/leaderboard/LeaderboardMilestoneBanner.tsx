@@ -1,4 +1,5 @@
-import { StyleSheet, Text as RNText, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text as RNText } from '../Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { getPrestigeInfo } from '../../lib/prestige';
 

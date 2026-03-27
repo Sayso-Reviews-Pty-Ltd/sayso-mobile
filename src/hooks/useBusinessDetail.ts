@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { BusinessPercentilesDto } from '@sayso/contracts';
 import { apiFetch } from '../lib/api';
+import { RawBusinessDetailSchema } from '../contracts/schemas';
+import { safeValidate } from '../utils/validate';
 
 type RawDescription =
   | string
@@ -207,7 +209,8 @@ export function getBusinessDetailQueryKey(id: string) {
 }
 
 export async function fetchBusinessDetail(id: string) {
-  const payload = await apiFetch<RawBusinessDetail>(`/api/businesses/${id}`);
+  const raw = await apiFetch<RawBusinessDetail>(`/api/businesses/${id}`);
+  const payload = safeValidate(RawBusinessDetailSchema, raw, `business:${id}`) as RawBusinessDetail;
   return normalizeBusinessDetail(payload, id);
 }
 

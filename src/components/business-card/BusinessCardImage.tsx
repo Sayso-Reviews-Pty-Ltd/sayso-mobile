@@ -48,7 +48,6 @@ function BusinessCardImageComponent({ imageUri, placeholderUri, isPlaceholder }:
         placeholder={isPlaceholder ? undefined : { blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
         onError={handleError}
       />
-      <View style={styles.overlay} pointerEvents="none" />
     </View>
   );
 }
@@ -70,10 +69,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: '#E5E0E5',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   fallback: {
     width: '100%',

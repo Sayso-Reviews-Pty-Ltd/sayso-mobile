@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
 import type { MobileSessionProfileDto } from '@sayso/contracts';
+import { ProfileResponseSchema } from '../contracts/schemas';
+import { safeValidate } from '../utils/validate';
 
 export interface EnhancedProfileDto extends Omit<MobileSessionProfileDto, 'username' | 'display_name' | 'avatar_url'> {
   username?: string | null;
@@ -45,10 +47,13 @@ export interface UpdateProfilePayload {
 export function useProfile() {
   return useQuery({
     queryKey: ['profile'],
-    queryFn: () => apiFetch<ProfileResponse>('/api/user/profile'),
+    queryFn: async () => {
+      const raw = await apiFetch<ProfileResponse>('/api/user/profile');
+      return safeValidate(ProfileResponseSchema, raw, 'profile') as ProfileResponse;
+    },
     staleTime: 60_000,
     retry: 1,
-});
+  });
 }
 
 export function useUpdateProfile() {

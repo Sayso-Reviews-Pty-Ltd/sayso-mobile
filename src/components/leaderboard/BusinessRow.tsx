@@ -81,8 +81,7 @@ export function BusinessRow({ business, rank }: Props) {
               queryKey: getBusinessDetailQueryKey(business.id),
               queryFn: () => fetchBusinessDetail(business.id),
               staleTime: 120_000,
-                        retry: 1,
-},
+            },
           ],
         });
       }}

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import type { SavedBusinessDto, SavedBusinessesResponseDto } from '@sayso/contracts';
+import type { SavedBusinessesResponseDto } from '@sayso/contracts';
 import { useAuthSession } from './useSession';
 import { haptics } from '../lib/haptics';
 import { track } from '../lib/telemetry';

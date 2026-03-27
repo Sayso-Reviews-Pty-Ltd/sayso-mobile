@@ -1,6 +1,6 @@
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '../../../components/Typography';
+import { Text, TextInput } from '../../../components/Typography';
 
 const GRID = 8;
 const ICON_SIZE = 18;

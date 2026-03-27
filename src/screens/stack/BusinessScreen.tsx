@@ -1,39 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { haptics } from '../../lib/haptics';
 import {
   InteractionManager,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
-  Share,
   StatusBar,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '../../components/EmptyState';
-import { InlineErrorBanner } from '../../components/InlineErrorBanner';
 import { LoadingCrossfade } from '../../components/LoadingCrossfade';
-import { Text } from '../../components/Typography';
-import {
-  BusinessActionCard,
-  BusinessContactCard,
-  BusinessContactInfoCard,
-  BusinessDescriptionCard,
-  BusinessDetailsCard,
-  BusinessHeroCarousel,
-  BusinessInfoBlock,
-  BusinessLocationCard,
-  BusinessOwnedEventsSection,
-  BusinessPageHeader,
-  type BusinessHeaderRightAction,
-  BusinessPerformanceInsightsCard,
-  BusinessPhotoGrid,
-  BusinessReviewsSection,
-  BusinessScreenSkeleton,
-  PersonalizationInsightsCard,
-  SimilarBusinessesSection,
-} from '../../components/business-detail';
+import { BusinessScreenSkeleton } from '../../components/business-detail';
 import {
   normalizeBusinessImages,
   normalizeBusinessRating,
@@ -46,14 +24,12 @@ import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useRealtimeQueryInvalidation } from '../../hooks/useRealtimeQueryInvalidation';
 import { useSavedBusinesses } from '../../hooks/useSavedBusinesses';
 import { useAuthSession } from '../../hooks/useSession';
-import { TransitionItem } from '../../components/motion/TransitionItem';
-import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
-import { apiFetch } from '../../lib/api';
-import { ENV } from '../../lib/env';
 import { markFirstContentful, markInteractive, markScreenReady } from '../../lib/perf/perfMarkers';
 import { routes } from '../../navigation/routes';
 import { businessDetailColors } from '../../components/business-detail/styles';
 import { styles } from './business-screen/businessScreenStyles';
+import { BusinessScreenContent } from './business-screen/BusinessScreenContent';
+import { useBusinessScreenActions } from './business-screen/useBusinessScreenActions';
 
 type Props = {
   initialTab?: 'overview' | 'reviews';
@@ -65,7 +41,6 @@ export default function BusinessScreen({ initialTab }: Props) {
   const router = useRouter();
   const { user } = useAuthSession();
   const savedQuery = useSavedBusinesses();
-  const [saveBusy, setSaveBusy] = useState(false);
 
   const {
     data: business,
@@ -74,7 +49,6 @@ export default function BusinessScreen({ initialTab }: Props) {
     error: businessError,
     refetch: refetchBusiness,
   } = useBusinessDetail(id);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   const realtimeTargets = useMemo(
     () => [
@@ -103,6 +77,7 @@ export default function BusinessScreen({ initialTab }: Props) {
   const categoryText = useMemo(() => (business ? normalizeCategoryText(business) : 'Business'), [business]);
   const locationText = useMemo(() => (business ? normalizeLocationText(business) : 'Cape Town'), [business]);
   const descriptionText = useMemo(() => (business ? normalizeDescriptionText(business) : ''), [business]);
+
   const savedBusinessIds = useMemo(() => {
     const ids = ((savedQuery.data?.businesses ?? []) as Array<{ id?: string | null }>)
       .map((savedItem: { id?: string | null }) => savedItem?.id)
@@ -112,6 +87,7 @@ export default function BusinessScreen({ initialTab }: Props) {
       );
     return new Set(ids);
   }, [savedQuery.data?.businesses]);
+
   const isBusinessSaved = Boolean(business?.id && savedBusinessIds.has(business.id));
 
   useEffect(() => {
@@ -128,94 +104,15 @@ export default function BusinessScreen({ initialTab }: Props) {
     }
   }, [business, isLoading]);
 
-  const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-    router.replace(routes.home() as never);
-  };
-
-  const handleOpenNotifications = () => {
-    router.push(routes.notifications() as never);
-  };
-
-  const handleOpenMessages = () => {
-    router.push(routes.dmInbox() as never);
-  };
-
-  const handleShareBusiness = useCallback(async () => {
-    if (!business) return;
-    const origin = ENV.apiBaseUrl || 'https://www.sayso.co.za';
-    const businessPath = routes.businessDetail(business.id);
-
-    try {
-      await Share.share({
-        title: business.name,
-        message: `Check out ${business.name} on Sayso\n${origin}${businessPath}`,
-      });
-    } catch {
-      // Non-blocking.
-    }
-  }, [business]);
-
-  const handleToggleSaveBusiness = useCallback(async () => {
-    if (!business) return;
-    if (!user) {
-      router.push(routes.onboarding() as never);
-      return;
-    }
-    if (saveBusy) return;
-
-    haptics.confirm();
-    setSaveBusy(true);
-    setSaveError(null);
-    try {
-      if (savedBusinessIds.has(business.id)) {
-        await apiFetch<{ success?: boolean; message?: string }>(`/api/user/saved?business_id=${business.id}`, {
-          method: 'DELETE',
-        });
-      } else {
-        await apiFetch<{ success?: boolean; message?: string }>('/api/user/saved', {
-          method: 'POST',
-          body: JSON.stringify({ business_id: business.id }),
-        });
-      }
-      await savedQuery.refetch();
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Unable to update saved items right now.');
-    } finally {
-      setSaveBusy(false);
-    }
-  }, [business, router, saveBusy, savedBusinessIds, savedQuery, user]);
-
-  const headerRightActions = useMemo<BusinessHeaderRightAction[]>(
-    () => [
-      {
-        key: 'share',
-        icon: 'share-social-outline',
-        onPress: () => {
-          void handleShareBusiness();
-        },
-        accessibilityLabel: 'Share business',
-      },
-      {
-        key: 'save',
-        icon: isBusinessSaved ? 'bookmark' : 'bookmark-outline',
-        onPress: () => {
-          void handleToggleSaveBusiness();
-        },
-        accessibilityLabel: isBusinessSaved ? 'Unsave business' : 'Save business',
-        disabled: saveBusy,
-      },
-    ],
-    [handleShareBusiness, handleToggleSaveBusiness, isBusinessSaved, saveBusy]
-  );
-
-  const handleLeaveReview = () => {
-    if (!business) return;
-    router.push(routes.writeReview('business', business.id) as never);
-  };
+  const {
+    saveError,
+    setSaveError,
+    handleBack,
+    handleOpenNotifications,
+    handleOpenMessages,
+    headerRightActions,
+    handleLeaveReview,
+  } = useBusinessScreenActions({ business, savedQuery, savedBusinessIds, isBusinessSaved });
 
   const isBusinessOwner = Boolean(user && business?.owner_id && user.id === business.owner_id);
 
@@ -293,173 +190,30 @@ export default function BusinessScreen({ initialTab }: Props) {
         fillContainer
       >
         {business ? (
-          <>
-            <View style={[styles.stickyHeader, { backgroundColor: businessDetailColors.coral }]}>
-              <BusinessPageHeader
-                onPressBack={handleBack}
-                onPressNotifications={handleOpenNotifications}
-                onPressMessages={handleOpenMessages}
-                rightActions={headerRightActions}
-                menuItems={[]}
-                collapsed={true}
-              />
-            </View>
-
-            <ScreenTransitionScope>
-              <ScrollView
-                ref={scrollRef}
-                style={styles.scroll}
-                contentContainerStyle={styles.content}
-                showsVerticalScrollIndicator={false}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-              >
-              {isError && businessError ? (
-                <View style={styles.statusBanner}>
-                  <InlineErrorBanner
-                    message={`Showing saved details. ${businessError instanceof Error ? businessError.message : 'Please refresh.'}`}
-                    actionLabel="Retry"
-                    onAction={() => {
-                      void refetchBusiness();
-                    }}
-                  />
-                </View>
-              ) : null}
-
-              {saveError ? (
-                <View style={styles.statusBanner}>
-                  <InlineErrorBanner
-                    message={saveError}
-                    actionLabel="Dismiss"
-                    onAction={() => setSaveError(null)}
-                  />
-                </View>
-              ) : null}
-
-              <View style={styles.mainColumn}>
-                <TransitionItem role="hero" index={0}>
-                  <BusinessHeroCarousel
-                    businessName={business.name}
-                    images={images}
-                    rating={ratingMeta.rating}
-                    verified={business.verified}
-                    subcategorySlug={business.primary_subcategory_slug ?? business.sub_interest_id ?? business.subInterestId}
-                    interestId={business.primary_category_slug ?? business.interest_id ?? business.interestId}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="subheading" index={1}>
-                  <BusinessInfoBlock
-                    name={business.name}
-                    rating={ratingMeta.rating}
-                    category={categoryText}
-                    location={locationText}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={2}>
-                  <BusinessDescriptionCard description={descriptionText} />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={3}>
-                  <BusinessDetailsCard
-                    priceRange={business.price_range ?? business.priceRange}
-                    verified={business.verified}
-                    hours={business.hours}
-                    openingHours={business.openingHours}
-                    opening_hours={business.opening_hours}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={4} animate={false}>
-                  <BusinessPhotoGrid businessName={business.name} photos={images} />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={5} animate={false}>
-                  <BusinessLocationCard
-                    name={business.name}
-                    address={business.address}
-                    location={business.location}
-                    latitude={business.lat}
-                    longitude={business.lng}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={6} animate={false}>
-                  <BusinessContactInfoCard
-                    phone={business.phone}
-                    email={business.email}
-                    website={business.website}
-                    address={business.address}
-                    location={business.location}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="cta" index={7} animate={false}>
-                  <BusinessActionCard
-                    onPressLeaveReview={handleLeaveReview}
-                    onPressEditBusiness={() => router.push('/role-unsupported' as never)}
-                    isBusinessOwner={isBusinessOwner}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={8} animate={false}>
-                  <PersonalizationInsightsCard
-                    business={business}
-                    onPressLogin={() => router.push(routes.onboarding() as never)}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={9} animate={false}>
-                  <BusinessPerformanceInsightsCard
-                    punctuality={business.stats?.percentiles?.punctuality}
-                    costEffectiveness={business.stats?.percentiles?.['cost-effectiveness']}
-                    friendliness={business.stats?.percentiles?.friendliness}
-                    trustworthiness={business.stats?.percentiles?.trustworthiness}
-                  />
-                </TransitionItem>
-
-                <TransitionItem role="support" index={10} animate={false}>
-                  <BusinessContactCard
-                    businessId={business.id}
-                    businessName={business.name}
-                    phone={business.phone}
-                  />
-                </TransitionItem>
-              </View>
-
-              <TransitionItem role="support" index={11} animate={false}>
-                <BusinessOwnedEventsSection businessId={business.id} businessName={business.name} />
-              </TransitionItem>
-
-              <View
-                onLayout={(e) => { reviewsSectionYRef.current = e.nativeEvent.layout.y; }}
-              >
-                <TransitionItem role="support" index={12} animate={false}>
-                  <BusinessReviewsSection
-                    businessId={business.id}
-                    onPressWriteReview={handleLeaveReview}
-                    newReviewId={newReviewId}
-                  />
-                </TransitionItem>
-              </View>
-
-              <TransitionItem role="support" index={13} animate={false}>
-                <SimilarBusinessesSection businessId={business.id} />
-              </TransitionItem>
-
-              {initialTab === 'reviews' ? (
-                <TransitionItem role="support" index={14} animate={false}>
-                  <View style={styles.deeplinkHint}>
-                    <Text style={styles.deeplinkHintText}>
-                      This route now opens the write-review flow to match web behavior.
-                    </Text>
-                  </View>
-                </TransitionItem>
-              ) : null}
-              </ScrollView>
-            </ScreenTransitionScope>
-          </>
+          <BusinessScreenContent
+            scrollRef={scrollRef}
+            reviewsSectionYRef={reviewsSectionYRef}
+            onScroll={handleScroll}
+            business={business}
+            images={images}
+            ratingMeta={ratingMeta}
+            categoryText={categoryText}
+            locationText={locationText}
+            descriptionText={descriptionText}
+            isError={isError}
+            businessError={businessError instanceof Error ? businessError : null}
+            onRefetchBusiness={() => { void refetchBusiness(); }}
+            saveError={saveError}
+            onDismissSaveError={() => setSaveError(null)}
+            headerRightActions={headerRightActions}
+            isBusinessOwner={isBusinessOwner}
+            initialTab={initialTab}
+            newReviewId={newReviewId}
+            onPressBack={handleBack}
+            onPressNotifications={handleOpenNotifications}
+            onPressMessages={handleOpenMessages}
+            onPressLeaveReview={() => { if (business) handleLeaveReview(business.id); }}
+          />
         ) : null}
       </LoadingCrossfade>
     </SafeAreaView>

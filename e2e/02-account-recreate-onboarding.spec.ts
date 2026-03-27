@@ -124,7 +124,7 @@ test.describe('Account reset and onboarding (UI focused)', () => {
       await page.goto(`${BASE}/interests`);
       await page.waitForLoadState('networkidle');
 
-      for (let bounce = 0; bounce < 5 && /\/login/i.test(page.url()); bounce++) {
+      for (let bounce = 0; bounce < 3 && /\/login/i.test(page.url()); bounce++) {
         await goToLogin(page);
         expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
         await page.goto(`${BASE}/interests`);

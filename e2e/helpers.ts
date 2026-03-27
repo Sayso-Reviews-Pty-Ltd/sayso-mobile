@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
-export const BASE = process.env.E2E_BASE_URL ?? 'https://sayso.co.za';
+// Production redirects apex → www; use www so session cookies match post-login navigations.
+export const BASE = process.env.E2E_BASE_URL ?? 'https://www.sayso.co.za';
 
 const LOGIN_TIMEOUT_MS = 60_000;
 

@@ -18,7 +18,7 @@ test.describe('Account reset and onboarding (UI focused)', () => {
     const loginOutcome = await signInWithPersonalAccount(page, email!, password!);
 
     if (loginOutcome === 'authenticated') {
-      await page.goto('https://sayso.co.za/profile');
+      await page.goto(`${BASE}/profile`);
       await page.waitForLoadState('networkidle');
       const accountActionsCard = page.getByRole('region', { name: /account actions/i });
       if (await accountActionsCard.isVisible()) {
@@ -124,7 +124,7 @@ test.describe('Account reset and onboarding (UI focused)', () => {
       await page.goto(`${BASE}/interests`);
       await page.waitForLoadState('networkidle');
 
-      if (/\/login/i.test(page.url())) {
+      for (let bounce = 0; bounce < 5 && /\/login/i.test(page.url()); bounce++) {
         await goToLogin(page);
         expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
         await page.goto(`${BASE}/interests`);

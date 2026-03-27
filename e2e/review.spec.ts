@@ -1,6 +1,6 @@
 import path from 'path';
 import { test, expect } from '@playwright/test';
-import { goToLogin, signInWithPersonalAccount } from './helpers';
+import { BASE, goToLogin, signInWithPersonalAccount } from './helpers';
 
 const IMAGE_PATH = path.resolve(
   __dirname,
@@ -22,7 +22,7 @@ test.describe('Write Review', () => {
     expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
 
     // Navigate to home and find a business link
-    await page.goto('https://sayso.co.za/home');
+    await page.goto(`${BASE}/home`);
     await page.waitForLoadState('networkidle');
 
     const businessLink = page.locator('a[href^="/business/"]').first();
@@ -31,7 +31,7 @@ test.describe('Write Review', () => {
     expect(href).toBeTruthy();
 
     // Navigate to the review page for this business
-    const reviewUrl = `https://sayso.co.za${href}/review`;
+    const reviewUrl = `${BASE}${href}/review`;
     await page.goto(reviewUrl);
     await page.waitForLoadState('networkidle');
 

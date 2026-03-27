@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { goToLogin, signInWithPersonalAccount } from './helpers';
+import { BASE, goToLogin, signInWithPersonalAccount } from './helpers';
 
 test.describe('Account reset and onboarding (UI focused)', () => {
   test('delete account, re-register, and complete onboarding with feedback checks', async ({
@@ -108,17 +108,34 @@ test.describe('Account reset and onboarding (UI focused)', () => {
     }
 
     // 3) Onboarding step 1: interests feedback.
-    await page.goto('https://sayso.co.za/interests');
+    await page.goto(`${BASE}/interests`);
     await page.waitForLoadState('networkidle');
     if (/\/login/i.test(page.url())) {
       await goToLogin(page);
       expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
-      await page.goto('https://sayso.co.za/interests');
+      await page.goto(`${BASE}/interests`);
       await page.waitForLoadState('networkidle');
     }
-    await expect(page.getByRole('heading', { name: 'What interests you?' })).toBeVisible({
-      timeout: 25_000,
-    });
+    if (/verify-email/i.test(page.url())) {
+      await expect(page.getByRole('heading', { name: 'Check Your Email' })).toBeVisible();
+      await page.getByText('Back to login').click();
+      expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+      await page.goto(`${BASE}/interests`);
+      await page.waitForLoadState('networkidle');
+    }
+
+    const interestsTitle = page.getByRole('heading', { name: 'What interests you?' });
+    const verifyEmailClientGate = page.getByRole('heading', { name: 'Verify Your Email' });
+    await expect(interestsTitle.or(verifyEmailClientGate)).toBeVisible({ timeout: 60_000 });
+    if (await verifyEmailClientGate.isVisible()) {
+      await page.getByRole('link', { name: /Go to Email Verification Page/i }).click();
+      await page.waitForLoadState('networkidle');
+      await page.getByText('Back to login').click();
+      expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+      await page.goto(`${BASE}/interests`);
+      await page.waitForLoadState('networkidle');
+    }
+    await expect(interestsTitle).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText('Select 3 or more to continue')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled();
 

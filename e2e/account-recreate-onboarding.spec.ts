@@ -90,7 +90,7 @@ test.describe('Account reset and onboarding (UI focused)', () => {
 
       // Some environments land on verify-email first; continue by signing in again.
       if (/verify-email/.test(page.url())) {
-        await expect(page.getByText('Check Your Email')).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Check Your Email' })).toBeVisible();
         await page.getByText('Back to login').click();
         await expect(page.getByPlaceholder('you@example.com')).toBeVisible();
         expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
@@ -99,7 +99,7 @@ test.describe('Account reset and onboarding (UI focused)', () => {
       // If registration didn't create an active session (e.g. email already exists),
       // sign in explicitly so onboarding routes are accessible.
       if (/\/login|\/register|\/onboarding/.test(page.url())) {
-        const loginTab = page.getByRole('button', { name: 'Login' });
+        const loginTab = page.getByRole('button', { name: 'Login', exact: true });
         if (await loginTab.isVisible()) {
           await loginTab.click();
         }

@@ -114,6 +114,15 @@ test.describe('Account reset and onboarding (UI focused)', () => {
     const verifyEmailClientGate = page.getByRole('heading', { name: 'Verify Your Email' });
     const checkEmailHeading = page.getByRole('heading', { name: 'Check Your Email' });
 
+    await page.goto(`${BASE}/home`, { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle', { timeout: 45_000 }).catch(() => {});
+    if (/\/login/i.test(page.url())) {
+      await goToLogin(page);
+      expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
+      await page.goto(`${BASE}/home`, { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 45_000 }).catch(() => {});
+    }
+
     let interestsStepReady = false;
     for (let attempt = 0; attempt < 3 && !interestsStepReady; attempt++) {
       if (attempt > 0) {
@@ -121,22 +130,24 @@ test.describe('Account reset and onboarding (UI focused)', () => {
         expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
       }
 
-      await page.goto(`${BASE}/interests`);
-      await page.waitForLoadState('networkidle');
+      await page.goto(`${BASE}/interests`, { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 45_000 }).catch(() => {});
 
       for (let bounce = 0; bounce < 3 && /\/login/i.test(page.url()); bounce++) {
         await goToLogin(page);
         expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
-        await page.goto(`${BASE}/interests`);
-        await page.waitForLoadState('networkidle');
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
+        await page.goto(`${BASE}/interests`, { waitUntil: 'domcontentloaded' });
+        await page.waitForLoadState('networkidle', { timeout: 45_000 }).catch(() => {});
       }
 
       if (/verify-email/i.test(page.url())) {
         await expect(checkEmailHeading).toBeVisible();
         await page.getByText('Back to login').click();
         expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
-        await page.goto(`${BASE}/interests`);
-        await page.waitForLoadState('networkidle');
+        await page.goto(`${BASE}/interests`, { waitUntil: 'domcontentloaded' });
+        await page.waitForLoadState('networkidle', { timeout: 45_000 }).catch(() => {});
       }
 
       try {

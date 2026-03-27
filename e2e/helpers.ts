@@ -28,12 +28,14 @@ export async function signInWithPersonalAccount(
     await page.waitForURL((url) => !url.pathname.toLowerCase().includes('/login'), {
       timeout: timeoutMs,
     });
+    await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
     return 'authenticated';
   } catch {
     const pollUntil = Date.now() + 30_000;
     while (Date.now() < pollUntil) {
       const href = page.url();
       if (!href.toLowerCase().includes('/login')) {
+        await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
         return 'authenticated';
       }
       const banner = page.getByText(loginErrorPattern).first();

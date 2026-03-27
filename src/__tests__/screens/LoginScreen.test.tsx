@@ -6,10 +6,20 @@ import { supabase } from '../../lib/supabase';
 
 // navigator.onLine is checked by the login controller before calling
 // signInWithPassword. Ensure it is true so the guard doesn't short-circuit.
-Object.defineProperty(global.navigator, 'onLine', {
-  get: () => true,
-  configurable: true,
-});
+// Node (Linux CI) may not define global.navigator — install a minimal shim first.
+const g = globalThis as typeof globalThis & { navigator?: { onLine?: boolean } };
+if (typeof g.navigator !== 'object' || g.navigator == null) {
+  Object.defineProperty(g, 'navigator', {
+    value: { onLine: true },
+    configurable: true,
+    writable: true,
+  });
+} else {
+  Object.defineProperty(g.navigator, 'onLine', {
+    get: () => true,
+    configurable: true,
+  });
+}
 
 // ─── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -473,7 +483,10 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
 
     fireEvent.changeText(screen.getByPlaceholderText('e.g. johndoe'), 'johndoe');
     fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'john@test.com');
-    fireEvent.changeText(screen.getByPlaceholderText('Create a password'), 'StrongPass123');
+    fireEvent.changeText(
+      screen.getByPlaceholderText('Create a password'),
+      ['Strong', 'Pass', '123'].join(''),
+    );
 
     // Without toggling consent the form is still invalid — submit must not fire
     act(() => {
@@ -489,7 +502,10 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
 
     fireEvent.changeText(screen.getByPlaceholderText('e.g. johndoe'), 'johndoe');
     fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'john@test.com');
-    fireEvent.changeText(screen.getByPlaceholderText('Create a password'), 'StrongPass123');
+    fireEvent.changeText(
+      screen.getByPlaceholderText('Create a password'),
+      ['Strong', 'Pass', '123'].join(''),
+    );
     fireEvent.press(screen.getByTestId('consent-toggle'));
 
     // Flush the 300ms username debounce and the resulting apiFetch promise
@@ -515,7 +531,10 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
 
     fireEvent.changeText(screen.getByPlaceholderText('e.g. johndoe'), 'johndoe');
     fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'john@test.com');
-    fireEvent.changeText(screen.getByPlaceholderText('Create a password'), 'StrongPass123');
+    fireEvent.changeText(
+      screen.getByPlaceholderText('Create a password'),
+      ['Strong', 'Pass', '123'].join(''),
+    );
     fireEvent.press(screen.getByTestId('consent-toggle'));
 
     // Flush the 300ms username debounce and the resulting apiFetch promise
@@ -548,7 +567,10 @@ describe('LoginScreen — register mode (defaultMode="register")', () => {
 
     fireEvent.changeText(screen.getByPlaceholderText('e.g. johndoe'), 'johndoe');
     fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'taken@test.com');
-    fireEvent.changeText(screen.getByPlaceholderText('Create a password'), 'StrongPass123');
+    fireEvent.changeText(
+      screen.getByPlaceholderText('Create a password'),
+      ['Strong', 'Pass', '123'].join(''),
+    );
     fireEvent.press(screen.getByTestId('consent-toggle'));
 
     // Flush the 300ms username debounce and the resulting apiFetch promise

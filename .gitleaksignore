@@ -1,0 +1,2 @@
+# Historical test fixture flagged as generic-api-key (not a real secret)
+dedd3b4c38ccdb8827553d39a9751360877dc066:src/__tests__/screens/LoginScreen.test.tsx:generic-api-key:526

@@ -28,21 +28,21 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Validate required E2E secrets
-        run: |
-          if [ -z "$E2E_PERSONAL_ACCOUNT_EMAIL" ] || [ -z "$E2E_PERSONAL_ACCOUNT_PASSWORD" ]; then
-            echo "Missing required secrets: E2E_PERSONAL_ACCOUNT_EMAIL and/or E2E_PERSONAL_ACCOUNT_PASSWORD"
-            exit 1
-          fi
-
       - name: Install dependencies
         run: npm ci
 
       - name: Install Playwright browsers
+        if: ${{ secrets.E2E_PERSONAL_ACCOUNT_EMAIL != '' && secrets.E2E_PERSONAL_ACCOUNT_PASSWORD != '' }}
         run: npx playwright install --with-deps chromium
 
       - name: Run mobile E2E regression guard
+        if: ${{ secrets.E2E_PERSONAL_ACCOUNT_EMAIL != '' && secrets.E2E_PERSONAL_ACCOUNT_PASSWORD != '' }}
         run: npm run test:e2e:mobile
+
+      - name: E2E skipped (secrets not configured)
+        if: ${{ secrets.E2E_PERSONAL_ACCOUNT_EMAIL == '' || secrets.E2E_PERSONAL_ACCOUNT_PASSWORD == '' }}
+        run: |
+          echo "::warning::Skipping mobile E2E — set repo secrets E2E_PERSONAL_ACCOUNT_EMAIL and E2E_PERSONAL_ACCOUNT_PASSWORD to run the guard on CI."
 
       - name: Upload Playwright report and artifacts
         if: always()

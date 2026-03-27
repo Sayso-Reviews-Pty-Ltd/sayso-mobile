@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Expo / React Native
 .expo/
@@ -73,3 +72,4 @@ Thumbs.db
 *.der
 *.secret
 secrets/
+.cursor/mcp.json

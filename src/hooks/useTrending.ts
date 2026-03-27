@@ -13,6 +13,5 @@ export function useTrending(limit = 20, enabled = true) {
     queryFn: () => apiFetch<TrendingResponse>(`/api/trending?limit=${limit}`),
     enabled,
     staleTime: 120_000,
-    retry: 1,
-});
+  });
 }

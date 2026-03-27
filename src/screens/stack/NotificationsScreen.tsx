@@ -3,10 +3,7 @@ import {
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Pressable,
   RefreshControl,
-  ScrollView,
-  StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -24,7 +21,7 @@ import {
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
 import { useAuthSession } from '../../hooks/useSession';
 import { routes } from '../../navigation/routes';
-import { NAVBAR_BG_COLOR } from '../../styles/colors';
+import { APP_PAGE_GUTTER } from '../../styles/layout';
 import { LoadingCrossfade } from '../../components/LoadingCrossfade';
 import { NotificationItem } from '../../components/NotificationItem';
 import { EmptyState } from '../../components/EmptyState';
@@ -33,7 +30,9 @@ import { SkeletonCard } from '../../components/SkeletonCard';
 import { Text } from '../../components/Typography';
 import { TransitionItem } from '../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
-import { APP_PAGE_GUTTER } from '../../styles/layout';
+import { NotificationFilterBar, FILTER_CHIPS } from './NotificationFilterBar';
+import type { NotificationFilter } from './NotificationFilterBar';
+import { styles } from './NotificationsScreen.styles';
 
 // The server response includes entity_id and entity_type though the DTO
 // hasn't been updated to reflect them yet.
@@ -41,16 +40,6 @@ type NotificationWithEntity = NotificationDto & {
   entity_id?: string;
   entity_type?: string;
 };
-
-type NotificationFilter = 'all' | 'review' | 'badge_earned' | 'dm' | 'business';
-
-const FILTER_CHIPS: Array<{ id: NotificationFilter; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'review', label: 'Reviews' },
-  { id: 'badge_earned', label: 'Badges' },
-  { id: 'dm', label: 'Messages' },
-  { id: 'business', label: 'Businesses' },
-];
 
 function matchesFilter(type: string, filter: NotificationFilter): boolean {
   if (filter === 'all') return true;
@@ -166,29 +155,6 @@ export default function NotificationsScreen() {
     [dismissNotification]
   );
 
-  const filterBar = (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.filterRow}
-      style={styles.filterScroll}
-    >
-      {FILTER_CHIPS.map((chip) => (
-        <Pressable
-          key={chip.id}
-          style={[styles.chip, activeFilter === chip.id && styles.chipActive]}
-          onPress={() => { haptics.navigation(); setActiveFilter(chip.id); }}
-          accessibilityRole="button"
-          accessibilityState={{ selected: activeFilter === chip.id }}
-        >
-          <Text style={[styles.chipText, activeFilter === chip.id && styles.chipTextActive]}>
-            {chip.label}
-          </Text>
-        </Pressable>
-      ))}
-    </ScrollView>
-  );
-
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
@@ -278,7 +244,10 @@ export default function NotificationsScreen() {
                     }}
                   />
                 ) : null}
-                {filterBar}
+                <NotificationFilterBar
+                  activeFilter={activeFilter}
+                  onFilterChange={setActiveFilter}
+                />
               </View>
             }
             ListEmptyComponent={
@@ -297,69 +266,3 @@ export default function NotificationsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#E5E0E5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: APP_PAGE_GUTTER,
-    paddingTop: 20,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#F3F4F6',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#111827',
-  },
-  markRead: {
-    fontSize: 14,
-    color: '#2563EB',
-    fontWeight: '500',
-  },
-  filterScroll: {
-    paddingVertical: 12,
-  },
-  listHeader: {
-    gap: 8,
-  },
-  filterRow: {
-    gap: 8,
-    paddingHorizontal: APP_PAGE_GUTTER,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.80)',
-    borderWidth: 1,
-    borderColor: 'rgba(45,45,45,0.20)',
-  },
-  chipActive: {
-    backgroundColor: NAVBAR_BG_COLOR,
-    borderColor: NAVBAR_BG_COLOR,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#2D2D2D',
-  },
-  chipTextActive: {
-    color: '#fff',
-  },
-  emptyFilter: {
-    paddingHorizontal: APP_PAGE_GUTTER,
-    paddingVertical: 32,
-    alignItems: 'center',
-  },
-  emptyFilterText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-});

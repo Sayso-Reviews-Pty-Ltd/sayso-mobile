@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence,
-  withRepeat, cancelAnimation, Easing, interpolate, makeMutable, type SharedValue,
+  withRepeat, cancelAnimation, Easing, makeMutable,
 } from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,138 +15,11 @@ import { apiFetch } from '../../lib/api';
 import { haptics } from '../../lib/haptics';
 import { routes } from '../../navigation/routes';
 import { useProfile } from '../../providers/ProfileProvider';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const PARTICLE_COUNT = 180;
-const FALL_DISTANCE = SCREEN_HEIGHT + 160;
-
-type ParticleShape = 'square' | 'circle' | 'rect';
-
-function Particle({
-  delay,
-  x,
-  color,
-  size,
-  drift,
-  fallDuration,
-  shape,
-  spinMultiplier,
-}: {
-  delay: number;
-  x: number;
-  color: string;
-  size: number;
-  drift: number;
-  fallDuration: number;
-  shape: ParticleShape;
-  spinMultiplier: number;
-}) {
-  const y = useSharedValue(-size);
-  const opacity = useSharedValue(0);
-  const rotation = useSharedValue(0);
-  const translateX = useSharedValue(0);
-
-  useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: 120 }));
-
-    y.value = withDelay(
-      delay,
-      withTiming(FALL_DISTANCE, { duration: fallDuration, easing: Easing.linear }, (finished) => {
-        'worklet';
-        if (finished) {
-          opacity.value = withTiming(0, { duration: 180 });
-        }
-      })
-    );
-
-    rotation.value = withDelay(
-      delay,
-      withTiming(360 * spinMultiplier, { duration: fallDuration, easing: Easing.linear })
-    );
-
-    translateX.value = withDelay(
-      delay,
-      withSequence(
-        withTiming(drift, { duration: fallDuration * 0.5, easing: Easing.inOut(Easing.sin) }),
-        withTiming(-drift * 0.6, { duration: fallDuration * 0.5, easing: Easing.inOut(Easing.sin) })
-      )
-    );
-  }, [delay, drift, fallDuration, opacity, rotation, spinMultiplier, translateX, y]);
-
-  const width = shape === 'rect' ? size * 0.4 : size;
-  const height = shape === 'rect' ? size * 1.8 : size;
-  const borderRadius = shape === 'circle' ? size / 2 : shape === 'rect' ? 2 : size / 5;
-
-  const particleStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: y.value },
-      { translateX: translateX.value },
-      { rotate: `${rotation.value}deg` },
-    ],
-  }), []);
-
-  return (
-    <Animated.View
-      style={[
-        {
-          position: 'absolute',
-          top: 0,
-          left: x,
-          width,
-          height,
-          borderRadius,
-          backgroundColor: color,
-        },
-        particleStyle,
-      ]}
-      pointerEvents="none"
-    />
-  );
-}
-
-type DealbreakerIconName = 'shield-checkmark-outline' | 'time-outline' | 'happy-outline' | 'pricetag-outline';
-
-function FloatingIcon({ icon, floatValue }: { icon: DealbreakerIconName; floatValue: SharedValue<number> }) {
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: interpolate(floatValue.value, [0, 1], [0, -8]) }],
-  }), []);
-
-  return (
-    <Animated.View style={style}>
-      <View style={styles.iconBubble}>
-        <Ionicons name={icon} size={22} color={ONBOARDING_TOKENS.sage} />
-      </View>
-    </Animated.View>
-  );
-}
-
-const DEALBREAKER_ICONS: Record<string, DealbreakerIconName> = {
-  trustworthiness: 'shield-checkmark-outline',
-  punctuality: 'time-outline',
-  friendliness: 'happy-outline',
-  'value-for-money': 'pricetag-outline',
-};
-
-const CONFETTI_COLORS = [
-  ONBOARDING_TOKENS.coral,
-  ONBOARDING_TOKENS.sage,
-  ONBOARDING_TOKENS.offWhite,
-  '#722F37',
-  '#9DAB9B',
-  '#F4C842',
-  '#E8735A',
-  '#A8D5A2',
-  '#F9E4B7',
-  '#C9A0DC',
-  '#FFB347',
-  '#87CEEB',
-  '#FF6B9D',
-  '#B5EAD7',
-  '#FFDAC1',
-];
-
-const PARTICLE_SHAPES: ParticleShape[] = ['square', 'circle', 'rect'];
+import {
+  Particle, FloatingIcon,
+  DEALBREAKER_ICONS, CONFETTI_COLORS, PARTICLE_SHAPES, PARTICLE_COUNT, SCREEN_WIDTH,
+} from './completeScreenParts';
+import { completeStyles } from './completeScreenStyles';
 
 export default function CompleteScreen() {
   const router = useRouter();
@@ -195,7 +68,7 @@ export default function CompleteScreen() {
     } finally {
       // Flush the stale profile state so RootGuard sees isOnboardingComplete: true
       // before evaluating /home — prevents a redirect loop back to /complete.
-      try { await refreshProfile(); } catch {}
+      try { await refreshProfile(); } catch { /* non-critical: route to home regardless */ }
       router.replace(routes.home() as never);
     }
   }, [refreshProfile, router]);
@@ -285,7 +158,7 @@ export default function CompleteScreen() {
         isLoading={isCompleting}
         overlay={
           !reducedMotion ? (
-            <View style={[StyleSheet.absoluteFill, styles.confettiLayer]} pointerEvents="none">
+            <View style={[StyleSheet.absoluteFill, completeStyles.confettiLayer]} pointerEvents="none">
               {particles.map((particle) => (
                 <Particle
                   key={particle.key}
@@ -303,9 +176,9 @@ export default function CompleteScreen() {
           ) : undefined
         }
       >
-        <Animated.View style={[styles.content, contentStyle]}>
+        <Animated.View style={[completeStyles.content, contentStyle]}>
           {selectedDealbreakers.length > 0 ? (
-            <View style={styles.iconRow}>
+            <View style={completeStyles.iconRow}>
               {selectedDealbreakers.map((id, index) => {
                 const icon = DEALBREAKER_ICONS[id];
                 if (!icon) return null;
@@ -321,66 +194,14 @@ export default function CompleteScreen() {
           ) : null}
 
           <Animated.View style={badgeStyle}>
-            <View style={styles.badge}>
+            <View style={completeStyles.badge}>
               <Ionicons name="checkmark-circle-outline" size={14} color={ONBOARDING_TOKENS.sage} />
-              <Text style={styles.badgeText}>Setup Complete</Text>
+              <Text style={completeStyles.badgeText}>Setup Complete</Text>
             </View>
-            <Text style={styles.autoRedirectHint}>Redirecting automatically...</Text>
+            <Text style={completeStyles.autoRedirectHint}>Redirecting automatically...</Text>
           </Animated.View>
         </Animated.View>
       </OnboardingLayout>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  confettiLayer: {
-    overflow: 'hidden',
-  },
-  content: {
-    alignItems: 'center',
-    gap: 18,
-    marginBottom: 8,
-  },
-  iconRow: {
-    marginTop: 6,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  iconBubble: {
-    width: 46,
-    height: 46,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(157,171,155,0.32)',
-    backgroundColor: 'rgba(157,171,155,0.16)',
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(157,171,155,0.15)',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(157,171,155,0.35)',
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: ONBOARDING_TOKENS.sage,
-  },
-  autoRedirectHint: {
-    marginTop: 10,
-    fontSize: 12,
-    fontWeight: '400',
-    color: 'rgba(45,45,45,0.60)',
-    textAlign: 'center',
-  },
-});

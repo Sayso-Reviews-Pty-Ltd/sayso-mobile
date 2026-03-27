@@ -10,7 +10,7 @@ type Props = {
   photos: string[];
 };
 
-export function BusinessPhotoGrid({ businessName, photos }: Props) {
+export function BusinessPhotoGrid({ businessName: _businessName, photos }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 

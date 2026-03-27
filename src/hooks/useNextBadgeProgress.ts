@@ -56,6 +56,7 @@ export function useNextBadgeProgress() {
       .filter((b) => !b.earned && b.threshold != null && b.rule_type != null)
       .map((b) => {
         const ruleType = b.rule_type as BadgeRuleType;
+        // eslint-disable-next-line no-useless-assignment
         let current = 0;
         switch (ruleType) {
           case 'review_count':

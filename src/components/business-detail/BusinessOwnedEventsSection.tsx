@@ -1,4 +1,4 @@
-import { FlatList, Platform, StyleSheet, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { EventCard } from '../EventCard';
 import { EventCardSkeleton } from '../EventCardSkeleton';
 import { Text } from '../Typography';
@@ -21,8 +21,12 @@ type Props = {
 };
 
 export function BusinessOwnedEventsSection({ businessId, businessName }: Props) {
+  const { width: windowWidth } = useWindowDimensions();
   const { events, isLoading, error, refetch } = useBusinessEvents(businessId);
   const hasEvents = events.length > 0;
+  const snapInterval = CARD_WIDTH + GAP;
+  // Keep right-most cards aligned to the same snap target.
+  const trailingSpacer = Math.max(windowWidth - businessDetailSpacing.pageGutter - CARD_WIDTH, 0);
 
   if (!isLoading && !hasEvents) {
     return null;
@@ -53,12 +57,13 @@ export function BusinessOwnedEventsSection({ businessId, businessName }: Props) 
           )}
           ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
           getItemLayout={(_, index) => ({
-            length: CARD_WIDTH,
+            length: snapInterval,
             offset: (CARD_WIDTH + GAP) * index,
             index,
           })}
+          ListFooterComponent={<View style={{ width: trailingSpacer }} />}
           showsHorizontalScrollIndicator={false}
-          snapToInterval={CARD_WIDTH + GAP}
+          snapToInterval={snapInterval}
           snapToAlignment="start"
           decelerationRate="fast"
           disableIntervalMomentum
@@ -75,12 +80,13 @@ export function BusinessOwnedEventsSection({ businessId, businessName }: Props) 
           )}
           ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
           getItemLayout={(_, index) => ({
-            length: CARD_WIDTH,
+            length: snapInterval,
             offset: (CARD_WIDTH + GAP) * index,
             index,
           })}
+          ListFooterComponent={<View style={{ width: trailingSpacer }} />}
           showsHorizontalScrollIndicator={false}
-          snapToInterval={CARD_WIDTH + GAP}
+          snapToInterval={snapInterval}
           snapToAlignment="start"
           decelerationRate="fast"
           disableIntervalMomentum

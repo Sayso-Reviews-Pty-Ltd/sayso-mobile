@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { haptics } from '../lib/haptics';
 import type { BusinessListItemDto } from '@sayso/contracts';
@@ -76,8 +77,7 @@ function BusinessCardComponent({ business, style }: Props) {
           queryKey: getBusinessDetailQueryKey(businessIdentifier),
           queryFn: () => fetchBusinessDetail(businessIdentifier),
           staleTime: 120_000,
-                retry: 1,
-},
+        },
       ],
     });
   }, [businessIdentifier, href, router]);
@@ -90,7 +90,12 @@ function BusinessCardComponent({ business, style }: Props) {
 
   return (
     <Pressable
-      style={({ pressed }) => [styles.card, cardShadowStyle, style, pressed ? styles.cardPressed : null]}
+      style={({ pressed }) => [
+        styles.card,
+        cardShadowStyle,
+        style,
+        pressed ? styles.cardPressed : null,
+      ]}
       onPress={handleNavigate}
       onPressIn={handlePressIn}
       accessibilityLabel={`${business.name}, ${displayCategoryLabel ?? 'business'}, ${hasRating ? `${displayRating} stars` : 'no rating yet'}`}
@@ -146,8 +151,7 @@ function BusinessCardComponent({ business, style }: Props) {
                     queryKey: getBusinessDetailQueryKey(businessIdentifier),
                     queryFn: () => fetchBusinessDetail(businessIdentifier),
                     staleTime: 120_000,
-                                    retry: 1,
-},
+                },
                 ],
               });
               handleNavigate();
@@ -159,7 +163,10 @@ function BusinessCardComponent({ business, style }: Props) {
               end={{ x: 1, y: 1 }}
               style={styles.reviewButtonGradient}
             >
-              <Text style={styles.reviewButtonText}>{ctaLabel}</Text>
+              <View style={styles.reviewButtonInner}>
+                <Text style={styles.reviewButtonText}>{ctaLabel}</Text>
+                <Ionicons name="chevron-forward" size={14} color="#FFFFFF" />
+              </View>
             </LinearGradient>
           </Pressable>
         </View>
@@ -190,8 +197,8 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: 12,
+    paddingBottom: 12,
     alignItems: 'center',
     backgroundColor: 'rgba(157,171,155,0.10)',
   },
@@ -205,10 +212,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   category: {
-    marginTop: 2,
+    marginTop: 4,
   },
   reviewRow: {
-    marginTop: 9,
+    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -247,14 +254,20 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(125,155,118,0.5)',
   },
   cardPressed: {
-    opacity: 0.96,
+    opacity: 0.94,
+    transform: [{ scale: 0.98 }],
   },
   reviewButtonPressed: {
-    opacity: 0.96,
+    opacity: 0.92,
   },
   reviewButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  reviewButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
 });

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '../Typography';
+import { Text, TextInput } from '../Typography';
 
 type Props = {
   isOpen: boolean;

@@ -116,28 +116,36 @@ export default function OnboardingScreen() {
         style={[
           styles.content,
           {
-            paddingTop: insets.top + GRID * 6,
+            paddingTop: insets.top + GRID * 3,
             paddingBottom: insets.bottom + GRID * 4,
           },
         ]}
       >
-        <View style={styles.centerRail}>
-          <Animated.View
-            style={[
-              styles.headerGroup,
-              {
-                opacity: headerOpacity,
-                transform: [{ translateY: headerY }],
-              },
-            ]}
-          >
-            <Text style={styles.logoText}>Sayso</Text>
-            <Text style={styles.title}>Discover gems{'\n'}near you!</Text>
-            <Text style={styles.subtitle}>
-              Explore trusted businesses, leave reviews and see what&apos;s trending around you
-            </Text>
-          </Animated.View>
+        {/* Wordmark — pinned to the top */}
+        <Animated.View
+          style={{ opacity: headerOpacity, transform: [{ translateY: headerY }] }}
+        >
+          <Text style={styles.logoText}>Sayso</Text>
+        </Animated.View>
 
+        {/* Title + subtitle — vertically centred between wordmark and CTAs */}
+        <Animated.View
+          style={[
+            styles.headerGroup,
+            {
+              opacity: headerOpacity,
+              transform: [{ translateY: headerY }],
+            },
+          ]}
+        >
+          <Text style={styles.title}>Discover gems{'\n'}near you!</Text>
+          <Text style={styles.subtitle}>
+            Explore trusted businesses, leave reviews and see what&apos;s trending around you
+          </Text>
+        </Animated.View>
+
+        {/* CTAs + tagline — anchored to the bottom */}
+        <View style={styles.bottomWrap}>
           <Animated.View
             style={[
               styles.ctaWrap,
@@ -171,9 +179,9 @@ export default function OnboardingScreen() {
               </Pressable>
             </View>
           </Animated.View>
-        </View>
 
-        <Text style={styles.tagline}>Less guessing, more confessing</Text>
+          <Text style={styles.tagline}>Less guessing, more confessing</Text>
+        </View>
       </View>
     </View>
   );
@@ -189,13 +197,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  centerRail: {
-    flex: 1,
+  bottomWrap: {
     width: '100%',
     maxWidth: GRID * 43,
+    gap: GRID * 2,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: GRID * 4,
   },
 
   headerGroup: {

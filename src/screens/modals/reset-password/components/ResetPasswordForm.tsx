@@ -1,7 +1,7 @@
-import { Animated, Pressable, TextInput, View } from 'react-native';
+import { Animated, Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Text } from '../../../../components/Typography';
+import { Text, TextInput } from '../../../../components/Typography';
 import { C, FIELD_ICON_SIZE } from '../constants';
 import { getPasswordStrengthLabel, getStrengthColor } from '../helpers';
 import { styles } from '../ResetPasswordScreen.styles';

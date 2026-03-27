@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LoadingCrossfade } from '../../components/LoadingCrossfade';
@@ -9,7 +9,7 @@ import { ScreenTransitionScope } from '../../components/motion/TransitionScope';
 import { StackPageHeader } from '../../components/StackPageHeader';
 import { useAuthSession } from '../../hooks/useSession';
 import { routes } from '../../navigation/routes';
-import { BREAKPOINT_SM, BREAKPOINT_MD, OFF_WHITE, ITEMS_PER_PAGE, resolveGridColumns } from './saved-screen/savedScreenTokens';
+import { BREAKPOINT_SM, BREAKPOINT_MD, ITEMS_PER_PAGE, resolveGridColumns } from './saved-screen/savedScreenTokens';
 import { styles } from './saved-screen/savedScreenStyles';
 import { useSavedScreenState } from './saved-screen/useSavedScreenState';
 import { EmptySavedState } from './saved/components/EmptySavedState';

@@ -26,7 +26,7 @@ const DISTANCE_OPTIONS = [1, 5, 10, 25] as const;
 export default function FiltersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { minRating, distanceKm, setMinRating, setDistanceKm, clearFilters } = useFilters();
+  const { minRating, distanceKm, setMinRating, setDistanceKm, clearFilters: _clearFilters } = useFilters();
 
   // Local draft state — only committed on "Apply"
   const [draftRating, setDraftRating] = useState<number | null>(minRating);

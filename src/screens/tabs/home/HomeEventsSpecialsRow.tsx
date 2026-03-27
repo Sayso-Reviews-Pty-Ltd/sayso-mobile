@@ -62,6 +62,8 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const cardWidth = windowWidth - homeTokens.pageGutter - GAP - 40;
   const snapInterval = cardWidth + GAP;
+  // Keep right-most cards aligned with the same snap point.
+  const trailingSpacer = Math.max(windowWidth - homeTokens.pageGutter - cardWidth, 0);
   const reducedMotion = useReducedMotion();
 
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -83,10 +85,11 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
         )}
         ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
         getItemLayout={(_, index) => ({
-          length: cardWidth,
+          length: snapInterval,
           offset: (cardWidth + GAP) * index,
           index,
         })}
+        ListFooterComponent={<View style={{ width: trailingSpacer }} />}
         showsHorizontalScrollIndicator={false}
         snapToInterval={snapInterval}
         snapToAlignment="start"
@@ -141,10 +144,11 @@ export function HomeEventsSpecialsRow({ items, loading, error }: Props) {
         }
         ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
         getItemLayout={(_, index) => ({
-          length: cardWidth,
+          length: snapInterval,
           offset: (cardWidth + GAP) * index,
           index,
         })}
+        ListFooterComponent={<View style={{ width: trailingSpacer }} />}
         showsHorizontalScrollIndicator={false}
         snapToInterval={snapInterval}
         snapToAlignment="start"

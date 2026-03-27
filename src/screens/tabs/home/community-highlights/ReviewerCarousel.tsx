@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated as RNAnimated, FlatList, TouchableOpacity, View } from 'react-native';
+import { Animated as RNAnimated, FlatList, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import type { RecentReviewDto, TopReviewerDto } from '@sayso/contracts';
@@ -7,6 +7,7 @@ import { SkeletonBlock } from '../../../../components/SkeletonBlock';
 import { Text } from '../../../../components/Typography';
 import { ReviewerCard } from '../../../../components/reviewer-card/ReviewerCard';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
+import { APP_PAGE_GUTTER } from '../../../../styles/layout';
 import { CommunityBadgeMarquee } from './CommunityBadgeMarquee';
 import {
   FLATLIST_PERF,
@@ -66,8 +67,11 @@ export function ReviewerCarousel({
   onPressContributors,
   onPressBadges,
 }: Props) {
+  const { width: windowWidth } = useWindowDimensions();
   const contributorsHeading = reviewersMode === 'normal' ? 'Top Contributors' : 'Early Voices';
   const showContributorsAction = reviewers.length > 0 && !reviewersLoading;
+  // Keep right-most reviewer cards snapping to the same visible position.
+  const trailingSpacer = Math.max(windowWidth - APP_PAGE_GUTTER - REVIEWER_CARD_WIDTH, 0);
   const reducedMotion = useReducedMotion();
   const reviewerScrollX = useRef(new RNAnimated.Value(0)).current;
   const onReviewerScroll = RNAnimated.event(
@@ -133,10 +137,11 @@ export function ReviewerCarousel({
           )}
           ItemSeparatorComponent={() => <View style={{ width: REVIEWER_GAP }} />}
           getItemLayout={(_, index) => ({
-            length: REVIEWER_CARD_WIDTH,
+            length: REVIEWER_SNAP_INTERVAL,
             offset: (REVIEWER_CARD_WIDTH + REVIEWER_GAP) * index,
             index,
           })}
+          ListFooterComponent={<View style={{ width: trailingSpacer }} />}
           showsHorizontalScrollIndicator={false}
           snapToInterval={REVIEWER_CARD_WIDTH + REVIEWER_GAP}
           snapToAlignment="start"
@@ -179,10 +184,11 @@ export function ReviewerCarousel({
           }}
           ItemSeparatorComponent={() => <View style={{ width: REVIEWER_GAP }} />}
           getItemLayout={(_, index) => ({
-            length: REVIEWER_CARD_WIDTH,
+            length: REVIEWER_SNAP_INTERVAL,
             offset: (REVIEWER_CARD_WIDTH + REVIEWER_GAP) * index,
             index,
           })}
+          ListFooterComponent={<View style={{ width: trailingSpacer }} />}
           showsHorizontalScrollIndicator={false}
           snapToInterval={REVIEWER_SNAP_INTERVAL}
           snapToAlignment="start"

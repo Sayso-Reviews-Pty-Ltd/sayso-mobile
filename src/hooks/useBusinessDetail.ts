@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { BusinessPercentilesDto } from '@sayso/contracts';
 import { apiFetch } from '../lib/api';
+import { RawBusinessDetailSchema } from '../contracts/schemas';
+import { safeValidate } from '../utils/validate';
 
 type RawDescription =
   | string
@@ -97,19 +99,27 @@ export interface BusinessDetail {
   };
 }
 
-function normalizeDescription(raw: RawDescription, category: string | undefined, location: string | undefined) {
+function normalizeDescription(
+  raw: RawDescription,
+  category: string | undefined,
+  location: string | undefined,
+) {
   if (!raw) {
     return `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
   }
 
   if (typeof raw === 'string') {
     const trimmed = raw.trim();
-    return trimmed.length > 0 ? trimmed : `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
+    return trimmed.length > 0
+      ? trimmed
+      : `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
   }
 
   const preferred = raw.friendly ?? raw.raw ?? '';
   const trimmed = preferred.trim();
-  return trimmed.length > 0 ? trimmed : `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
+  return trimmed.length > 0
+    ? trimmed
+    : `${category ?? 'Business'} located in ${location ?? 'Cape Town'}`;
 }
 
 function toNumber(value: unknown) {
@@ -152,7 +162,8 @@ function normalizeImages(raw: RawBusinessDetail) {
 
 function normalizeBusinessDetail(raw: RawBusinessDetail, fallbackId: string): BusinessDetail {
   const images = normalizeImages(raw);
-  const primaryCategory = raw.category_label ?? raw.primary_category_label ?? raw.category ?? undefined;
+  const primaryCategory =
+    raw.category_label ?? raw.primary_category_label ?? raw.category ?? undefined;
   const location = raw.location ?? undefined;
   const statsAverageRating = toNumber(raw.stats?.average_rating);
   const statsTotalReviews = toNumber(raw.stats?.total_reviews);
@@ -207,7 +218,8 @@ export function getBusinessDetailQueryKey(id: string) {
 }
 
 export async function fetchBusinessDetail(id: string) {
-  const payload = await apiFetch<RawBusinessDetail>(`/api/businesses/${id}`);
+  const raw = await apiFetch<RawBusinessDetail>(`/api/businesses/${id}`);
+  const payload = safeValidate(RawBusinessDetailSchema, raw, `business:${id}`) as RawBusinessDetail;
   return normalizeBusinessDetail(payload, id);
 }
 
@@ -217,6 +229,5 @@ export function useBusinessDetail(id: string) {
     queryFn: () => fetchBusinessDetail(id),
     enabled: !!id,
     staleTime: 120_000,
-    retry: 1,
-});
+  });
 }

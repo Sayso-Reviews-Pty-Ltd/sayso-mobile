@@ -266,7 +266,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
               contentContainerStyle={styles.imagesContent}
               nestedScrollEnabled={Platform.OS === 'android'}
             >
-              {validImages.map((uri, i) => (
+              {validImages.map((uri, _i) => (
                 <ReviewImage key={uri} uri={uri} onPress={() => setPreviewUri(uri)} />
               ))}
             </ScrollView>

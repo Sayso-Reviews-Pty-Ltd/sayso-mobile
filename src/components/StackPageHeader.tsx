@@ -20,7 +20,6 @@ export function StackPageHeader({ navigation, options, onPressBack, showBackButt
     ? (StyleSheet.flatten(options.headerStyle as never) as { backgroundColor?: string } | undefined)
     : undefined;
   const bgColor = flattenedHeaderStyle?.backgroundColor ?? NAVBAR_BG_COLOR;
-  const collapsed = options?.headerTintColor === '#FFFFFF';
   const effectiveShowBackButton = showBackButton ?? navigation.canGoBack();
 
   return (

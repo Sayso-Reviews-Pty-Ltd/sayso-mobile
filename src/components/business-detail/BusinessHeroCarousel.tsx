@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../Typography';
-import { businessDetailColors, businessDetailSpacing } from './styles';
+import { businessDetailColors } from './styles';
 import { getBusinessPlaceholderFromCandidates } from '../../lib/businessPlaceholders';
 import { getRatingGradient } from '../../styles/ratingColors';
 
@@ -17,7 +17,7 @@ type Props = {
   interestId?: string | null;
 };
 
-export function BusinessHeroCarousel({ businessName, images, rating, verified, subcategorySlug, interestId }: Props) {
+export function BusinessHeroCarousel({ businessName: _businessName, images, rating, verified, subcategorySlug, interestId }: Props) {
   const [index, setIndex] = useState(0);
   const [failedUris, setFailedUris] = useState<Set<string>>(new Set());
 

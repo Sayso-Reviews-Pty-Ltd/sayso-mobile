@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(229,224,229,0.35)',
   },
   text: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     color: 'rgba(45,45,45,0.74)',
   },

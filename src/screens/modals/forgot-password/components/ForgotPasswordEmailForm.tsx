@@ -1,6 +1,6 @@
-import { Animated, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '../../../../components/Typography';
+import { Text, TextInput } from '../../../../components/Typography';
 import { C, FIELD_ICON_SIZE, GRID } from '../constants';
 import { GradientActionButton } from './GradientActionButton';
 

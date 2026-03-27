@@ -86,6 +86,8 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
   const { width: windowWidth } = useWindowDimensions();
   const cardWidth = windowWidth - homeTokens.pageGutter - GAP - 40;
   const snapInterval = cardWidth + GAP;
+  // Add trailing space so right-most cards can still reach the same snap position.
+  const trailingSpacer = Math.max(windowWidth - homeTokens.pageGutter - cardWidth, 0);
   const resolvedPaddingBottom = Math.max(contentPaddingBottom, 12);
   const reducedMotion = useReducedMotion();
 
@@ -108,10 +110,11 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
         )}
         ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
         getItemLayout={(_, index) => ({
-          length: cardWidth,
+          length: snapInterval,
           offset: (cardWidth + GAP) * index,
           index,
         })}
+        ListFooterComponent={<View style={{ width: trailingSpacer }} />}
         showsHorizontalScrollIndicator={false}
         snapToInterval={snapInterval}
         snapToAlignment="start"
@@ -164,10 +167,11 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
         }
         ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
         getItemLayout={(_, index) => ({
-          length: cardWidth,
+          length: snapInterval,
           offset: (cardWidth + GAP) * index,
           index,
         })}
+        ListFooterComponent={<View style={{ width: trailingSpacer }} />}
         showsHorizontalScrollIndicator={false}
         snapToInterval={snapInterval}
         snapToAlignment="start"

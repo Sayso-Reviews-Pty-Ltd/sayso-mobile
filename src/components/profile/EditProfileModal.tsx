@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { Text, TextInput } from '../Typography';
 import { haptics } from '../../lib/haptics';
+import { editProfileStyles } from './editProfileStyles';
 
 export type EditProfileSavePayload = {
   username: string;
@@ -163,49 +164,49 @@ export function EditProfileModal({
 
   return (
     <Modal transparent visible={isOpen} animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View style={editProfileStyles.backdrop}>
         <Pressable style={StyleSheet.absoluteFillObject} onPress={() => !saving && onClose()} />
 
         <LinearGradient
           colors={['#9DAB9B', '#9DAB9B', 'rgba(157,171,155,0.95)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.card}
+          style={editProfileStyles.card}
         >
-          <View style={styles.headerRow}>
-            <Text style={styles.title}>Edit Profile</Text>
-            <Pressable onPress={() => !saving && onClose()} style={styles.closeButton} disabled={saving}>
+          <View style={editProfileStyles.headerRow}>
+            <Text style={editProfileStyles.title}>Edit Profile</Text>
+            <Pressable onPress={() => !saving && onClose()} style={editProfileStyles.closeButton} disabled={saving}>
               <Ionicons name="close-outline" size={18} color="rgba(45,45,45,0.75)" />
             </Pressable>
           </View>
 
-          {mergedError ? <Text style={styles.error}>{mergedError}</Text> : null}
+          {mergedError ? <Text style={editProfileStyles.error}>{mergedError}</Text> : null}
 
-          <View style={styles.avatarRow}>
+          <View style={editProfileStyles.avatarRow}>
             {avatarPreview ? (
-              <Image source={{ uri: avatarPreview }} style={styles.avatar} contentFit="cover" />
+              <Image source={{ uri: avatarPreview }} style={editProfileStyles.avatar} contentFit="cover" />
             ) : (
-              <View style={[styles.avatar, styles.avatarFallback]}>
+              <View style={[editProfileStyles.avatar, editProfileStyles.avatarFallback]}>
                 <Ionicons name="person-outline" size={28} color="rgba(45,45,45,0.55)" />
               </View>
             )}
 
-            <View style={styles.avatarActions}>
-              <Pressable onPress={handleAddPhoto} style={styles.avatarActionButton} disabled={saving}>
+            <View style={editProfileStyles.avatarActions}>
+              <Pressable onPress={handleAddPhoto} style={editProfileStyles.avatarActionButton} disabled={saving}>
                 <Ionicons name="cloud-upload-outline" size={14} color="#2D2D2D" />
-                <Text style={styles.avatarActionText}>Upload</Text>
+                <Text style={editProfileStyles.avatarActionText}>Upload</Text>
               </Pressable>
               {avatarPreview ? (
-                <Pressable onPress={handleRemoveAvatar} style={styles.avatarActionButton} disabled={saving}>
+                <Pressable onPress={handleRemoveAvatar} style={editProfileStyles.avatarActionButton} disabled={saving}>
                   <Ionicons name="trash-outline" size={14} color="#7F1D1D" />
-                  <Text style={[styles.avatarActionText, { color: '#7F1D1D' }]}>Remove</Text>
+                  <Text style={[editProfileStyles.avatarActionText, { color: '#7F1D1D' }]}>Remove</Text>
                 </Pressable>
               ) : null}
             </View>
           </View>
 
-          <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Username</Text>
+          <View style={editProfileStyles.fieldWrap}>
+            <Text style={editProfileStyles.fieldLabel}>Username</Text>
             <TextInput
               value={username}
               onChangeText={(value) => {
@@ -214,30 +215,30 @@ export function EditProfileModal({
               }}
               autoCapitalize="none"
               autoCorrect={false}
-              style={styles.input}
+              style={editProfileStyles.input}
               placeholder="Choose a username"
               placeholderTextColor="rgba(45,45,45,0.45)"
             />
-            <Text style={styles.helper}>3-20 characters, letters/numbers/underscore/hyphen.</Text>
+            <Text style={editProfileStyles.helper}>3-20 characters, letters/numbers/underscore/hyphen.</Text>
           </View>
 
-          <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Display Name</Text>
+          <View style={editProfileStyles.fieldWrap}>
+            <Text style={editProfileStyles.fieldLabel}>Display Name</Text>
             <TextInput
               value={displayName}
               onChangeText={setDisplayName}
-              style={styles.input}
+              style={editProfileStyles.input}
               placeholder="How your name appears"
               placeholderTextColor="rgba(45,45,45,0.45)"
             />
           </View>
 
-          <View style={styles.actions}>
-            <Pressable onPress={onClose} style={styles.secondaryButton} disabled={saving}>
-              <Text style={styles.secondaryButtonText}>Cancel</Text>
+          <View style={editProfileStyles.actions}>
+            <Pressable onPress={onClose} style={editProfileStyles.secondaryButton} disabled={saving}>
+              <Text style={editProfileStyles.secondaryButtonText}>Cancel</Text>
             </Pressable>
-            <Pressable onPress={handleSave} style={styles.primaryButton} disabled={saving}>
-              <Text style={styles.primaryButtonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
+            <Pressable onPress={handleSave} style={editProfileStyles.primaryButton} disabled={saving}>
+              <Text style={editProfileStyles.primaryButtonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
             </Pressable>
           </View>
         </LinearGradient>
@@ -245,140 +246,3 @@ export function EditProfileModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(17,24,39,0.35)',
-  },
-  card: {
-    borderRadius: 12,
-    padding: 18,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#2D2D2D',
-  },
-  closeButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.65)',
-  },
-  error: {
-    fontSize: 12,
-    color: '#7F1D1D',
-    marginBottom: 8,
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  avatar: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.7)',
-  },
-  avatarFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(229,224,229,0.7)',
-  },
-  avatarActions: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-    flex: 1,
-  },
-  avatarActionButton: {
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'center',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(45,45,45,0.18)',
-    backgroundColor: 'rgba(255,255,255,0.72)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  avatarActionText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#2D2D2D',
-  },
-  fieldWrap: {
-    marginBottom: 12,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(45,45,45,0.9)',
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: 'rgba(45,45,45,0.22)',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#2D2D2D',
-    backgroundColor: 'rgba(255,255,255,0.72)',
-  },
-  helper: {
-    marginTop: 4,
-    fontSize: 11,
-    color: 'rgba(45,45,45,0.65)',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
-  },
-  secondaryButton: {
-    flex: 1,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(45,45,45,0.2)',
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.72)',
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#2D2D2D',
-  },
-  primaryButton: {
-    flex: 1,
-    borderRadius: 999,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#722F37',
-  },
-  primaryButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-});

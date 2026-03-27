@@ -37,7 +37,7 @@ export function EventSpecialActionCard({
   item,
   routeType,
   isGoing,
-  rsvpCount,
+  rsvpCount: _rsvpCount,
   rsvpBusy = false,
   reminderBusy = false,
   hasReminder1Day,

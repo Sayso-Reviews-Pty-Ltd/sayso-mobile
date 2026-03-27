@@ -1,184 +1,24 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  Image,
-  type ImageSourcePropType,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { BADGE_MAPPINGS, BADGE_GROUPS, type BadgeGroup, type BadgeMappingItem } from '../../lib/badgeMappings';
-import { getBadgeImage } from '../../lib/badgeImages';
-import { Text } from '../../components/Typography';
+import { BADGE_MAPPINGS, BADGE_GROUPS } from '../../lib/badgeMappings';
+import { Text, TextInput } from '../../components/Typography';
 import { useGlobalScrollToTop } from '../../hooks/useGlobalScrollToTop';
-import { useAllUserBadges, type UserBadgeDto } from '../../hooks/useUserBadges';
-
-const GRID = 8;
-
-const C = {
-  page: '#E5E0E5',
-  card: '#9DAB9B',
-  charcoal: '#2D2D2D',
-  charcoal70: 'rgba(45,45,45,0.7)',
-  charcoal60: 'rgba(45,45,45,0.6)',
-  charcoal50: 'rgba(45,45,45,0.5)',
-  charcoal20: 'rgba(45,45,45,0.2)',
-  charcoal08: 'rgba(45,45,45,0.08)',
-  white: '#FFFFFF',
-  wine: '#722F37',
-  sage: '#7D9B76',
-  inputBg: 'rgba(255,255,255,0.95)',
-  inputBorder: 'rgba(45,45,45,0.15)',
-};
-
-const GROUP_LABELS: Record<string, string> = {
-  explorer: 'Explorer',
-  specialist: 'Specialist',
-  milestone: 'Milestone',
-  community: 'Community',
-};
-
-const GROUP_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  explorer: 'compass-outline',
-  specialist: 'ribbon-outline',
-  milestone: 'trophy-outline',
-  community: 'people-outline',
-};
-
-const GROUP_COLORS: Record<string, string> = {
-  explorer: '#60A5FA',
-  specialist: '#34D399',
-  milestone: '#FFD700',
-  community: '#F472B6',
-};
-
-interface BadgeLibraryItem {
-  id: string;
-  name: string;
-  description: string;
-  howToEarn: string;
-  badgeGroup: BadgeGroup;
-  imageKey: string;
-  iconPath: string | null;
-}
-
-const RULE_COPY: Record<string, string> = {
-  review_count: 'reviews',
-  category_review_count: 'reviews in this category',
-  distinct_category_count: 'different categories',
-  photo_count: 'reviews with photos',
-  helpful_votes_total: 'helpful votes given',
-  helpful_votes_received: 'helpful votes received',
-  streak_days: 'consecutive days of reviewing',
-  weekly_streak: 'consecutive weeks of reviewing',
-  loyal_reviewer: 'reviews for one business',
-};
-
-function normalizeGroup(group: string | null | undefined, fallback: BadgeGroup = 'explorer'): BadgeGroup {
-  return BADGE_GROUPS.includes(group as BadgeGroup) ? (group as BadgeGroup) : fallback;
-}
-
-function buildRuleHowToEarn(ruleType: string | null | undefined, threshold: number | null | undefined): string | null {
-  if (!ruleType || typeof threshold !== 'number' || threshold <= 0) return null;
-  const action = RULE_COPY[ruleType];
-  if (!action) return null;
-  return `Complete ${threshold} ${action}.`;
-}
-
-function mapBadgeDefinition(mapping: BadgeMappingItem): BadgeLibraryItem {
-  return {
-    id: mapping.id,
-    name: mapping.name,
-    description: mapping.description,
-    howToEarn: mapping.howToEarn,
-    badgeGroup: mapping.badgeGroup,
-    imageKey: mapping.imageKey,
-    iconPath: null,
-  };
-}
-
-function mapApiBadgeToLibraryItem(badge: UserBadgeDto): BadgeLibraryItem {
-  const mapped = BADGE_MAPPINGS[badge.id];
-  const mappedDefinition = mapped ? mapBadgeDefinition(mapped) : null;
-
-  const name = typeof badge.name === 'string' && badge.name.trim().length > 0
-    ? badge.name.trim()
-    : mappedDefinition?.name ?? 'Badge';
-  const description = typeof badge.description === 'string' && badge.description.trim().length > 0
-    ? badge.description.trim()
-    : mappedDefinition?.description ?? '';
-  const howToEarn = (typeof badge.how_to_earn === 'string' && badge.how_to_earn.trim().length > 0
-    ? badge.how_to_earn.trim()
-    : null) ?? (typeof badge.howToEarn === 'string' && badge.howToEarn.trim().length > 0
-    ? badge.howToEarn.trim()
-    : null) ?? mappedDefinition?.howToEarn
-    ?? buildRuleHowToEarn(badge.rule_type, badge.threshold)
-    ?? 'Complete this badge objective to unlock it.';
-
-  return {
-    id: badge.id,
-    name,
-    description,
-    howToEarn,
-    badgeGroup: normalizeGroup(badge.badge_group, mappedDefinition?.badgeGroup ?? 'explorer'),
-    imageKey: mappedDefinition?.imageKey ?? 'default',
-    iconPath: badge.icon_path ?? null,
-  };
-}
-
-function resolveBadgeImageSource(badge: BadgeLibraryItem): ImageSourcePropType {
-  if (badge.iconPath && badge.iconPath.trim().length > 0) {
-    return { uri: badge.iconPath };
-  }
-  return getBadgeImage(badge.imageKey);
-}
-
-function BadgeCard({ badge }: { badge: BadgeLibraryItem }) {
-
-  return (
-    <View style={styles.badgeCard}>
-      <Image source={resolveBadgeImageSource(badge)} style={styles.badgeCardImg} />
-      <View style={styles.badgeCardContent}>
-        <Text style={styles.badgeCardName}>{badge.name}</Text>
-        <Text style={styles.badgeCardDesc} numberOfLines={2}>{badge.description}</Text>
-        <View style={styles.badgeCardHowTo}>
-          <Ionicons name="information-circle-outline" size={12} color={C.charcoal50} />
-          <Text style={styles.badgeCardHowToText} numberOfLines={2}>{badge.howToEarn}</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function BadgeSection({ groupKey, badges }: { groupKey: string; badges: BadgeLibraryItem[] }) {
-  const label = GROUP_LABELS[groupKey] ?? groupKey;
-  const icon = GROUP_ICONS[groupKey] ?? 'ribbon-outline';
-  const color = GROUP_COLORS[groupKey] ?? C.wine;
-
-  return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <View style={[styles.sectionIconWrap, { backgroundColor: `${color}18` }]}>
-          <Ionicons name={icon} size={18} color={color} />
-        </View>
-        <Text style={styles.sectionTitle}>{label} Badges</Text>
-        <View style={styles.sectionCount}>
-          <Text style={styles.sectionCountText}>{badges.length}</Text>
-        </View>
-      </View>
-      <View style={styles.badgeList}>
-        {badges.map((badge) => (
-          <BadgeCard key={badge.id} badge={badge} />
-        ))}
-      </View>
-    </View>
-  );
-}
+import { useAllUserBadges } from '../../hooks/useUserBadges';
+import { BadgeSection } from './badges/BadgeSection';
+import { BadgeCard } from './badges/BadgeCard';
+import { mapBadgeDefinition, mapApiBadgeToLibraryItem } from './badges/badgeHelpers';
+import { GRID, C } from './badges/badgeScreenTypes';
+import type { BadgeGroup } from '../../lib/badgeMappings';
+import type { BadgeLibraryItem } from './badges/badgeScreenTypes';
 
 export default function BadgesScreen() {
   const router = useRouter();
@@ -205,11 +45,9 @@ export default function BadgesScreen() {
   }, [setScrollTopVisible]);
 
   const badgeCatalog = useMemo<BadgeLibraryItem[]>(() => {
-    // Prefer backend badges so the library mirrors server-side award rules.
     if (backendBadges.length === 0) {
       return Object.values(BADGE_MAPPINGS).map(mapBadgeDefinition);
     }
-
     const deduped = new Map<string, BadgeLibraryItem>();
     backendBadges.forEach((badge) => {
       if (!badge?.id || deduped.has(badge.id)) return;
@@ -258,7 +96,6 @@ export default function BadgesScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {/* Page header */}
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Badge Library</Text>
           <Text style={styles.pageSubtitle}>
@@ -266,7 +103,6 @@ export default function BadgesScreen() {
           </Text>
         </View>
 
-        {/* Search bar */}
         <View style={styles.searchRow}>
           <Ionicons name="search-outline" size={18} color={C.charcoal50} style={styles.searchIcon} />
           <TextInput
@@ -286,7 +122,6 @@ export default function BadgesScreen() {
           )}
         </View>
 
-        {/* Search results */}
         {filteredBadges !== null ? (
           <View style={styles.section}>
             <Text style={styles.searchResultsLabel}>
@@ -315,7 +150,6 @@ export default function BadgesScreen() {
           ))
         )}
 
-        {/* CTA */}
         {!filteredBadges && (
           <View style={styles.cta}>
             <Text style={styles.ctaTitle}>Start earning today</Text>
@@ -342,7 +176,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: GRID * 2,
     gap: GRID * 3,
   },
-
   pageHeader: {
     alignItems: 'center',
     gap: GRID,
@@ -361,7 +194,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -389,87 +221,12 @@ const styles = StyleSheet.create({
     color: C.charcoal50,
     marginBottom: GRID,
   },
-
   section: {
     gap: GRID * 1.5,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: GRID,
-  },
-  sectionIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  sectionTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '700',
-    color: C.charcoal,
-    letterSpacing: -0.2,
-  },
-  sectionCount: {
-    paddingHorizontal: GRID,
-    paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: C.charcoal08,
-  },
-  sectionCountText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: C.charcoal60,
-  },
-
   badgeList: {
     gap: GRID,
   },
-  badgeCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: GRID * 1.5,
-    backgroundColor: 'rgba(255,255,255,0.72)',
-    borderRadius: 12,
-    padding: GRID * 2,
-    borderWidth: 1,
-    borderColor: C.charcoal08,
-  },
-  badgeCardImg: {
-    width: 44,
-    height: 44,
-    flexShrink: 0,
-  },
-  badgeCardContent: {
-    flex: 1,
-    gap: 4,
-  },
-  badgeCardName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: C.charcoal,
-  },
-  badgeCardDesc: {
-    fontSize: 13,
-    color: C.charcoal70,
-    lineHeight: 18,
-  },
-  badgeCardHowTo: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 4,
-    marginTop: 2,
-  },
-  badgeCardHowToText: {
-    flex: 1,
-    fontSize: 12,
-    color: C.charcoal50,
-    lineHeight: 16,
-  },
-
   emptySearch: {
     alignItems: 'center',
     paddingVertical: GRID * 4,
@@ -479,7 +236,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: C.charcoal50,
   },
-
   cta: {
     backgroundColor: C.card,
     borderRadius: 12,

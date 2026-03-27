@@ -16,6 +16,7 @@ const TRENDING_RESPONSE = {
 describe('useTrending', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockApiFetch.mockReset();
     mockApiFetch.mockResolvedValue(TRENDING_RESPONSE);
   });
 
@@ -37,16 +38,12 @@ describe('useTrending', () => {
 
   it('uses ["trending", 20] as the query key (default)', () => {
     const { queryClient } = renderHookWithQuery(() => useTrending());
-    expect(
-      queryClient.getQueryCache().find({ queryKey: ['trending', 20] }),
-    ).toBeDefined();
+    expect(queryClient.getQueryCache().find({ queryKey: ['trending', 20] })).toBeDefined();
   });
 
   it('includes the limit in the query key', () => {
     const { queryClient } = renderHookWithQuery(() => useTrending(7));
-    expect(
-      queryClient.getQueryCache().find({ queryKey: ['trending', 7] }),
-    ).toBeDefined();
+    expect(queryClient.getQueryCache().find({ queryKey: ['trending', 7] })).toBeDefined();
   });
 
   // ─── staleTime ────────────────────────────────────────────────────────────
@@ -80,7 +77,9 @@ describe('useTrending', () => {
   it('isLoading is true before response resolves', async () => {
     let resolveRequest!: (v: unknown) => void;
     mockApiFetch.mockReturnValueOnce(
-      new Promise((res) => { resolveRequest = res; }),
+      new Promise((res) => {
+        resolveRequest = res;
+      }),
     );
 
     const { result } = renderHookWithQuery(() => useTrending());

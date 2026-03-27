@@ -35,7 +35,7 @@ jobs:
       - name: Mobile E2E regression guard (skipped if secrets unset)
         run: |
           if [ -z "${E2E_PERSONAL_ACCOUNT_EMAIL:-}" ] || [ -z "${E2E_PERSONAL_ACCOUNT_PASSWORD:-}" ]; then
-            echo "::warning::Skipping mobile E2E — set repo secrets E2E_PERSONAL_ACCOUNT_EMAIL and E2E_PERSONAL_ACCOUNT_PASSWORD to run Playwright on CI."
+            echo "::warning::Skipping mobile E2E — add repository secrets E2E_PERSONAL_ACCOUNT_EMAIL and E2E_PERSONAL_ACCOUNT_PASSWORD (same keys as in your local .env; see .env.example)."
             exit 0
           fi
           npx playwright install --with-deps chromium

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { Animated, FlatList, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { BusinessListItemDto, FeaturedBusinessDto } from '@sayso/contracts';
 import { BusinessCard } from '../../../components/BusinessCard';
@@ -39,11 +39,7 @@ type AnimatedCardProps = {
 };
 
 function AnimatedCard({ scrollX, index, snapInterval, children }: AnimatedCardProps) {
-  const inputRange = [
-    (index - 1) * snapInterval,
-    index * snapInterval,
-    (index + 1) * snapInterval,
-  ];
+  const inputRange = [(index - 1) * snapInterval, index * snapInterval, (index + 1) * snapInterval];
 
   const scale = scrollX.interpolate({
     inputRange,
@@ -57,11 +53,11 @@ function AnimatedCard({ scrollX, index, snapInterval, children }: AnimatedCardPr
     extrapolate: 'clamp',
   });
 
-  return (
-    <Animated.View style={{ transform: [{ scale }], opacity }}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={{ transform: [{ scale }], opacity }}>{children}</Animated.View>;
+}
+
+function SkeletonSeparator() {
+  return <View style={styles.gap} />;
 }
 
 // ─── Row ─────────────────────────────────────────────────────────────────────
@@ -92,9 +88,26 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
   const reducedMotion = useReducedMotion();
 
   const scrollX = useRef(new Animated.Value(0)).current;
-  const onScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    { useNativeDriver: true }
+  const onScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+    useNativeDriver: true,
+  });
+
+  const renderSkeletonItem = useCallback(
+    () => (
+      <View style={{ width: cardWidth }}>
+        <SkeletonCard />
+      </View>
+    ),
+    [cardWidth],
+  );
+
+  const getSkeletonItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: snapInterval,
+      offset: (cardWidth + GAP) * index,
+      index,
+    }),
+    [cardWidth, snapInterval],
   );
 
   if (loading) {
@@ -103,17 +116,9 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
         horizontal
         data={SKELETONS}
         keyExtractor={(i) => `business-skeleton-${i}`}
-        renderItem={() => (
-          <View style={{ width: cardWidth }}>
-            <SkeletonCard />
-          </View>
-        )}
-        ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
-        getItemLayout={(_, index) => ({
-          length: snapInterval,
-          offset: (cardWidth + GAP) * index,
-          index,
-        })}
+        renderItem={renderSkeletonItem}
+        ItemSeparatorComponent={SkeletonSeparator}
+        getItemLayout={getSkeletonItemLayout}
         ListFooterComponent={<View style={{ width: trailingSpacer }} />}
         showsHorizontalScrollIndicator={false}
         snapToInterval={snapInterval}
@@ -188,6 +193,9 @@ export function HomeBusinessRow<T extends BusinessListItemDto | FeaturedBusiness
 }
 
 const styles = StyleSheet.create({
+  gap: {
+    width: GAP,
+  },
   row: {
     overflow: 'visible',
     backgroundColor: homeTokens.offWhite,

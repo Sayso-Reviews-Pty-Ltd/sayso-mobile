@@ -15,11 +15,11 @@ export function ProfileSkeleton() {
         style={styles.heroCard}
       >
         <View style={styles.heroContent}>
-          <SkeletonBlock style={{ width: 96, height: 96, borderRadius: 48 }} />
-          <SkeletonBlock style={{ width: 190, height: 24, borderRadius: 12, marginTop: 16 }} />
-          <SkeletonBlock style={{ width: 160, height: 13, borderRadius: 7, marginTop: 8 }} />
-          <SkeletonBlock style={{ width: 220, height: 12, borderRadius: 7, marginTop: 10 }} />
-          <SkeletonBlock style={{ width: 120, height: 40, borderRadius: 20, marginTop: 16 }} />
+          <SkeletonBlock style={sk.avatar} />
+          <SkeletonBlock style={sk.heroName} />
+          <SkeletonBlock style={sk.heroMeta1} />
+          <SkeletonBlock style={sk.heroMeta2} />
+          <SkeletonBlock style={sk.heroBtn} />
         </View>
       </LinearGradient>
 
@@ -33,25 +33,40 @@ export function ProfileSkeleton() {
             style={styles.statCard}
           >
             <View style={styles.statTitleRow}>
-              <SkeletonBlock style={{ width: 32, height: 32, borderRadius: 16 }} />
-              <SkeletonBlock style={{ width: 74, height: 12, borderRadius: 6 }} />
+              <SkeletonBlock style={sk.statIcon} />
+              <SkeletonBlock style={sk.statLabel} />
             </View>
-            <SkeletonBlock style={{ width: 46, height: 24, borderRadius: 10, marginTop: 8 }} />
-            <SkeletonBlock style={{ width: 94, height: 12, borderRadius: 6, marginTop: 8 }} />
+            <SkeletonBlock style={sk.statValue} />
+            <SkeletonBlock style={sk.statDesc} />
           </LinearGradient>
         ))}
       </View>
 
       {[0, 1, 2].map((index) => (
         <ProfileSectionCard key={`profile-section-skeleton-${index}`}>
-          <SkeletonBlock style={{ width: 140, height: 18, borderRadius: 9, marginBottom: 14 }} />
-          <SkeletonBlock style={{ width: '100%', height: 14, borderRadius: 7 }} />
-          <SkeletonBlock style={{ width: '88%', height: 14, borderRadius: 7, marginTop: 10 }} />
+          <SkeletonBlock style={sk.sectionTitle} />
+          <SkeletonBlock style={sk.sectionLine1} />
+          <SkeletonBlock style={sk.sectionLine2} />
         </ProfileSectionCard>
       ))}
     </>
   );
 }
+
+const sk = StyleSheet.create({
+  avatar: { width: 96, height: 96, borderRadius: 48 },
+  heroName: { width: 190, height: 24, borderRadius: 12, marginTop: 16 },
+  heroMeta1: { width: 160, height: 13, borderRadius: 7, marginTop: 8 },
+  heroMeta2: { width: 220, height: 12, borderRadius: 7, marginTop: 10 },
+  heroBtn: { width: 120, height: 40, borderRadius: 20, marginTop: 16 },
+  statIcon: { width: 32, height: 32, borderRadius: 16 },
+  statLabel: { width: 74, height: 12, borderRadius: 6 },
+  statValue: { width: 46, height: 24, borderRadius: 10, marginTop: 8 },
+  statDesc: { width: 94, height: 12, borderRadius: 6, marginTop: 8 },
+  sectionTitle: { width: 140, height: 18, borderRadius: 9, marginBottom: 14 },
+  sectionLine1: { width: '100%', height: 14, borderRadius: 7 },
+  sectionLine2: { width: '88%', height: 14, borderRadius: 7, marginTop: 10 },
+});
 
 const styles = StyleSheet.create({
   heroCard: {

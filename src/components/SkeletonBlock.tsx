@@ -1,6 +1,16 @@
 import { useEffect } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, cancelAnimation, Easing, interpolate } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
+  cancelAnimation,
+  Easing,
+  interpolate,
+} from 'react-native-reanimated';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import type { ReactNode } from 'react';
 
@@ -41,19 +51,22 @@ export function SkeletonBlock({
     pulse.value = withRepeat(
       withSequence(
         withTiming(1, { duration: 980, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 980, easing: Easing.inOut(Easing.ease) })
+        withTiming(0, { duration: 980, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
-      false
+      false,
     );
 
     shimmer.value = withRepeat(
       withSequence(
-        withDelay(220, withTiming(1, { duration: SKELETON_SHIMMER_DURATION_MS, easing: Easing.linear })),
-        withTiming(0, { duration: 0 })
+        withDelay(
+          220,
+          withTiming(1, { duration: SKELETON_SHIMMER_DURATION_MS, easing: Easing.linear }),
+        ),
+        withTiming(0, { duration: 0 }),
       ),
       -1,
-      false
+      false,
     );
 
     return () => {
@@ -62,27 +75,40 @@ export function SkeletonBlock({
     };
   }, [pulse, shimmer, shouldAnimate]);
 
-  const fillStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(pulse.value, [0, 1], [PULSE_MIN, PULSE_MAX]),
-  }), []);
+  const fillStyle = useAnimatedStyle(
+    () => ({
+      opacity: interpolate(pulse.value, [0, 1], [PULSE_MIN, PULSE_MAX]),
+    }),
+    [],
+  );
 
-  const shimmerStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(shimmer.value, [0, 0.3, 0.7, 1], [0, 0.28, 0.28, 0]),
-    transform: [
-      { translateX: interpolate(shimmer.value, [0, 1], [SKELETON_SHIMMER_TRANSLATE_START, SKELETON_SHIMMER_TRANSLATE_END]) },
-      { rotate: '14deg' },
-    ],
-  }), []);
+  const shimmerStyle = useAnimatedStyle(
+    () => ({
+      opacity: interpolate(shimmer.value, [0, 0.3, 0.7, 1], [0, 0.28, 0.28, 0]),
+      transform: [
+        {
+          translateX: interpolate(
+            shimmer.value,
+            [0, 1],
+            [SKELETON_SHIMMER_TRANSLATE_START, SKELETON_SHIMMER_TRANSLATE_END],
+          ),
+        },
+        { rotate: '14deg' },
+      ],
+    }),
+    [],
+  );
 
   const variantStyle =
-    variant === 'soft'
-      ? styles.soft
-      : variant === 'strong'
-      ? styles.strong
-      : styles.default;
+    variant === 'soft' ? styles.soft : variant === 'strong' ? styles.strong : styles.default;
 
   return (
-    <View style={[styles.base, variantStyle, style]}>
+    <View
+      style={[styles.base, variantStyle, style]}
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      accessibilityElementsHidden
+    >
       <Animated.View style={[StyleSheet.absoluteFillObject, styles.fill, fillStyle]} />
       {shouldAnimate ? (
         <Animated.View pointerEvents="none" style={[styles.shimmer, shimmerStyle]} />

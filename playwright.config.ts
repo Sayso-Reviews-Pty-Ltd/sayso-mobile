@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 
+const e2eBaseURL = process.env.E2E_BASE_URL ?? 'https://www.sayso.co.za';
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
@@ -8,7 +10,7 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
 
   use: {
-    baseURL: 'https://sayso.co.za',
+    baseURL: e2eBaseURL,
     headless: true,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

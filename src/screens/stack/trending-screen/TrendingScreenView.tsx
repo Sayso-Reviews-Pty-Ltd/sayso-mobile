@@ -3,7 +3,10 @@ import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { TrendingMapView } from '../TrendingMapView';
-import { businessDetailColors, businessDetailSpacing } from '../../../components/business-detail/styles';
+import {
+  businessDetailColors,
+  businessDetailSpacing,
+} from '../../../components/business-detail/styles';
 import type { TrendingScreenViewProps } from './types';
 
 function ItemSeparator() {
@@ -72,7 +75,7 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: businessDetailSpacing.pageGutter,
     paddingTop: 4,
-    paddingBottom: 4,
+    paddingBottom: 24,
     flexGrow: 1,
   },
   mapWrap: {

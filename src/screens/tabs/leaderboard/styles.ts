@@ -1,5 +1,8 @@
 import { StyleSheet } from 'react-native';
-import { businessDetailSpacing, businessDetailColors } from '../../../components/business-detail/styles';
+import {
+  businessDetailSpacing,
+  businessDetailColors,
+} from '../../../components/business-detail/styles';
 import { CARD_BG_COLOR, NAVBAR_BG_COLOR } from '../../../styles/colors';
 
 export const styles = StyleSheet.create({
@@ -20,7 +23,7 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
   hero: {
     paddingHorizontal: businessDetailSpacing.pageGutter,
@@ -87,7 +90,7 @@ export const styles = StyleSheet.create({
     padding: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
     overflow: 'hidden',
@@ -252,7 +255,7 @@ export const styles = StyleSheet.create({
     borderRadius: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },

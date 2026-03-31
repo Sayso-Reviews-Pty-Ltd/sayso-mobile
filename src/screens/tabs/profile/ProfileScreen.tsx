@@ -32,7 +32,7 @@ export default function ProfileScreen() {
     if (!controller.profileQuery.isLoading && controller.user) {
       track('prestige.profile_viewed', { tier: prestige.tier });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [controller.profileQuery.isLoading, controller.user]);
 
   if (!controller.user) {
@@ -50,7 +50,10 @@ export default function ProfileScreen() {
           ref={controller.scrollRef}
           contentContainerStyle={styles.content}
           refreshControl={
-            <RefreshControl refreshing={controller.isRefreshing} onRefresh={controller.handleRefresh} />
+            <RefreshControl
+              refreshing={controller.isRefreshing}
+              onRefresh={controller.handleRefresh}
+            />
           }
           showsVerticalScrollIndicator={false}
           onScroll={controller.handleScroll}
@@ -113,9 +116,7 @@ export default function ProfileScreen() {
                   reviews={controller.userReviews}
                   isLoading={controller.reviewSectionLoading}
                   showAllContributions={controller.showAllContributions}
-                  onToggleShowAll={() =>
-                    controller.setShowAllContributions((current) => !current)
-                  }
+                  onToggleShowAll={() => controller.setShowAllContributions((current) => !current)}
                   onViewBusiness={(businessSlugOrId) =>
                     controller.router.push(routes.businessDetail(businessSlugOrId) as never)
                   }
@@ -137,12 +138,8 @@ export default function ProfileScreen() {
               <TransitionItem role="support" index={7}>
                 <ProfileAccountActionsSection
                   onSignOut={controller.handleSignOut}
-                  onChangePassword={() =>
-                    controller.router.push(routes.changePassword() as never)
-                  }
-                  onChangeEmail={() =>
-                    controller.router.push(routes.changeEmail() as never)
-                  }
+                  onChangePassword={() => controller.router.push(routes.changePassword() as never)}
+                  onChangeEmail={() => controller.router.push(routes.changeEmail() as never)}
                   onDeleteAccount={() => {
                     controller.setDeleteAccountError(null);
                     controller.setIsDeleteAccountOpen(true);
@@ -214,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: OFF_WHITE,
   },
   content: {
-    paddingBottom: 34,
+    paddingBottom: 24,
     gap: 10,
   },
 });

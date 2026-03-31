@@ -26,6 +26,7 @@ import {
   resolveEventMediaImage,
   type EventCountdownState,
 } from './event-card/eventCardUtils';
+import { useEventRatings } from '../hooks/useEventRatings';
 import { CARD_BG_COLOR, CARD_BG_RGB, NAVBAR_BG_COLOR, NAVBAR_BG_90 } from '../styles/colors';
 import { haptics } from '../lib/haptics';
 
@@ -43,8 +44,19 @@ function EventCardComponent({ item, style }: Props) {
   const router = useRouter();
   const href = useMemo(() => getEventDetailHref(item), [item]);
   const { image, isFallbackArtwork } = resolveEventMediaImage(item);
-  const { hasRating, displayRating, reviews } = normalizeEventRating(item);
-  const [countdown, setCountdown] = useState<EventCountdownState>(() => getEventCountdownState(item));
+  const { displayRating: staticDisplayRating, reviews: fallbackReviews } =
+    normalizeEventRating(item);
+  const { rating: liveRating, totalReviews: liveReviews } = useEventRatings(
+    item.id,
+    staticDisplayRating ?? 0,
+    fallbackReviews,
+  );
+  const hasRating = liveRating > 0;
+  const displayRating = hasRating ? liveRating : undefined;
+  const reviews = liveReviews;
+  const [countdown, setCountdown] = useState<EventCountdownState>(() =>
+    getEventCountdownState(item),
+  );
   const detailLabel = item.type === 'event' ? 'View Event' : 'View Special';
 
   useEffect(() => {
@@ -80,18 +92,30 @@ function EventCardComponent({ item, style }: Props) {
 
   return (
     <Pressable
-      style={({ pressed }) => [styles.card, cardShadowStyle, style, pressed ? styles.cardPressed : null]}
+      style={({ pressed }) => [
+        styles.card,
+        cardShadowStyle,
+        style,
+        pressed ? styles.cardPressed : null,
+      ]}
       onPress={handleNavigate}
       onPressIn={handlePressIn}
       accessibilityRole="button"
       accessibilityLabel={`View ${item.title} details`}
     >
-      <LinearGradient colors={CARD_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardGradient}>
+      <LinearGradient
+        colors={CARD_GRADIENT}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.cardGradient}
+      >
         <View style={styles.media}>
           <EventCardImage imageUri={image} isFallbackArtwork={isFallbackArtwork} />
           <View style={styles.mediaOverlay} pointerEvents="none" />
           <EventDateRibbon label={getDateRibbonLabel(item)} />
-          {hasRating && displayRating !== undefined ? <EventRatingBadge rating={displayRating} /> : null}
+          {hasRating && displayRating !== undefined ? (
+            <EventRatingBadge rating={displayRating} />
+          ) : null}
           {countdown.show ? <EventCountdownBadge countdown={countdown} /> : null}
         </View>
 
@@ -118,7 +142,11 @@ function EventCardComponent({ item, style }: Props) {
           </View>
 
           <Pressable
-            style={({ pressed }) => [styles.ctaButton, ctaShadowStyle, pressed ? styles.ctaButtonPressed : null]}
+            style={({ pressed }) => [
+              styles.ctaButton,
+              ctaShadowStyle,
+              pressed ? styles.ctaButtonPressed : null,
+            ]}
             onPress={(event) => {
               event.stopPropagation();
               handleNavigate();
@@ -143,7 +171,7 @@ function EventCardComponent({ item, style }: Props) {
 
 export const EventCard = memo(
   EventCardComponent,
-  (prev, next) => prev.item === next.item && prev.style === next.style
+  (prev, next) => prev.item === next.item && prev.style === next.style,
 );
 
 const styles = StyleSheet.create({

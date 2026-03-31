@@ -32,25 +32,28 @@ function assertSecureApiBaseUrl(apiBaseUrl: string) {
   if (isDevBuild) return;
   if (apiBaseUrl.startsWith('https://')) return;
 
-  throw new Error(
-    '[ENV] EXPO_PUBLIC_API_BASE_URL must use HTTPS in non-development builds.'
-  );
+  throw new Error('[ENV] EXPO_PUBLIC_API_BASE_URL must use HTTPS in non-development builds.');
 }
 
 export const ENV = {
-  apiBaseUrl: normalizeApiBaseUrl(
-    process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000'
-  ),
+  apiBaseUrl: normalizeApiBaseUrl(process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000'),
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || '',
   supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
   apiPinnedKeyHashes: toList(process.env.EXPO_PUBLIC_API_PINNED_KEY_HASHES),
   securityEnforcePinning: toBooleanFlag(process.env.EXPO_PUBLIC_SECURITY_ENFORCE_PINNING, false),
-  securityEnforceIntegrity: toBooleanFlag(process.env.EXPO_PUBLIC_SECURITY_ENFORCE_INTEGRITY, false),
+  securityEnforceIntegrity: toBooleanFlag(
+    process.env.EXPO_PUBLIC_SECURITY_ENFORCE_INTEGRITY,
+    false,
+  ),
   securityAllowEmulator: toBooleanFlag(process.env.EXPO_PUBLIC_SECURITY_ALLOW_EMULATOR, isDevBuild),
   easProjectId:
     process.env.EXPO_PUBLIC_EAS_PROJECT_ID ||
     (Constants.expoConfig?.extra as any)?.eas?.projectId ||
     '',
+  homeNativeCarouselEnabled: toBooleanFlag(
+    process.env.EXPO_PUBLIC_HOME_NATIVE_CAROUSEL_ENABLED,
+    false,
+  ),
 };
 
 assertSecureApiBaseUrl(ENV.apiBaseUrl);

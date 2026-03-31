@@ -34,7 +34,10 @@ export type TelemetryEvent =
   // ── Performance markers ────────────────────────────────────────────────────
   | 'perf.home_ready'
   | 'perf.business_detail_ready'
-  | 'perf.leaderboard_ready';
+  | 'perf.leaderboard_ready'
+
+  // ── Rollout / exposure ─────────────────────────────────────────────────────
+  | 'rollout.home_native_carousel_exposed';
 
 export type TelemetryPayload = Record<string, string | number | boolean>;
 

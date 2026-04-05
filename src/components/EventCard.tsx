@@ -141,19 +141,7 @@ function EventCardComponent({ item, style }: Props) {
             )}
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.ctaButton,
-              ctaShadowStyle,
-              pressed ? styles.ctaButtonPressed : null,
-            ]}
-            onPress={(event) => {
-              event.stopPropagation();
-              handleNavigate();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={detailLabel}
-          >
+          <View style={[styles.ctaButton, ctaShadowStyle]}>
             <LinearGradient
               colors={CTA_GRADIENT}
               start={{ x: 0, y: 0 }}
@@ -162,7 +150,7 @@ function EventCardComponent({ item, style }: Props) {
             >
               <Text style={styles.ctaText}>{detailLabel}</Text>
             </LinearGradient>
-          </Pressable>
+          </View>
         </View>
       </LinearGradient>
     </Pressable>
@@ -201,22 +189,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(157,171,155,0.10)',
   },
   title: {
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '800',
     color: '#2D2D2D',
-    lineHeight: 25,
+    lineHeight: 24,
     letterSpacing: -0.4,
   },
   description: {
     fontSize: 14,
-    lineHeight: 19,
+    lineHeight: 20,
     fontWeight: '400',
     color: 'rgba(45,45,45,0.70)',
     marginTop: 8,
   },
   reviewRow: {
-    marginTop: 10,
-    minHeight: 17,
+    marginTop: 8,
+    minHeight: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
@@ -251,9 +239,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-  },
-  ctaButtonPressed: {
-    opacity: 0.96,
   },
   ctaText: {
     fontSize: 14,

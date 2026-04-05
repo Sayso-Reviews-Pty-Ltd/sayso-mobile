@@ -77,7 +77,7 @@ export const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
     color: C.white,
-    lineHeight: 38,
+    lineHeight: 40,
   },
   ringLabel: {
     fontSize: 12,
@@ -130,7 +130,7 @@ export const styles = StyleSheet.create({
   },
   groupHeaderText: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   groupTitle: {
     fontSize: 15,
@@ -178,7 +178,7 @@ export const styles = StyleSheet.create({
   },
   badgeRowInfo: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   badgeRowName: {
     fontSize: 14,

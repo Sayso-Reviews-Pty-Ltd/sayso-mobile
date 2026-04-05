@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Modal, Pressable, View } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, styles } from './ReviewCard.styles';
 
@@ -26,7 +26,8 @@ export function ReviewImage({ uri, onPress }: { uri: string; onPress: () => void
 export function ImageLightbox({ uri, onClose }: { uri: string; onClose: () => void }) {
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.lightboxOverlay} onPress={onClose}>
+      <View style={styles.lightboxOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
         <Pressable
           style={styles.lightboxClose}
@@ -36,7 +37,7 @@ export function ImageLightbox({ uri, onClose }: { uri: string; onClose: () => vo
         >
           <Ionicons name="close" size={22} color={C.white} />
         </Pressable>
-      </Pressable>
+      </View>
     </Modal>
   );
 }

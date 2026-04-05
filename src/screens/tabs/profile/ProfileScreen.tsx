@@ -132,6 +132,9 @@ export default function ProfileScreen() {
                 <ProfilePreferencesSection
                   locationStatus={controller.locationStatus}
                   onRequestLocationPermission={controller.requestLocationPermission}
+                  onEditPreferences={() =>
+                    controller.router.push(routes.editPreferences() as never)
+                  }
                 />
               </TransitionItem>
 
@@ -212,6 +215,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 24,
-    gap: 10,
+    gap: 12,
   },
 });

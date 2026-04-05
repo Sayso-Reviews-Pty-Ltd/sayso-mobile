@@ -31,7 +31,7 @@ export const headerStyles = StyleSheet.create({
     padding: GRID * 2.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
   },
@@ -48,8 +48,6 @@ export const headerStyles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 999,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
   },
   avatarFallback: {
     backgroundColor: 'rgba(45,45,45,0.1)',
@@ -78,7 +76,7 @@ export const headerStyles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
-    gap: GRID * 0.75,
+    gap: GRID * 1,
   },
   nameRow: {
     flexDirection: 'row',
@@ -95,7 +93,7 @@ export const headerStyles = StyleSheet.create({
   },
   trophyBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 999,
   },
   trophyBadge_gold: { backgroundColor: '#FEF3C7' },
@@ -121,12 +119,12 @@ export const headerStyles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
+    gap: 8,
+    marginTop: 4,
   },
   starRow: {
     flexDirection: 'row',
-    gap: 1,
+    gap: 0,
   },
   ratingValue: {
     fontSize: 15,
@@ -151,7 +149,7 @@ export const headerStyles = StyleSheet.create({
     gap: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
   },
@@ -162,7 +160,7 @@ export const headerStyles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 11,

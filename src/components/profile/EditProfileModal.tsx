@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -148,7 +156,9 @@ export function EditProfileModal({
 
     const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
     if (!usernameRegex.test(normalizedUsername)) {
-      setLocalError('Username must be 3-20 characters and only letters, numbers, underscores, or hyphens.');
+      setLocalError(
+        'Username must be 3-20 characters and only letters, numbers, underscores, or hyphens.',
+      );
       return;
     }
 
@@ -163,86 +173,126 @@ export function EditProfileModal({
   };
 
   return (
-    <Modal transparent visible={isOpen} animationType="fade" onRequestClose={onClose}>
-      <View style={editProfileStyles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={() => !saving && onClose()} />
+    <Modal transparent visible={isOpen} animationType="slide" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={editProfileStyles.backdrop}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => !saving && onClose()} />
 
-        <LinearGradient
-          colors={['#9DAB9B', '#9DAB9B', 'rgba(157,171,155,0.95)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={editProfileStyles.card}
-        >
-          <View style={editProfileStyles.headerRow}>
-            <Text style={editProfileStyles.title}>Edit Profile</Text>
-            <Pressable onPress={() => !saving && onClose()} style={editProfileStyles.closeButton} disabled={saving}>
-              <Ionicons name="close-outline" size={18} color="rgba(45,45,45,0.75)" />
-            </Pressable>
-          </View>
+          <LinearGradient
+            colors={['#9DAB9B', '#9DAB9B', 'rgba(157,171,155,0.95)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={editProfileStyles.card}
+          >
+            <View style={editProfileStyles.handle} />
 
-          {mergedError ? <Text style={editProfileStyles.error}>{mergedError}</Text> : null}
-
-          <View style={editProfileStyles.avatarRow}>
-            {avatarPreview ? (
-              <Image source={{ uri: avatarPreview }} style={editProfileStyles.avatar} contentFit="cover" />
-            ) : (
-              <View style={[editProfileStyles.avatar, editProfileStyles.avatarFallback]}>
-                <Ionicons name="person-outline" size={28} color="rgba(45,45,45,0.55)" />
-              </View>
-            )}
-
-            <View style={editProfileStyles.avatarActions}>
-              <Pressable onPress={handleAddPhoto} style={editProfileStyles.avatarActionButton} disabled={saving}>
-                <Ionicons name="cloud-upload-outline" size={14} color="#2D2D2D" />
-                <Text style={editProfileStyles.avatarActionText}>Upload</Text>
+            <View style={editProfileStyles.headerRow}>
+              <Text style={editProfileStyles.title}>Edit Profile</Text>
+              <Pressable
+                onPress={() => !saving && onClose()}
+                style={editProfileStyles.closeButton}
+                disabled={saving}
+              >
+                <Ionicons name="close-outline" size={18} color="rgba(45,45,45,0.75)" />
               </Pressable>
-              {avatarPreview ? (
-                <Pressable onPress={handleRemoveAvatar} style={editProfileStyles.avatarActionButton} disabled={saving}>
-                  <Ionicons name="trash-outline" size={14} color="#7F1D1D" />
-                  <Text style={[editProfileStyles.avatarActionText, { color: '#7F1D1D' }]}>Remove</Text>
-                </Pressable>
-              ) : null}
             </View>
-          </View>
 
-          <View style={editProfileStyles.fieldWrap}>
-            <Text style={editProfileStyles.fieldLabel}>Username</Text>
-            <TextInput
-              value={username}
-              onChangeText={(value) => {
-                setUsername(value);
-                setLocalError(null);
-              }}
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={editProfileStyles.input}
-              placeholder="Choose a username"
-              placeholderTextColor="rgba(45,45,45,0.45)"
-            />
-            <Text style={editProfileStyles.helper}>3-20 characters, letters/numbers/underscore/hyphen.</Text>
-          </View>
+            {mergedError ? <Text style={editProfileStyles.error}>{mergedError}</Text> : null}
 
-          <View style={editProfileStyles.fieldWrap}>
-            <Text style={editProfileStyles.fieldLabel}>Display Name</Text>
-            <TextInput
-              value={displayName}
-              onChangeText={setDisplayName}
-              style={editProfileStyles.input}
-              placeholder="How your name appears"
-              placeholderTextColor="rgba(45,45,45,0.45)"
-            />
-          </View>
+            <View style={editProfileStyles.avatarRow}>
+              {avatarPreview ? (
+                <Image
+                  source={{ uri: avatarPreview }}
+                  style={editProfileStyles.avatar}
+                  contentFit="cover"
+                />
+              ) : (
+                <View style={[editProfileStyles.avatar, editProfileStyles.avatarFallback]}>
+                  <Ionicons name="person-outline" size={28} color="rgba(45,45,45,0.55)" />
+                </View>
+              )}
+              <View style={editProfileStyles.avatarActions}>
+                <Pressable
+                  onPress={handleAddPhoto}
+                  style={editProfileStyles.avatarActionButton}
+                  disabled={saving}
+                >
+                  <Ionicons name="cloud-upload-outline" size={14} color="#2D2D2D" />
+                  <Text style={editProfileStyles.avatarActionText}>Upload</Text>
+                </Pressable>
+                {avatarPreview ? (
+                  <Pressable
+                    onPress={handleRemoveAvatar}
+                    style={editProfileStyles.avatarActionButton}
+                    disabled={saving}
+                  >
+                    <Ionicons name="trash-outline" size={14} color="#7F1D1D" />
+                    <Text style={[editProfileStyles.avatarActionText, { color: '#7F1D1D' }]}>
+                      Remove
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
 
-          <View style={editProfileStyles.actions}>
-            <Pressable onPress={onClose} style={editProfileStyles.secondaryButton} disabled={saving}>
-              <Text style={editProfileStyles.secondaryButtonText}>Cancel</Text>
-            </Pressable>
-            <Pressable onPress={handleSave} style={editProfileStyles.primaryButton} disabled={saving}>
-              <Text style={editProfileStyles.primaryButtonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
-            </Pressable>
-          </View>
-        </LinearGradient>
-      </View>
+            <View style={editProfileStyles.fieldWrap}>
+              <Text style={editProfileStyles.fieldLabel}>Username</Text>
+              <TextInput
+                value={username}
+                onChangeText={(value) => {
+                  setUsername(value);
+                  setLocalError(null);
+                }}
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={editProfileStyles.input}
+                placeholder="Choose a username"
+                placeholderTextColor="rgba(45,45,45,0.45)"
+              />
+              <Text style={editProfileStyles.helper}>
+                3-20 characters, letters/numbers/underscore/hyphen.
+              </Text>
+            </View>
+
+            <View style={editProfileStyles.fieldWrap}>
+              <Text style={editProfileStyles.fieldLabel}>Display Name</Text>
+              <TextInput
+                value={displayName}
+                onChangeText={setDisplayName}
+                style={editProfileStyles.input}
+                placeholder="How your name appears"
+                placeholderTextColor="rgba(45,45,45,0.45)"
+              />
+            </View>
+
+            <View style={editProfileStyles.actions}>
+              <Pressable
+                onPress={onClose}
+                style={editProfileStyles.secondaryButton}
+                disabled={saving}
+              >
+                <Text style={editProfileStyles.secondaryButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleSave}
+                style={editProfileStyles.primaryButton}
+                disabled={saving}
+              >
+                <Text style={editProfileStyles.primaryButtonText}>
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Text>
+              </Pressable>
+            </View>
+          </LinearGradient>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+});

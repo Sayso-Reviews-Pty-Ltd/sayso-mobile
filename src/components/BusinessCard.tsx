@@ -148,31 +148,7 @@ function BusinessCardComponent({ business, style }: Props) {
             <BusinessCardPercentiles percentiles={business.percentiles} />
           )}
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.reviewButton,
-              ctaShadowStyle,
-              pressed ? styles.reviewButtonPressed : null,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={`${ctaLabel} ${business.name}`}
-            accessibilityHint="Opens business details"
-            onPress={(event) => {
-              event.stopPropagation();
-              prefetchRouteIntent(`business:${businessIdentifier}`, {
-                href,
-                router: router as unknown as { prefetch?: (path: string) => Promise<void> | void },
-                queryKeys: [
-                  {
-                    queryKey: getBusinessDetailQueryKey(businessIdentifier),
-                    queryFn: () => fetchBusinessDetail(businessIdentifier),
-                    staleTime: 120_000,
-                  },
-                ],
-              });
-              handleNavigate();
-            }}
-          >
+          <View style={[styles.reviewButton, ctaShadowStyle]}>
             <LinearGradient
               colors={CTA_GRADIENT}
               start={{ x: 0, y: 0 }}
@@ -184,7 +160,7 @@ function BusinessCardComponent({ business, style }: Props) {
                 <Ionicons name="chevron-forward" size={14} color="#FFFFFF" />
               </View>
             </LinearGradient>
-          </Pressable>
+          </View>
         </View>
       </LinearGradient>
     </Pressable>
@@ -219,11 +195,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(157,171,155,0.10)',
   },
   name: {
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '700',
     color: '#2D2D2D',
     textAlign: 'center',
-    lineHeight: 25,
+    lineHeight: 24,
     letterSpacing: -0.18,
     width: '100%',
   },
@@ -236,7 +212,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    minHeight: 17,
+    minHeight: 16,
   },
   reviewCountNumber: {
     fontSize: 14,
@@ -273,9 +249,6 @@ const styles = StyleSheet.create({
     opacity: 0.94,
     transform: [{ scale: 0.98 }],
   },
-  reviewButtonPressed: {
-    opacity: 0.92,
-  },
   reviewButtonText: {
     fontSize: 14,
     fontWeight: '600',
@@ -284,6 +257,6 @@ const styles = StyleSheet.create({
   reviewButtonInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
 });

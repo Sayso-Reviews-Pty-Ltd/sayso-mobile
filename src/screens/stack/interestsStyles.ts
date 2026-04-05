@@ -13,8 +13,8 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 14,
+    paddingVertical: 8,
+    marginBottom: 16,
   },
   errorText: {
     color: ONBOARDING_TOKENS.coral,
@@ -26,17 +26,17 @@ export const styles = StyleSheet.create({
 
   selectionWrap: {
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   selectionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     borderWidth: 1,
     borderColor: 'rgba(157,171,155,0.2)',
     backgroundColor: 'rgba(157,171,155,0.10)',
     borderRadius: 999,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   selectionPillReady: {
@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 14,
+    rowGap: 16,
   },
   circle: {
     width: '100%',
@@ -94,7 +94,7 @@ export const styles = StyleSheet.create({
   circleLabel: {
     color: ONBOARDING_TOKENS.white,
     fontSize: 15,
-    lineHeight: 19,
+    lineHeight: 20,
     fontWeight: '600',
     textAlign: 'center',
   },

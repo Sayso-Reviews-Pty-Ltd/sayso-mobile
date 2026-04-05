@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withSpring,
-  withDelay, withSequence, Easing, makeMutable,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  withSequence,
+  Easing,
+  makeMutable,
 } from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,7 +26,7 @@ import { styles } from './interestsStyles';
 const MIN = 3;
 const MAX = 6;
 
-const INTERESTS = [
+export const INTERESTS = [
   { id: 'food-drink', label: 'Food & Drink' },
   { id: 'beauty-wellness', label: 'Beauty & Wellness' },
   { id: 'professional-services', label: 'Professional Services' },
@@ -32,7 +38,7 @@ const INTERESTS = [
   { id: 'shopping-lifestyle', label: 'Shopping & Lifestyle' },
 ] as const;
 
-type InterestId = typeof INTERESTS[number]['id'];
+type InterestId = (typeof INTERESTS)[number]['id'];
 type InterestPreferenceDto = { id: string };
 type PreferencesResponseDto = { interests?: InterestPreferenceDto[] };
 
@@ -55,7 +61,7 @@ export default function InterestsScreen() {
       selectedScale: makeMutable(1),
       bounceScale: makeMutable(1),
       checkScale: makeMutable(0),
-    }))
+    })),
   ).current;
 
   useEffect(() => {
@@ -66,7 +72,9 @@ export default function InterestsScreen() {
         const stored = await AsyncStorage.getItem('onboarding_interests');
         if (stored) {
           const ids = JSON.parse(stored) as string[];
-          const valid = ids.filter((id): id is InterestId => INTERESTS.some((item) => item.id === id));
+          const valid = ids.filter((id): id is InterestId =>
+            INTERESTS.some((item) => item.id === id),
+          );
           if (!cancelled && valid.length > 0) {
             setSelected(new Set(valid));
             return;
@@ -133,7 +141,11 @@ export default function InterestsScreen() {
         return;
       }
 
-      m.selectedScale.value = withSpring(isSelected ? 1.05 : 1, { stiffness: 400, damping: 17, mass: 1 });
+      m.selectedScale.value = withSpring(isSelected ? 1.05 : 1, {
+        stiffness: 400,
+        damping: 17,
+        mass: 1,
+      });
 
       if (isSelected) {
         m.checkScale.value = 0;
@@ -145,45 +157,51 @@ export default function InterestsScreen() {
     prevSelectedRef.current = new Set(selected);
   }, [itemMutables, reducedMotion, selected]);
 
-  const triggerShake = useCallback((id: InterestId) => {
-    if (reducedMotion) return;
-    const index = INTERESTS.findIndex((interest) => interest.id === id);
-    if (index < 0) return;
-    const m = itemMutables[index];
-    m.x.value = 0;
-    m.x.value = withSequence(
-      withTiming(-4, { duration: 70, easing: Easing.inOut(Easing.ease) }),
-      withTiming(4, { duration: 70, easing: Easing.inOut(Easing.ease) }),
-      withTiming(-3, { duration: 70, easing: Easing.inOut(Easing.ease) }),
-      withTiming(2, { duration: 70, easing: Easing.inOut(Easing.ease) }),
-      withTiming(0, { duration: 70, easing: Easing.inOut(Easing.ease) })
-    );
-  }, [itemMutables, reducedMotion]);
-
-  const toggle = useCallback((id: InterestId) => {
-    haptics.navigation();
-    const index = INTERESTS.findIndex((interest) => interest.id === id);
-    if (index >= 0 && !reducedMotion) {
+  const triggerShake = useCallback(
+    (id: InterestId) => {
+      if (reducedMotion) return;
+      const index = INTERESTS.findIndex((interest) => interest.id === id);
+      if (index < 0) return;
       const m = itemMutables[index];
-      m.bounceScale.value = 1;
-      m.bounceScale.value = withSequence(
-        withTiming(1.08, { duration: 140, easing: Easing.out(Easing.ease) }),
-        withTiming(1, { duration: 210, easing: Easing.out(Easing.ease) })
+      m.x.value = 0;
+      m.x.value = withSequence(
+        withTiming(-4, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+        withTiming(4, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+        withTiming(-3, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+        withTiming(2, { duration: 70, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 70, easing: Easing.inOut(Easing.ease) }),
       );
-    }
+    },
+    [itemMutables, reducedMotion],
+  );
 
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else if (next.size < MAX) {
-        next.add(id);
-      } else {
-        triggerShake(id);
+  const toggle = useCallback(
+    (id: InterestId) => {
+      haptics.navigation();
+      const index = INTERESTS.findIndex((interest) => interest.id === id);
+      if (index >= 0 && !reducedMotion) {
+        const m = itemMutables[index];
+        m.bounceScale.value = 1;
+        m.bounceScale.value = withSequence(
+          withTiming(1.08, { duration: 140, easing: Easing.out(Easing.ease) }),
+          withTiming(1, { duration: 210, easing: Easing.out(Easing.ease) }),
+        );
       }
-      return next;
-    });
-  }, [itemMutables, reducedMotion, triggerShake]);
+
+      setSelected((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else if (next.size < MAX) {
+          next.add(id);
+        } else {
+          triggerShake(id);
+        }
+        return next;
+      });
+    },
+    [itemMutables, reducedMotion, triggerShake],
+  );
 
   const canContinue = selected.size >= MIN && selected.size <= MAX;
   const atMax = selected.size >= MAX;
@@ -217,10 +235,13 @@ export default function InterestsScreen() {
         ? "Perfect! You've selected the maximum"
         : 'Great! You can continue or select more';
 
-  const badgeAnimStyle = useAnimatedStyle(() => ({
-    opacity: badgeOpacity.value,
-    transform: [{ translateY: badgeY.value }],
-  }), []);
+  const badgeAnimStyle = useAnimatedStyle(
+    () => ({
+      opacity: badgeOpacity.value,
+      transform: [{ translateY: badgeY.value }],
+    }),
+    [],
+  );
 
   return (
     <>
@@ -248,7 +269,11 @@ export default function InterestsScreen() {
                 {selected.size} of {MIN}-{MAX} selected
               </Text>
               {selected.size >= MIN ? (
-                <Ionicons name="checkmark-circle-outline" size={15} color={ONBOARDING_TOKENS.sage} />
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={15}
+                  color={ONBOARDING_TOKENS.sage}
+                />
               ) : null}
             </View>
             <Text style={styles.selectionHint}>{helperText}</Text>

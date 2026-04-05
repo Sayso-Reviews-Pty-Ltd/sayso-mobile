@@ -2,6 +2,7 @@ import { Animated, RefreshControl, ScrollView, View } from 'react-native';
 import type { BusinessListItemDto, TopReviewerDto } from '@sayso/contracts';
 import { ScreenTransitionScope } from '../../../../components/motion/TransitionScope';
 import { TransitionItem } from '../../../../components/motion/TransitionItem';
+import { useBottomScreenSpacing } from '../../../../hooks/useBottomScreenSpacing';
 import { HomeBusinessRow } from '../../home/HomeBusinessRow';
 import { HomeCommunityHighlightsSection } from '../../home/HomeCommunityHighlightsSection';
 import { HomeEventsSpecialsRow } from '../../home/HomeEventsSpecialsRow';
@@ -66,6 +67,8 @@ export function HomeFeedBody({
   onNavigateBadges,
   onNavigateOnboarding,
 }: Props) {
+  const bottomSpacing = useBottomScreenSpacing(true);
+
   return (
     <ScreenTransitionScope>
       <Animated.ScrollView
@@ -75,7 +78,7 @@ export function HomeFeedBody({
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} />
         }
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomSpacing }]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >

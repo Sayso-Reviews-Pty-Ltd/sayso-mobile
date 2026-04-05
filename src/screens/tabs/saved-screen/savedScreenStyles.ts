@@ -6,7 +6,7 @@ import { OFF_WHITE, CARD_BG, CHARCOAL } from './savedScreenTokens';
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: OFF_WHITE },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 24 },
+  scrollContent: {},
   maxContainer: {
     width: '100%',
     maxWidth: 2000,

@@ -2,11 +2,19 @@ import { Platform } from 'react-native';
 
 export const APP_PAGE_GUTTER = 8;
 export const SCROLL_TO_TOP_SIDE_OFFSET = APP_PAGE_GUTTER;
-export const SCROLL_TO_TOP_BOTTOM_OFFSET = Platform.select({
-  ios: 108,
-  android: 96,
-  default: 96,
-}) ?? 96;
+export const SCROLL_TO_TOP_BOTTOM_OFFSET =
+  Platform.select({
+    ios: 108,
+    android: 96,
+    default: 96,
+  }) ?? 96;
+
+// Tab bar visual height (excludes safe area / home indicator)
+export const TAB_BAR_HEIGHT = (Platform.select({ ios: 49, android: 56, default: 49 }) ??
+  49) as number;
+
+// Standard breathing room between last content item and the bottom boundary
+export const CONTENT_BREATHING_ROOM = 24;
 
 // Button heights — all interactive buttons must use one of these values
 export const BUTTON_HEIGHT_SM = 36;

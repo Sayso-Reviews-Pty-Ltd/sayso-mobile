@@ -6,8 +6,8 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import type { BusinessListItemDto, TopReviewerDto } from '@sayso/contracts';
+import { ScreenLayout } from '../../../components/ScreenLayout';
 import { HeaderDmBellActions } from '../../../components/HeaderDmBellActions';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
@@ -138,7 +138,7 @@ function HomeScreenViewComponent({
     dismissedSuggestionsQuery !== normalizedSearchInput;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenLayout edges={['top', 'left', 'right']} style={styles.container}>
       <View
         style={[
           styles.headerWrap,
@@ -268,7 +268,7 @@ function HomeScreenViewComponent({
           onNavigateOnboarding={onNavigateOnboarding}
         />
       )}
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
 

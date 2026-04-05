@@ -22,9 +22,7 @@ export const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 24,
-  },
+  scrollContent: {},
   hero: {
     paddingHorizontal: businessDetailSpacing.pageGutter,
     paddingTop: 28,

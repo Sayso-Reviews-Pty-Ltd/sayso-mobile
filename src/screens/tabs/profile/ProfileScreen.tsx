@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { haptics } from '../../../lib/haptics';
+import { ScreenLayout } from '../../../components/ScreenLayout';
+import { useBottomScreenSpacing } from '../../../hooks/useBottomScreenSpacing';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { ConfirmationDialog } from '../../../components/profile/ConfirmationDialog';
@@ -27,6 +28,7 @@ import {
 export default function ProfileScreen() {
   const controller = useProfileScreenController();
   const prestige = getPrestigeInfo(controller.reviewsCount);
+  const bottomSpacing = useBottomScreenSpacing(true);
 
   useEffect(() => {
     if (!controller.profileQuery.isLoading && controller.user) {
@@ -37,18 +39,18 @@ export default function ProfileScreen() {
 
   if (!controller.user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenLayout style={styles.container}>
         <ProfileEmptyState onSignIn={() => controller.router.push(routes.onboarding() as never)} />
-      </SafeAreaView>
+      </ScreenLayout>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenLayout style={styles.container}>
       <ScreenTransitionScope>
         <ScrollView
           ref={controller.scrollRef}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: bottomSpacing }]}
           refreshControl={
             <RefreshControl
               refreshing={controller.isRefreshing}
@@ -204,7 +206,7 @@ export default function ProfileScreen() {
         error={controller.deleteAccountError}
         requireConfirmText="DELETE"
       />
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
 
@@ -214,7 +216,6 @@ const styles = StyleSheet.create({
     backgroundColor: OFF_WHITE,
   },
   content: {
-    paddingBottom: 24,
     gap: 12,
   },
 });

@@ -91,7 +91,6 @@ export const styles = StyleSheet.create({
   },
   content: {
     backgroundColor: homeTokens.offWhite,
-    paddingBottom: 24,
   },
   section: {
     paddingTop: 24,

@@ -102,9 +102,18 @@ function BusinessCardComponent({ business, style }: Props) {
       accessibilityHint="Opens business details"
       accessibilityRole="button"
     >
-      <LinearGradient colors={CARD_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardGradient}>
+      <LinearGradient
+        colors={CARD_GRADIENT}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.cardGradient}
+      >
         <View style={styles.media}>
-          <BusinessCardImage imageUri={image} placeholderUri={placeholderImage} isPlaceholder={isPlaceholder} />
+          <BusinessCardImage
+            imageUri={image}
+            placeholderUri={placeholderImage}
+            isPlaceholder={isPlaceholder}
+          />
           <BusinessCardBadges
             verified={business.verified}
             hasRating={hasRating}
@@ -139,24 +148,7 @@ function BusinessCardComponent({ business, style }: Props) {
             <BusinessCardPercentiles percentiles={business.percentiles} />
           )}
 
-          <Pressable
-            style={({ pressed }) => [styles.reviewButton, ctaShadowStyle, pressed ? styles.reviewButtonPressed : null]}
-            onPress={(event) => {
-              event.stopPropagation();
-              prefetchRouteIntent(`business:${businessIdentifier}`, {
-                href,
-                router: router as unknown as { prefetch?: (path: string) => Promise<void> | void },
-                queryKeys: [
-                  {
-                    queryKey: getBusinessDetailQueryKey(businessIdentifier),
-                    queryFn: () => fetchBusinessDetail(businessIdentifier),
-                    staleTime: 120_000,
-                },
-                ],
-              });
-              handleNavigate();
-            }}
-          >
+          <View style={[styles.reviewButton, ctaShadowStyle]}>
             <LinearGradient
               colors={CTA_GRADIENT}
               start={{ x: 0, y: 0 }}
@@ -168,7 +160,7 @@ function BusinessCardComponent({ business, style }: Props) {
                 <Ionicons name="chevron-forward" size={14} color="#FFFFFF" />
               </View>
             </LinearGradient>
-          </Pressable>
+          </View>
         </View>
       </LinearGradient>
     </Pressable>
@@ -177,7 +169,7 @@ function BusinessCardComponent({ business, style }: Props) {
 
 export const BusinessCard = memo(
   BusinessCardComponent,
-  (prev, next) => prev.business === next.business && prev.style === next.style
+  (prev, next) => prev.business === next.business && prev.style === next.style,
 );
 
 const styles = StyleSheet.create({
@@ -203,11 +195,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(157,171,155,0.10)',
   },
   name: {
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '700',
     color: '#2D2D2D',
     textAlign: 'center',
-    lineHeight: 25,
+    lineHeight: 24,
     letterSpacing: -0.18,
     width: '100%',
   },
@@ -220,7 +212,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    minHeight: 17,
+    minHeight: 16,
   },
   reviewCountNumber: {
     fontSize: 14,
@@ -257,9 +249,6 @@ const styles = StyleSheet.create({
     opacity: 0.94,
     transform: [{ scale: 0.98 }],
   },
-  reviewButtonPressed: {
-    opacity: 0.92,
-  },
   reviewButtonText: {
     fontSize: 14,
     fontWeight: '600',
@@ -268,6 +257,6 @@ const styles = StyleSheet.create({
   reviewButtonInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
 });

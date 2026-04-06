@@ -91,11 +91,21 @@ function ForYouRouteViewComponent({
               end={{ x: 1, y: 1 }}
               style={styles.guestCard}
             >
-              <Text style={styles.guestTitle}>Create an account to unlock personalised recommendations.</Text>
-              <TouchableOpacity style={styles.guestPrimary} onPress={onPressOnboarding} activeOpacity={0.88}>
+              <Text style={styles.guestTitle}>
+                Create an account to unlock personalised recommendations.
+              </Text>
+              <TouchableOpacity
+                style={styles.guestPrimary}
+                onPress={onPressOnboarding}
+                activeOpacity={0.88}
+              >
                 <Text style={styles.guestPrimaryText}>Create Account</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.guestSecondary} onPress={onPressOnboarding} activeOpacity={0.88}>
+              <TouchableOpacity
+                style={styles.guestSecondary}
+                onPress={onPressOnboarding}
+                activeOpacity={0.88}
+              >
                 <Text style={styles.guestSecondaryText}>Sign In</Text>
               </TouchableOpacity>
             </LinearGradient>
@@ -157,7 +167,11 @@ function ForYouRouteViewComponent({
           {preferencesError ? (
             <>
               <View style={styles.loadingHeader}>{heroSection}</View>
-              <EmptyState icon="wifi-outline" title="Couldn't load personalised picks right now." message={preferencesError} />
+              <EmptyState
+                icon="wifi-outline"
+                title="Couldn't load personalised picks right now."
+                message={preferencesError}
+              />
             </>
           ) : !hasPreferences ? (
             <>
@@ -247,7 +261,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: homeTokens.pageGutter,
     paddingTop: 4,
-    paddingBottom: 16,
+    paddingBottom: 24,
   },
   separator: {
     height: 12,

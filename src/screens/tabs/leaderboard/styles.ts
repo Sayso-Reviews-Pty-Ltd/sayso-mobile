@@ -1,5 +1,8 @@
 import { StyleSheet } from 'react-native';
-import { businessDetailSpacing, businessDetailColors } from '../../../components/business-detail/styles';
+import {
+  businessDetailSpacing,
+  businessDetailColors,
+} from '../../../components/business-detail/styles';
 import { CARD_BG_COLOR, NAVBAR_BG_COLOR } from '../../../styles/colors';
 
 export const styles = StyleSheet.create({
@@ -9,7 +12,7 @@ export const styles = StyleSheet.create({
   },
   stickyHeader: {
     paddingHorizontal: businessDetailSpacing.pageGutter,
-    paddingTop: 14,
+    paddingTop: 16,
     paddingBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -19,9 +22,7 @@ export const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 32,
-  },
+  scrollContent: {},
   hero: {
     paddingHorizontal: businessDetailSpacing.pageGutter,
     paddingTop: 28,
@@ -84,10 +85,10 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.20)',
-    padding: 14,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
     overflow: 'hidden',
@@ -100,7 +101,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
     marginTop: 16,
     alignSelf: 'center',
     backgroundColor: CARD_BG_COLOR,
@@ -156,7 +157,7 @@ export const styles = StyleSheet.create({
   skeletonIdentity: {
     flex: 1,
     minWidth: 0,
-    gap: 6,
+    gap: 8,
   },
   skeletonName: {
     width: '62%',
@@ -170,7 +171,7 @@ export const styles = StyleSheet.create({
   },
   skeletonRight: {
     alignItems: 'flex-end',
-    gap: 6,
+    gap: 8,
     marginLeft: 8,
   },
   skeletonPill: {
@@ -248,11 +249,11 @@ export const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: '#fff',
     paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingVertical: 8,
     borderRadius: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -269,7 +270,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.22)',
     paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingVertical: 8,
     borderRadius: 999,
   },
   badgeSecondaryText: {

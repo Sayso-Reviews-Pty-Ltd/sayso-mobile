@@ -53,10 +53,13 @@ export function ProfileHeroCard({
             </View>
           ) : null}
           {prestige ? (
-            <View style={[styles.prestigePill, { backgroundColor: prestige.color + '22' }]}>
-              <Text style={[styles.prestigePillText, { color: prestige.color }]}>
-                {prestige.label}
-              </Text>
+            <View
+              style={[
+                styles.prestigePill,
+                { backgroundColor: prestige.color + '22', borderColor: prestige.color + '60' },
+              ]}
+            >
+              <Text style={styles.prestigePillText}>{prestige.label}</Text>
             </View>
           ) : null}
         </View>
@@ -99,17 +102,15 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     alignItems: 'center',
-    paddingHorizontal: 22,
+    paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 22,
+    paddingBottom: 24,
   },
   avatar: {
     width: 96,
     height: 96,
     borderRadius: 48,
     backgroundColor: 'rgba(229,224,229,0.55)',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.72)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
@@ -128,8 +129,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroName: {
-    fontSize: 27,
-    lineHeight: 31,
+    fontSize: 28,
+    lineHeight: 36,
     fontWeight: '700',
     color: CHARCOAL,
     letterSpacing: -0.3,
@@ -155,15 +156,17 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
   },
   prestigePillText: {
     fontSize: 11,
     fontWeight: '700',
+    color: 'rgba(45,45,45,0.84)',
   },
   heroBio: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 14,
-    lineHeight: 21,
+    lineHeight: 20,
     color: 'rgba(45,45,45,0.86)',
     textAlign: 'center',
   },
@@ -173,18 +176,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    columnGap: 10,
+    columnGap: 8,
     rowGap: 8,
   },
   heroMetaChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   heroMetaIconCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: 'rgba(229,224,229,0.72)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -206,10 +209,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(125,155,118,0.25)',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 8,
   },
   editProfileButtonText: {
     fontSize: 13,

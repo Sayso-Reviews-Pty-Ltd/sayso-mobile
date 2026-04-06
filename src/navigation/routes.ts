@@ -37,6 +37,9 @@ export const routes = {
   specialDetail: (id: string) => `/special/${id}`,
   publicProfile: (username: string) => `/profile/${username}`,
   reviewer: (id: string) => `/reviewer/${id}`,
+  editPreferences: () => '/edit-preferences',
   writeReview: (type: ReviewTargetType, id: string, reviewId?: string) =>
-    reviewId ? `/write-review/${type}/${id}?reviewId=${encodeURIComponent(reviewId)}` : `/write-review/${type}/${id}`,
+    reviewId
+      ? `/write-review/${type}/${id}?reviewId=${encodeURIComponent(reviewId)}`
+      : `/write-review/${type}/${id}`,
 } as const;

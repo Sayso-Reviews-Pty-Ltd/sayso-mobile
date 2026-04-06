@@ -1,17 +1,23 @@
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { routes } from '../../navigation/routes';
 import { Text } from '../../components/Typography';
+import { Button } from '../../components/ui/button';
 import { ONBOARDING_TOKENS } from '../../components/onboarding/onboardingTheme';
 
 const GRID = 8;
 const MAX_RAIL_WIDTH = 420;
-
 
 type ButtonDef = {
   label: string;
@@ -52,15 +58,21 @@ export default function SelectAccountTypeScreen() {
     cardY.value = withDelay(70, withTiming(0, { duration: 280, easing: ease }));
   }, []);
 
-  const titleAnimStyle = useAnimatedStyle(() => ({
-    opacity: titleOpacity.value,
-    transform: [{ translateY: titleY.value }],
-  }), []);
+  const titleAnimStyle = useAnimatedStyle(
+    () => ({
+      opacity: titleOpacity.value,
+      transform: [{ translateY: titleY.value }],
+    }),
+    [],
+  );
 
-  const cardAnimStyle = useAnimatedStyle(() => ({
-    opacity: cardOpacity.value,
-    transform: [{ translateY: cardY.value }],
-  }), []);
+  const cardAnimStyle = useAnimatedStyle(
+    () => ({
+      opacity: cardOpacity.value,
+      transform: [{ translateY: cardY.value }],
+    }),
+    [],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: ONBOARDING_TOKENS.offWhite }]}>
@@ -88,24 +100,26 @@ export default function SelectAccountTypeScreen() {
 
           <Animated.View style={[styles.cardWrap, cardAnimStyle]}>
             <LinearGradient
-              colors={[ONBOARDING_TOKENS.cardBg, ONBOARDING_TOKENS.cardBg, 'rgba(157,171,155,0.95)']}
+              colors={[
+                ONBOARDING_TOKENS.cardBg,
+                ONBOARDING_TOKENS.cardBg,
+                'rgba(157,171,155,0.95)',
+              ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.card}
             >
               <View style={styles.buttonGroup}>
                 {BUTTONS.map((btn) => (
-                  <Pressable
+                  <Button
                     key={btn.label}
-                    style={({ pressed }) => [
-                      styles.actionBtn,
-                      { backgroundColor: btn.bg },
-                      pressed ? styles.actionBtnPressed : null,
-                    ]}
+                    variant="onboarding-solid"
+                    style={{ backgroundColor: btn.bg }}
+                    textStyle={{ color: btn.textColor }}
                     onPress={() => router.replace(btn.route as never)}
                   >
-                    <Text style={[styles.actionBtnText, { color: btn.textColor }]}>{btn.label}</Text>
-                  </Pressable>
+                    {btn.label}
+                  </Button>
                 ))}
               </View>
 
@@ -187,24 +201,6 @@ const styles = StyleSheet.create({
   },
   buttonGroup: {
     gap: GRID * 2,
-  },
-  actionBtn: {
-    borderRadius: 999,
-    minHeight: GRID * 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  actionBtnPressed: {
-    opacity: 0.88,
-  },
-  actionBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   noteRow: {
     alignItems: 'center',

@@ -42,8 +42,10 @@ export default function ProfileUsernameScreen() {
     }
 
     resolve();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -76,11 +78,11 @@ const styles = StyleSheet.create({
   },
   skeletonWrap: {
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   skeletonOrb: {
-    width: 54,
-    height: 54,
+    width: 56,
+    height: 56,
     borderRadius: 999,
   },
   skeletonLine: {

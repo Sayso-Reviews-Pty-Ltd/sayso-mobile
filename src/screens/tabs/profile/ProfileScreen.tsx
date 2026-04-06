@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { haptics } from '../../../lib/haptics';
+import { ScreenLayout } from '../../../components/ScreenLayout';
+import { useBottomScreenSpacing } from '../../../hooks/useBottomScreenSpacing';
 import { TransitionItem } from '../../../components/motion/TransitionItem';
 import { ScreenTransitionScope } from '../../../components/motion/TransitionScope';
 import { ConfirmationDialog } from '../../../components/profile/ConfirmationDialog';
@@ -27,30 +28,34 @@ import {
 export default function ProfileScreen() {
   const controller = useProfileScreenController();
   const prestige = getPrestigeInfo(controller.reviewsCount);
+  const bottomSpacing = useBottomScreenSpacing(true);
 
   useEffect(() => {
     if (!controller.profileQuery.isLoading && controller.user) {
       track('prestige.profile_viewed', { tier: prestige.tier });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [controller.profileQuery.isLoading, controller.user]);
 
   if (!controller.user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenLayout style={styles.container}>
         <ProfileEmptyState onSignIn={() => controller.router.push(routes.onboarding() as never)} />
-      </SafeAreaView>
+      </ScreenLayout>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenLayout style={styles.container}>
       <ScreenTransitionScope>
         <ScrollView
           ref={controller.scrollRef}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: bottomSpacing }]}
           refreshControl={
-            <RefreshControl refreshing={controller.isRefreshing} onRefresh={controller.handleRefresh} />
+            <RefreshControl
+              refreshing={controller.isRefreshing}
+              onRefresh={controller.handleRefresh}
+            />
           }
           showsVerticalScrollIndicator={false}
           onScroll={controller.handleScroll}
@@ -113,9 +118,7 @@ export default function ProfileScreen() {
                   reviews={controller.userReviews}
                   isLoading={controller.reviewSectionLoading}
                   showAllContributions={controller.showAllContributions}
-                  onToggleShowAll={() =>
-                    controller.setShowAllContributions((current) => !current)
-                  }
+                  onToggleShowAll={() => controller.setShowAllContributions((current) => !current)}
                   onViewBusiness={(businessSlugOrId) =>
                     controller.router.push(routes.businessDetail(businessSlugOrId) as never)
                   }
@@ -131,18 +134,17 @@ export default function ProfileScreen() {
                 <ProfilePreferencesSection
                   locationStatus={controller.locationStatus}
                   onRequestLocationPermission={controller.requestLocationPermission}
+                  onEditPreferences={() =>
+                    controller.router.push(routes.editPreferences() as never)
+                  }
                 />
               </TransitionItem>
 
               <TransitionItem role="support" index={7}>
                 <ProfileAccountActionsSection
                   onSignOut={controller.handleSignOut}
-                  onChangePassword={() =>
-                    controller.router.push(routes.changePassword() as never)
-                  }
-                  onChangeEmail={() =>
-                    controller.router.push(routes.changeEmail() as never)
-                  }
+                  onChangePassword={() => controller.router.push(routes.changePassword() as never)}
+                  onChangeEmail={() => controller.router.push(routes.changeEmail() as never)}
                   onDeleteAccount={() => {
                     controller.setDeleteAccountError(null);
                     controller.setIsDeleteAccountOpen(true);
@@ -204,7 +206,7 @@ export default function ProfileScreen() {
         error={controller.deleteAccountError}
         requireConfirmText="DELETE"
       />
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
 
@@ -214,7 +216,6 @@ const styles = StyleSheet.create({
     backgroundColor: OFF_WHITE,
   },
   content: {
-    paddingBottom: 34,
-    gap: 10,
+    gap: 12,
   },
 });

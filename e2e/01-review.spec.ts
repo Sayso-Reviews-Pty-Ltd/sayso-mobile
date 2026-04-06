@@ -1,6 +1,6 @@
 import path from 'path';
 import { test, expect } from '@playwright/test';
-import { goToLogin } from './helpers';
+import { BASE, goToLogin, signInWithPersonalAccount } from './helpers';
 
 const IMAGE_PATH = path.resolve(
   __dirname,
@@ -8,7 +8,7 @@ const IMAGE_PATH = path.resolve(
   'assets',
   'businessImagePlaceholders',
   'food-drink',
-  'fine-dining.jpg'
+  'fine-dining.jpg',
 );
 test.describe('Write Review', () => {
   test('submit a review with image for a business', async ({ page }) => {
@@ -18,17 +18,11 @@ test.describe('Write Review', () => {
     const password = process.env.E2E_PERSONAL_ACCOUNT_PASSWORD;
     test.skip(!email || !password, 'E2E_PERSONAL_ACCOUNT credentials not set');
 
-    // Log in
     await goToLogin(page);
-    await page.getByPlaceholder('you@example.com').fill(email!);
-    await page.getByPlaceholder(/enter your password/i).fill(password!);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await page.waitForURL((url) => !url.pathname.includes('/login'), {
-      timeout: 15_000,
-    });
+    expect(await signInWithPersonalAccount(page, email!, password!)).toBe('authenticated');
 
     // Navigate to home and find a business link
-    await page.goto('https://sayso.co.za/home');
+    await page.goto(`${BASE}/home`);
     await page.waitForLoadState('networkidle');
 
     const businessLink = page.locator('a[href^="/business/"]').first();
@@ -37,14 +31,12 @@ test.describe('Write Review', () => {
     expect(href).toBeTruthy();
 
     // Navigate to the review page for this business
-    const reviewUrl = `https://sayso.co.za${href}/review`;
+    const reviewUrl = `${BASE}${href}/review`;
     await page.goto(reviewUrl);
     await page.waitForLoadState('networkidle');
 
     // Wait for the review form to load
-    await expect(
-      page.getByText('How was your experience?')
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('How was your experience?')).toBeVisible({ timeout: 15_000 });
 
     // Select 4-star rating
     await page.getByRole('button', { name: 'Rate 4 stars' }).click();
@@ -54,12 +46,12 @@ test.describe('Write Review', () => {
     const reviewTextarea = page.getByPlaceholder(/share your experience/i);
     if (await reviewTextarea.isVisible()) {
       await reviewTextarea.fill(
-        'This place has an amazing atmosphere and great service. Highly recommend visiting!'
+        'This place has an amazing atmosphere and great service. Highly recommend visiting!',
       );
     } else {
       const textarea = page.locator('textarea').first();
       await textarea.fill(
-        'This place has an amazing atmosphere and great service. Highly recommend visiting!'
+        'This place has an amazing atmosphere and great service. Highly recommend visiting!',
       );
     }
 
@@ -84,10 +76,7 @@ test.describe('Write Review', () => {
 
     // The web app uses window.location.href after a 1.5s delay post-success
     // Wait for redirect back to business detail page
-    await page.waitForURL(
-      (url) => !url.pathname.includes('/review'),
-      { timeout: 45_000 }
-    );
+    await page.waitForURL((url) => !url.pathname.includes('/review'), { timeout: 45_000 });
     await expect(page).toHaveURL(/\/business\//);
   });
 });

@@ -12,7 +12,9 @@ import {
   Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
 import { useFonts as useLocalFonts } from 'expo-font';
+import Toast from 'react-native-toast-message';
 import { Providers } from '../src/providers/Providers';
+import { AppErrorBoundary } from '../src/components/AppErrorBoundary';
 import { RootGuard } from '../src/components/RootGuard';
 import { OfflineBanner } from '../src/components/OfflineBanner';
 import { rootStackScreenOptions } from '../src/navigation/screenOptions';
@@ -39,19 +41,22 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: NAVBAR_BG_COLOR }}>
       <OfflineBanner />
-      <Providers>
-        {/* TODO: re-enable once dev build is ready — Expo Go ignores Info.plist */}
-        {/* <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} /> */}
-        <RootGuard>
-          <Stack screenOptions={rootStackScreenOptions}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="(stack)" options={{ headerShown: false }} />
-            <Stack.Screen name="(modals)" options={{ headerShown: false }} />
-            <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-            <Stack.Screen name="role-unsupported" options={{ headerShown: false, gestureEnabled: false }} />
-          </Stack>
-        </RootGuard>
-      </Providers>
+      <AppErrorBoundary>
+        <Providers>
+          {/* TODO: re-enable once dev build is ready — Expo Go ignores Info.plist */}
+          {/* <StatusBar style="light" backgroundColor={NAVBAR_BG_COLOR} translucent={false} /> */}
+          <RootGuard>
+            <Stack screenOptions={rootStackScreenOptions}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(stack)" options={{ headerShown: false }} />
+              <Stack.Screen name="(modals)" options={{ headerShown: false }} />
+              <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+              <Stack.Screen name="role-unsupported" options={{ headerShown: false, gestureEnabled: false }} />
+            </Stack>
+          </RootGuard>
+        </Providers>
+      </AppErrorBoundary>
+      <Toast />
     </View>
   );
 }

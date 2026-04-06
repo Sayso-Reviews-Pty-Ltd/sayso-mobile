@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Image,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
-} from 'react-native';
+import { Image, Platform, Pressable, ScrollView, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { haptics } from '../../lib/haptics';
@@ -14,6 +7,8 @@ import { Text } from '../Typography';
 import { useAuth } from '../../providers/AuthProvider';
 import { useReviewHelpful } from '../../hooks/useReviewHelpful';
 import { C, styles } from './ReviewCard.styles';
+import { getRatingGradient } from '../../styles/ratingColors';
+import { ReviewImage, ImageLightbox } from './ReviewCardMedia';
 
 // ─── Shared review data type (normalised from both ReviewItem & EventReviewItem)
 export interface ReviewCardData {
@@ -60,13 +55,7 @@ function Avatar({ src, name }: { src?: string | null; name: string }) {
   const initial = (name || 'U')[0].toUpperCase();
 
   if (src && !imgError) {
-    return (
-      <Image
-        source={{ uri: src }}
-        style={styles.avatar}
-        onError={() => setImgError(true)}
-      />
-    );
+    return <Image source={{ uri: src }} style={styles.avatar} onError={() => setImgError(true)} />;
   }
 
   return (
@@ -76,11 +65,10 @@ function Avatar({ src, name }: { src?: string | null; name: string }) {
   );
 }
 
-// ─── Stars — clamped to 0–5
-const STAR_GRADIENT = ['#FDE68A', '#FBBF24', '#D97706'] as const;
-
+// ─── Stars — clamped to 0–5, tier-coloured (gold / silver / bronze)
 function Stars({ rating }: { rating: number }) {
   const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
+  const starGradient = getRatingGradient(rating);
 
   if (safeRating === 0) {
     return (
@@ -92,11 +80,11 @@ function Stars({ rating }: { rating: number }) {
 
   return (
     <View style={styles.starsRow}>
-      {[1, 2, 3, 4, 5].map((i) => (
+      {[1, 2, 3, 4, 5].map((i) =>
         i <= safeRating ? (
           <LinearGradient
             key={i}
-            colors={STAR_GRADIENT}
+            colors={starGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.starFilledWrap}
@@ -105,65 +93,16 @@ function Stars({ rating }: { rating: number }) {
           </LinearGradient>
         ) : (
           <Ionicons key={i} testID="star-empty" name="star" size={16} color={C.charcoal30} />
-        )
-      ))}
+        ),
+      )}
     </View>
-  );
-}
-
-// ─── Review image with error fallback + lightbox trigger
-function ReviewImage({ uri, onPress }: { uri: string; onPress: () => void }) {
-  const [error, setError] = useState(false);
-
-  if (error) {
-    return (
-      <View style={[styles.reviewImage, styles.reviewImageError]}>
-        <Ionicons name="image-outline" size={24} color={C.charcoal30} />
-      </View>
-    );
-  }
-
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel="View full image"
-    >
-      <Image
-        source={{ uri }}
-        style={styles.reviewImage}
-        onError={() => setError(true)}
-      />
-    </Pressable>
-  );
-}
-
-// ─── Image lightbox modal
-function ImageLightbox({ uri, onClose }: { uri: string; onClose: () => void }) {
-  return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.lightboxOverlay} onPress={onClose}>
-        <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
-        <Pressable
-          style={styles.lightboxClose}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Close image preview"
-        >
-          <Ionicons name="close" size={22} color={C.white} />
-        </Pressable>
-      </Pressable>
-    </Modal>
   );
 }
 
 // ─── ReviewCard
 export function ReviewCard({ review }: { review: ReviewCardData }) {
   const { user } = useAuth();
-  const { count, isHelpful, loading, toggle } = useReviewHelpful(
-    review.id,
-    review.helpfulCount,
-  );
+  const { count, isHelpful, loading, toggle } = useReviewHelpful(review.id, review.helpfulCount);
 
   const [expanded, setExpanded] = useState(false);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
@@ -184,7 +123,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.card}
-      accessibilityLabel={`Review by ${review.user?.name ?? 'reviewer'}, ${review.rating} stars`}
+      accessible={false}
     >
       <View style={styles.row}>
         {/* Avatar */}
@@ -223,14 +162,13 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
 
           {/* Title */}
           {review.title ? (
-            <Text style={styles.title} numberOfLines={2}>{review.title}</Text>
+            <Text style={styles.title} numberOfLines={2}>
+              {review.title}
+            </Text>
           ) : null}
 
           {/* Body */}
-          <Text
-            style={styles.body}
-            numberOfLines={expanded || !isLongBody ? undefined : 4}
-          >
+          <Text style={styles.body} numberOfLines={expanded || !isLongBody ? undefined : 4}>
             {review.content}
           </Text>
           {isLongBody ? (
@@ -238,11 +176,11 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
               onPress={() => setExpanded((v) => !v)}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               accessibilityRole="button"
-              accessibilityLabel={expanded ? 'Show less of this review' : 'Read more of this review'}
+              accessibilityLabel={
+                expanded ? 'Show less of this review' : 'Read more of this review'
+              }
             >
-              <Text style={styles.readMoreText}>
-                {expanded ? 'Show less' : 'Read more'}
-              </Text>
+              <Text style={styles.readMoreText}>{expanded ? 'Show less' : 'Read more'}</Text>
             </Pressable>
           ) : null}
 
@@ -304,9 +242,7 @@ export function ReviewCard({ review }: { review: ReviewCardData }) {
         </View>
       </View>
 
-      {previewUri ? (
-        <ImageLightbox uri={previewUri} onClose={() => setPreviewUri(null)} />
-      ) : null}
+      {previewUri ? <ImageLightbox uri={previewUri} onClose={() => setPreviewUri(null)} /> : null}
     </LinearGradient>
   );
 }

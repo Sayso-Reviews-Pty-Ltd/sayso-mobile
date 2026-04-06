@@ -8,8 +8,8 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 14,
+    paddingVertical: 8,
+    marginBottom: 16,
   },
   errorText: {
     color: ONBOARDING_TOKENS.coral,
@@ -25,12 +25,12 @@ export const styles = StyleSheet.create({
   counterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     borderWidth: 1,
     borderColor: 'rgba(157,171,155,0.2)',
     backgroundColor: 'rgba(157,171,155,0.10)',
     borderRadius: 999,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   counterPillReady: {
@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
   },
   counterHint: {
-    marginTop: 7,
+    marginTop: 8,
     fontSize: 13,
     lineHeight: 18,
     color: ONBOARDING_TOKENS.charcoal60,
@@ -51,7 +51,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   group: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   groupLabel: {
     fontSize: 17,
@@ -76,9 +76,9 @@ export const styles = StyleSheet.create({
   pillFill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   pillSelected: {
     borderColor: ONBOARDING_TOKENS.coral,
@@ -100,7 +100,7 @@ export const styles = StyleSheet.create({
     color: ONBOARDING_TOKENS.white,
   },
   emptyState: {
-    paddingVertical: 18,
+    paddingVertical: 16,
   },
   emptyStateText: {
     textAlign: 'center',

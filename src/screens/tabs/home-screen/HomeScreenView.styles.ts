@@ -20,12 +20,12 @@ export const styles = StyleSheet.create({
     borderBottomColor: FROSTED_CARD_BORDER_COLOR,
   },
   headerWrapExpanded: {
-    paddingTop: 10,
-    paddingBottom: 14,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   headerWrapCollapsed: {
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   headerMaterial: {
     ...StyleSheet.absoluteFillObject,
@@ -78,10 +78,10 @@ export const styles = StyleSheet.create({
     zIndex: 30,
   },
   searchBarWrapExpanded: {
-    marginTop: 10,
+    marginTop: 8,
   },
   searchBarWrapCollapsed: {
-    marginTop: 3,
+    marginTop: 4,
   },
   suggestionsOverlay: {
     position: 'absolute',
@@ -91,7 +91,6 @@ export const styles = StyleSheet.create({
   },
   content: {
     backgroundColor: homeTokens.offWhite,
-    paddingBottom: 24,
   },
   section: {
     paddingTop: 24,
@@ -117,7 +116,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.92)',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   guestBadgeText: {
     fontSize: 12,
@@ -126,19 +125,19 @@ export const styles = StyleSheet.create({
   },
   guestTitle: {
     fontSize: 24,
-    lineHeight: 31,
+    lineHeight: 32,
     fontWeight: '700',
     color: homeTokens.white,
     maxWidth: 320,
   },
   guestActions: {
     gap: 12,
-    marginTop: 18,
+    marginTop: 16,
   },
   primaryGuestButton: {
     borderRadius: CARD_CTA_RADIUS,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     backgroundColor: homeTokens.white,
   },
   primaryGuestButtonText: {
@@ -149,8 +148,8 @@ export const styles = StyleSheet.create({
   },
   secondaryGuestButton: {
     borderRadius: CARD_CTA_RADIUS,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.24)',
@@ -179,6 +178,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: homeTokens.textSecondary,
-    marginTop: 6,
+    marginTop: 8,
   },
 });

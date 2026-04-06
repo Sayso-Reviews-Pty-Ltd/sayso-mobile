@@ -1,6 +1,7 @@
 import { ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { ScreenLayout } from '../../components/ScreenLayout';
+import { useBottomScreenSpacing } from '../../hooks/useBottomScreenSpacing';
 import { BusinessPageHeader } from '../../components/business-detail/BusinessPageHeader';
 import { businessDetailColors } from '../../components/business-detail/styles';
 import { TransitionItem } from '../../components/motion/TransitionItem';
@@ -39,6 +40,8 @@ export default function LeaderboardScreen() {
     visibleContributors,
   } = useLeaderboardController(params.tab);
 
+  const bottomSpacing = useBottomScreenSpacing(true);
+
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
@@ -48,7 +51,7 @@ export default function LeaderboardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenLayout edges={['top', 'left', 'right']} style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <View
@@ -73,7 +76,7 @@ export default function LeaderboardScreen() {
         <ScrollView
           ref={scrollRef}
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomSpacing }]}
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
@@ -120,6 +123,6 @@ export default function LeaderboardScreen() {
           </TransitionItem>
         </ScrollView>
       </ScreenTransitionScope>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }

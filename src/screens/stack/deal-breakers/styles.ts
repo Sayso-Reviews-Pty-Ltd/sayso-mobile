@@ -117,7 +117,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     color: ONBOARDING_TOKENS.charcoal60,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     fontWeight: '600',
   },
   selectedIconWrap: {
@@ -127,7 +127,7 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   selectedCheck: {
     width: 24,

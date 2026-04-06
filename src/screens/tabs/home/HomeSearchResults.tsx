@@ -4,7 +4,6 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
-  StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -12,11 +11,9 @@ import { Text } from '../../../components/Typography';
 import { BusinessCard } from '../../../components/BusinessCard';
 import { EmptyState } from '../../../components/EmptyState';
 import type { BusinessListItemDto } from '@sayso/contracts';
-import { homeTokens } from './HomeTokens';
-import { APP_PAGE_GUTTER } from '../../../styles/layout';
-import { CARD_SHADOW_MD } from '../../../styles/overlayShadow';
 import { haptics } from '../../../lib/haptics';
 import { track } from '../../../lib/telemetry';
+import { styles } from './HomeSearchResults.styles';
 
 type Props = {
   query: string;
@@ -77,6 +74,14 @@ const distanceOptions = [
   { label: '10 km', value: 10 },
 ];
 
+function ResultSeparator() {
+  return <View style={styles.separator} />;
+}
+
+function renderResultItem({ item }: { item: BusinessListItemDto }) {
+  return <BusinessCard business={item} />;
+}
+
 export function HomeSearchResults({
   query,
   results,
@@ -106,14 +111,14 @@ export function HomeSearchResults({
         (listRef as React.MutableRefObject<FlatList<BusinessListItemDto> | null>).current = node;
       }
     },
-    [listRef]
+    [listRef],
   );
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       onScroll?.(event);
     },
-    [onScroll]
+    [onScroll],
   );
 
   return (
@@ -122,8 +127,8 @@ export function HomeSearchResults({
         ref={mergedRef}
         data={isLoading ? [] : results}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <BusinessCard business={item} />}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        renderItem={renderResultItem}
+        ItemSeparatorComponent={ResultSeparator}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -136,7 +141,11 @@ export function HomeSearchResults({
                 <Text style={styles.title}>Results for &ldquo;{query.trim()}&rdquo;</Text>
               </View>
               {hasFilters ? (
-                <TouchableOpacity onPress={onClearFilters} activeOpacity={0.8} style={styles.clearButton}>
+                <TouchableOpacity
+                  onPress={onClearFilters}
+                  activeOpacity={0.8}
+                  style={styles.clearButton}
+                >
                   <Text style={styles.clearButtonText}>Clear filters</Text>
                 </TouchableOpacity>
               ) : null}
@@ -150,7 +159,10 @@ export function HomeSearchResults({
                   {distanceOptions.map(({ label, value }) => (
                     <TouchableOpacity
                       key={`distance-${value}`}
-                      style={[styles.filterChip, distanceKm === value ? styles.filterChipActive : null]}
+                      style={[
+                        styles.filterChip,
+                        distanceKm === value ? styles.filterChipActive : null,
+                      ]}
                       onPress={() => {
                         haptics.navigation();
                         track('discovery.filter_applied', { filter: 'distance' });
@@ -158,7 +170,12 @@ export function HomeSearchResults({
                       }}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.filterChipText, distanceKm === value ? styles.filterChipTextActive : null]}>
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          distanceKm === value ? styles.filterChipTextActive : null,
+                        ]}
+                      >
                         {label}
                       </Text>
                     </TouchableOpacity>
@@ -172,7 +189,10 @@ export function HomeSearchResults({
                   {ratingOptions.map(({ label, value }) => (
                     <TouchableOpacity
                       key={`rating-${value}`}
-                      style={[styles.filterChip, minRating === value ? styles.filterChipActive : null]}
+                      style={[
+                        styles.filterChip,
+                        minRating === value ? styles.filterChipActive : null,
+                      ]}
                       onPress={() => {
                         haptics.navigation();
                         track('discovery.filter_applied', { filter: 'rating' });
@@ -180,7 +200,12 @@ export function HomeSearchResults({
                       }}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.filterChipText, minRating === value ? styles.filterChipTextActive : null]}>
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          minRating === value ? styles.filterChipTextActive : null,
+                        ]}
+                      >
                         {label}
                       </Text>
                     </TouchableOpacity>
@@ -190,7 +215,9 @@ export function HomeSearchResults({
             </View>
 
             {locationDenied && distanceKm != null ? (
-              <Text style={styles.notice}>Location permission is off, so distance filtering could not be applied.</Text>
+              <Text style={styles.notice}>
+                Location permission is off, so distance filtering could not be applied.
+              </Text>
             ) : null}
           </View>
         }
@@ -214,114 +241,3 @@ export function HomeSearchResults({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: homeTokens.offWhite,
-  },
-  content: {
-    paddingHorizontal: APP_PAGE_GUTTER,
-    paddingTop: 16,
-    paddingBottom: 32,
-    backgroundColor: homeTokens.offWhite,
-  },
-  header: {
-    paddingBottom: 16,
-  },
-  // ─── Title row ───────────────────────────────────────────────────────────────
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  titleColumn: {
-    flex: 1,
-    gap: 2,
-  },
-  modeLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    color: 'rgba(45,45,45,0.60)',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: homeTokens.charcoal,
-    letterSpacing: -0.3,
-  },
-  clearButton: {
-    paddingBottom: 2,
-    flexShrink: 0,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(45,45,45,0.80)',
-    textDecorationLine: 'underline',
-  },
-  // ─── Filter section ──────────────────────────────────────────────────────────
-  filters: {
-    gap: 12,
-    marginTop: 16,
-  },
-  filterLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    color: 'rgba(45,45,45,0.60)',
-  },
-  filterPills: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: homeTokens.borderSoft,
-    backgroundColor: 'rgba(255,255,255,0.60)',
-  },
-  filterChipActive: {
-    backgroundColor: 'rgba(157,171,155,0.92)',
-    borderColor: 'rgba(157,171,155,0.50)',
-  },
-  filterChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(45,45,45,0.70)',
-  },
-  filterChipTextActive: {
-    color: homeTokens.white,
-  },
-  // ─── Notice ──────────────────────────────────────────────────────────────────
-  notice: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: homeTokens.coral,
-    marginTop: 12,
-  },
-  // ─── Error state ─────────────────────────────────────────────────────────────
-  errorBox: {
-    marginTop: 24,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(114,47,55,0.30)',
-    backgroundColor: 'rgba(114,47,55,0.10)',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    ...CARD_SHADOW_MD,
-  },
-  errorText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: homeTokens.coral,
-  },
-});

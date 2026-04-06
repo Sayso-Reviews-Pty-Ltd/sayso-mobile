@@ -24,10 +24,7 @@ describe('track', () => {
 
   it('passes an empty object when no payload is provided', () => {
     track('discovery.search_executed');
-    expect(consoleSpy).toHaveBeenCalledWith(
-      '[telemetry] discovery.search_executed',
-      {},
-    );
+    expect(consoleSpy).toHaveBeenCalledWith('[telemetry] discovery.search_executed', {});
   });
 
   it('forwards payload to console.debug', () => {
@@ -70,6 +67,7 @@ describe('track', () => {
       'perf.home_ready',
       'perf.business_detail_ready',
       'perf.leaderboard_ready',
+      'rollout.home_native_carousel_exposed',
     ];
     expect(() => events.forEach((e) => track(e))).not.toThrow();
   });
